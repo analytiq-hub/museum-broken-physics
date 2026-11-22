@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { loadEnvironment, loadMaterials } from "./render/materials";
+import { createPost } from "./render/post";
 import { GUI } from "lil-gui";
 import Stats from "stats.js";
 import { BodySync } from "./engine/bodySync";
@@ -22,6 +24,7 @@ import {
 } from "./exhibits/sideways-gravity/sim";
 import { CAMERA_POSES, buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
 import { installDebugApi } from "./debug/api";
+import { Sound } from "./audio/sound";
 import { Recorder } from "./debug/recorder";
 import { GRAVITY_KEYS, createInstrument } from "./ui/instrument";
 import { instrumentModel } from "./ui/instrumentModel";
@@ -32,6 +35,8 @@ const R = await initPhysics();
 const params = new URLSearchParams(location.search);
 /** `?debug` shows the FPS meter and the lil-gui debug panel. */
 const DEBUG = params.has("debug");
+/** `?quality=low`: no bloom, smaller shadow map, pixel ratio 1 (slow machines). */
+const LOW_QUALITY = params.get("quality") === "low";
 /** Seconds the failed state stays on screen before the room resets itself. */
 const AUTO_RESET_SECONDS = 2.5;
 /** How far away (m) a console button can be pressed from. */
@@ -40,19 +45,23 @@ const REACH = 2.6;
 // --- Renderer, scene, camera -------------------------------------------------
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(LOW_QUALITY ? 1 : Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.85;
+renderer.info.autoReset = false;
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x15130f);
-// Placeholder reflections so metals (brass) aren't black; an HDR map replaces this in the visual pass.
+// Procedural reflections until the HDRI has loaded (it replaces this).
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.3;
-scene.add(new THREE.HemisphereLight(0xfff4e0, 0x2a241c, 0.4));
+scene.environmentIntensity = 0.45;
+scene.add(new THREE.HemisphereLight(0xfff4e0, 0x2a241c, 0.25));
+const materials = await loadMaterials(renderer);
+const environmentReady = loadEnvironment(renderer, scene).catch((e) => console.warn("HDRI failed to load", e));
 
 const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.05, 100);
 camera.rotation.order = "YXZ";
@@ -72,7 +81,11 @@ const look = new PointerLockControls(camera, renderer.domElement);
 // --- Exhibit and player ----------------------------------------------------------
 const exhibit = new SidewaysGravityExhibit(R);
 const sync = new BodySync();
-const view = buildSidewaysGravityView(scene, exhibit, sync);
+const view = buildSidewaysGravityView(scene, exhibit, sync, materials);
+if (LOW_QUALITY) scene.traverse((o) => {
+  if (o instanceof THREE.SpotLight && o.castShadow) o.shadow.mapSize.set(1024, 1024);
+});
+const post = createPost(renderer, scene, camera, !LOW_QUALITY);
 const player = new Player(R, PLAYER_SPAWN);
 player.attach(exhibit.world);
 camera.rotation.set(-0.08, 0, 0); // facing the window, eyes slightly lowered
@@ -87,6 +100,14 @@ let paused = params.has("paused");
 const pointerLocked = () => look.isLocked || AUTOMATION;
 let failedFor = 0;
 const recorder = new Recorder(exhibit.id, () => player.getState());
+const sound = new Sound();
+/** Strongest ball impact since the last frame (velocity jump, m/s). */
+let pendingImpact = 0;
+let lastBallVelocity = { x: 0, y: 0, z: 0 };
+let wasSolved = false;
+let wasFailed = false;
+/** Distance walked since the last footstep (m). */
+let stride = 0;
 const ballPosition = () => exhibit.describe().bodies.ball.pos;
 
 const keys = new Set<string>();
@@ -105,9 +126,15 @@ function stepOnce(): void {
   const input = playerInput();
   recorder.input(exhibit.stepCount, input);
   player.step(input, FIXED_DT);
+  if (player.grounded) stride += Math.hypot(player.position.x - player.previous.x, player.position.z - player.previous.z);
   sync.beforeStep();
   exhibit.step();
   sync.afterStep();
+  // A sudden change in the ball's velocity is an impact (gravity alone changes it by ~0.16 m/s per step).
+  const v = exhibit.ball.linvel();
+  const jump = Math.hypot(v.x - lastBallVelocity.x, v.y - lastBallVelocity.y, v.z - lastBallVelocity.z);
+  if (jump > 1.2) pendingImpact = Math.max(pendingImpact, jump);
+  lastBallVelocity = { x: v.x, y: v.y, z: v.z };
   if (exhibit.isSolved()) recorder.finish("solved", exhibit.stepCount, ballPosition());
   else if (exhibit.isFailed()) recorder.finish("failed", exhibit.stepCount, ballPosition());
 }
@@ -123,12 +150,18 @@ function reset(): void {
   sync.rebind(exhibit.world);
   stepper.clear();
   failedFor = 0;
+  lastBallVelocity = { x: 0, y: 0, z: 0 };
+  pendingImpact = 0;
 }
 
 /** Every rule change goes through here, so the recorder sees it. */
 function changeRule(id: string, value: unknown): boolean {
   const changed = exhibit.setRule(id, value);
-  if (changed) recorder.change(exhibit.stepCount, id, value);
+  if (changed) {
+    recorder.change(exhibit.stepCount, id, value);
+    sound.click();
+    if (id === "gravity") sound.gravityShift();
+  }
   return changed;
 }
 
@@ -198,9 +231,14 @@ overlay.innerHTML = `
     <p>Gallery 1: <b>The Sideways Gallery</b></p>
     <p class="controls"><b>Click</b> to enter · <b>WASD</b> walk · <b>Mouse</b> look ·
       <b>Click</b> a brass button on the console to change gravity · hold <b>Q</b> for your physics instrument ·
-      <b>R</b> reset · <b>Esc</b> pause</p>
+      <b>R</b> reset · <b>M</b> mute · <b>Esc</b> pause</p>
   </div>`;
-overlay.addEventListener("click", () => look.lock());
+overlay.addEventListener("click", () => {
+  sound.unlock();
+  look.lock();
+});
+// Audio may only start after a gesture; any key or click will do.
+window.addEventListener("pointerdown", () => sound.unlock());
 document.body.appendChild(overlay);
 if (AUTOMATION) overlay.classList.add("hidden");
 look.addEventListener("lock", () => overlay.classList.add("hidden"));
@@ -305,6 +343,8 @@ gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
   keys.add(e.code);
+  sound.unlock();
+  if (e.code === "KeyM") sound.setMuted(!sound.isMuted);
   if (e.code === "KeyQ" && !e.repeat && mode === "first-person") raiseInstrument();
   // In the window view, arrows and Space set gravity like the on-screen d-pad.
   const direction = mode === "orbit" ? GRAVITY_KEYS[e.key] : undefined;
@@ -336,10 +376,12 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  post.setSize(window.innerWidth, window.innerHeight);
 });
 
 // --- Debug API (window.__game) ----------------------------------------------------
 installDebugApi({
+  ready: environmentReady.then(() => undefined),
   getState: () => exhibit.describe(),
   setRule: changeRule,
   getRecording: () => recorder.toJSON(),
@@ -381,8 +423,34 @@ installDebugApi({
     const d = button.getWorldPosition(new THREE.Vector3()).sub(camera.position);
     camera.rotation.set(Math.atan2(d.y, Math.hypot(d.x, d.z)), Math.atan2(-d.x, -d.z), 0);
   },
+  getRenderInfo: () => ({ ...renderer.info.render, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
   getPlayer: () => ({ feet: player.feet, yaw: camera.rotation.y, pitch: camera.rotation.x, hovered }),
 });
+
+// --- Sound ------------------------------------------------------------------------
+function playSounds(): void {
+  if (pendingImpact > 0) {
+    sound.impact(Math.min(1, (pendingImpact - 1.2) / 6));
+    pendingImpact = 0;
+  }
+  const v = exhibit.ball.linvel();
+  const speed = Math.hypot(v.x, v.y, v.z);
+  sound.setRolling(exhibit.ballTouching() && !paused ? Math.min(1, speed / 4) : 0);
+
+  if (exhibit.isSolved() && !wasSolved) {
+    sound.solved();
+    sound.door();
+  }
+  if (exhibit.isFailed() && !wasFailed) sound.failed();
+  wasSolved = exhibit.isSolved();
+  wasFailed = exhibit.isFailed();
+
+  // Footsteps: one every 0.7 m walked on the ground (stride accumulates per physics step).
+  if (stride > 0.7) {
+    sound.footstep();
+    stride = 0;
+  }
+}
 
 // --- Frame loop ------------------------------------------------------------------
 const clock = new THREE.Timer();
@@ -410,9 +478,11 @@ renderer.setAnimationLoop((time) => {
     orbit.update();
   }
   updateHover();
+  playSounds();
   debug.gravity = exhibit.rule("gravity").current as GravityDirection;
   view.update(frameDt);
   renderHud();
-  renderer.render(scene, camera);
+  renderer.info.reset(); // counted per frame (post-processing renders several passes)
+  post.render();
   stats.end();
 });

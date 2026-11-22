@@ -53,6 +53,19 @@ non-solutions and asserts they are not.
   view (C) it stays open as a normal panel.
 - Player-facing directions are named from the viewer's side: floor, left/right/back wall, window.
 
+## Rendering and sound
+
+- `src/render/materials.ts`: shared PBR materials. Marble/plaster textures and the HDRI are CC0
+  from Poly Haven in `public/assets/` (credits in `public/assets/CREDITS.md`); brass scratches,
+  wood, labels and placards are procedural canvas textures. `worldBoxGeometry` gives boxes
+  world-scale UVs so textures tile at real size and line up across boxes.
+- `src/render/post.ts`: half-resolution bloom + tone mapping. `?quality=low` disables bloom,
+  uses a 1024 shadow map and pixel ratio 1.
+- `src/audio/sound.ts`: all sounds are synthesized with WebAudio (no files); audio starts on
+  the first click/key. M mutes.
+- Lighting budget: one shadow-casting spot (the key), everything else unshadowed. A frame is
+  ~115 draw calls / 11k triangles.
+
 ## Playtest recordings
 
 Every rule change is recorded with the fixed-step count it happened at (`src/debug/recorder.ts`);
@@ -77,6 +90,11 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   to your own per-step maths (the player), or replays drift from the browser.
 - **Resetting closes doors.** Anything standing in a doorway or beyond when the room resets
   must be moved (see `RESET_SPOT`), or it is shut out or stuck inside the door.
+- **No lights straight above shiny things the player looks down at.** An overhead light (or a
+  bright emissive panel) mirrors off the brass console into the player's eyes from anywhere, and
+  bloom makes it a blaze. Light the room from the sides and corners; keep ceiling panels dim.
+- **`renderer.info` resets per render call**, and post-processing renders several passes. It is
+  set to reset once per frame in `main.ts`, so `__game.getRenderInfo()` reports whole frames.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

@@ -60,8 +60,8 @@ try {
     const state = await page.evaluate(async (s: Shot) => {
       const game = window.__game as GameDebugApi;
       if (s.player) game.setPlayer({ x: s.player.x, z: s.player.z }, s.player.yaw, s.player.pitch);
-      if (s.instrument) game.setInstrument(true);
       else game.setCamera(s.camera ?? "window");
+      if (s.instrument) game.setInstrument(true);
       for (const move of s.moves) {
         game.setRule("gravity", move);
         game.settle();

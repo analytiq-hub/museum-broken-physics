@@ -249,6 +249,18 @@ export class SidewaysGravityExhibit extends ExhibitBase {
     return this.world.getRigidBody(this.doorHandle);
   }
 
+  /** Is the ball in contact with anything right now? (Read-only; for sound.) */
+  ballTouching(): boolean {
+    const ball = this.world.getCollider(this.ballColliderHandle);
+    let touching = false;
+    this.world.contactPairsWith(ball, (other) => {
+      this.world.contactPair(ball, other, (manifold) => {
+        if (manifold.numContacts() > 0) touching = true;
+      });
+    });
+    return touching;
+  }
+
   /** 0 = closed, 1 = fully open. */
   get doorOpenness(): number {
     return this.doorProgress;

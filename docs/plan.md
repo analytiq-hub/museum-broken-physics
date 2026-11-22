@@ -272,6 +272,16 @@ the budget. `npm run ui-check` tests the whole flow with a real pointer lock in 
 - Basic audio: footsteps, ball rolling, a gravity-shift sound.
 - Keep an eye on performance: target 60 fps on a mid-range laptop.
 - **Done when:** a screenshot of the room conveys the art direction.
+- *As built:* Poly Haven CC0 marble tiles (floor), veined marble (walls, ledge, chips),
+  plaster (ceiling) and the "Museum of Ethnography" HDRI for reflections; procedural brass,
+  walnut, placard and console engraving. Dark marble baseboards, cornice and door surround;
+  brass window frames and a cracked pane; a laylight with brass glazing bars (decorative,
+  deliberately dim). Lighting: a corner key spot (the only shadow map), a target spot with a
+  faint light shaft, side wall-washes and sconces; nothing bright overhead, because it glared
+  off the console (found in playtesting). Bloom, ACES tone mapping, soft additive dust.
+  Synthesized sound (footsteps, rolling, impacts, gravity sweep, clicks, chime, door, fail,
+  room tone). Real-GPU frame rate not yet measured: the frame is ~115 draw calls / 11k
+  triangles, and `?quality=low` exists for slow machines.
 
 ### Milestone 5: Second exhibit, the broken pendulum (3–4 days)
 - Pendulum built with a Rapier revolute or spherical joint (from the joints example).
