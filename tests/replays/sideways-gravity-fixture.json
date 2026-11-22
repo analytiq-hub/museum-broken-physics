@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "exhibit": "sideways-gravity",
+  "recordedAt": "2026-11-22T22:52:01.454Z",
+  "attempts": [
+    {
+      "changes": [
+        {
+          "step": 30,
+          "rule": "gravity",
+          "value": "north"
+        },
+        {
+          "step": 105,
+          "rule": "gravity",
+          "value": "west"
+        },
+        {
+          "step": 174,
+          "rule": "gravity",
+          "value": "down"
+        },
+        {
+          "step": 589,
+          "rule": "gravity",
+          "value": "west"
+        }
+      ],
+      "outcome": "solved",
+      "endStep": 658,
+      "ball": [
+        -5.6,
+        3.4,
+        -3.6
+      ]
+    },
+    {
+      "changes": [
+        {
+          "step": 0,
+          "rule": "gravity",
+          "value": "down"
+        }
+      ],
+      "outcome": "failed",
+      "endStep": 40,
+      "ball": [
+        5.59,
+        2.406,
+        0
+      ]
+    }
+  ]
+}

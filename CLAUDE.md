@@ -13,6 +13,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |
 | `npm run solve` | Puzzle solver report (every move sequence within budget, at early/settled timings) and trajectory SVGs in `harness/out/`. Solver thresholds themselves are asserted in `tests/exhibits/*.solver.test.ts`. |
 | `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`. |
+| `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
 | `npm run build` | Production build to `dist/`. |
 
 CI (`.github/workflows/ci.yml`) runs check + build on every push and PR, and deploys `main`
@@ -41,6 +42,15 @@ to GitHub Pages: https://analytiqhub.com/museum-broken-physics/
 (meshes bound to the sim's bodies). Add a headless test in `tests/exhibits/<name>.test.ts`
 that replays the intended solution and asserts it is solved, and replays known
 non-solutions and asserts they are not.
+
+## Playtest recordings
+
+Every rule change is recorded with the fixed-step count it happened at (`src/debug/recorder.ts`);
+each try at the room is one attempt. In the game, **Shift+D** (or "Download recording" with
+`?debug`) saves the session as JSON. Put it in `tests/replays/` and `tests/replays.test.ts`
+replays every attempt headlessly and asserts the same outcome and the exact same final ball
+position. A stuck or surprising playtest becomes a regression test. If a deliberate change
+alters the physics, old recordings will legitimately fail: re-record or delete them.
 
 ## Gotchas (add new ones here when you find them)
 

@@ -11,6 +11,7 @@ import type { GravityDirection } from "./rules/Rule";
 import { GRAVITY_LABELS, GRAVITY_OPTIONS, SidewaysGravityExhibit } from "./exhibits/sideways-gravity/sim";
 import { CAMERA_POSES, buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
 import { installDebugApi } from "./debug/api";
+import { Recorder } from "./debug/recorder";
 import { GRAVITY_KEYS, createGravityPanel } from "./ui/gravityPanel";
 import "./style.css";
 
@@ -55,22 +56,45 @@ const view = buildSidewaysGravityView(scene, exhibit, sync);
 /** `?paused` starts with the simulation stopped (for automation via window.__game). */
 let paused = params.has("paused");
 let failedFor = 0;
+const recorder = new Recorder(exhibit.id);
+const ballPosition = () => exhibit.describe().bodies.ball.pos;
+
 function stepOnce(): void {
   sync.beforeStep();
   exhibit.step();
   sync.afterStep();
+  if (exhibit.isSolved()) recorder.finish("solved", exhibit.stepCount, ballPosition());
+  else if (exhibit.isFailed()) recorder.finish("failed", exhibit.stepCount, ballPosition());
 }
 const stepper = new FixedStepper(FIXED_DT, stepOnce);
 
 function reset(): void {
+  recorder.reset(exhibit.stepCount, ballPosition());
   exhibit.reset();
   sync.rebind(exhibit.world);
   stepper.clear();
   failedFor = 0;
 }
 
+/** Every rule change goes through here, so the recorder sees it. */
+function changeRule(id: string, value: unknown): boolean {
+  const changed = exhibit.setRule(id, value);
+  if (changed) recorder.change(exhibit.stepCount, id, value);
+  return changed;
+}
+
 function setGravity(direction: GravityDirection): void {
-  exhibit.setRule("gravity", direction);
+  changeRule("gravity", direction);
+}
+
+/** Saves this session's attempts as JSON, to drop into tests/replays/. */
+function downloadRecording(): void {
+  const blob = new Blob([JSON.stringify(recorder.toJSON(), null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `recording-${exhibit.id}-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 // --- HUD and gravity controls ---------------------------------------------------
@@ -111,6 +135,7 @@ const debug = {
   paused,
   reset,
   step: () => stepper.advance(FIXED_DT),
+  downloadRecording,
 };
 gui
   .add(debug, "gravity", Object.fromEntries(GRAVITY_OPTIONS.map((g) => [GRAVITY_LABELS[g], g])))
@@ -120,6 +145,7 @@ gui
 gui.add(debug, "paused").name("Pause (P)").onChange((v: boolean) => (paused = v)).listen();
 gui.add(debug, "step").name("Step once (.)");
 gui.add(debug, "reset").name("Reset (R)");
+gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
   const direction = GRAVITY_KEYS[e.key];
@@ -127,6 +153,7 @@ window.addEventListener("keydown", (e) => {
     e.preventDefault(); // arrows and space would otherwise scroll or press focused buttons
     setGravity(direction);
   }
+  if (e.key === "D" && e.shiftKey) downloadRecording();
   if (e.key === "r" || e.key === "R") reset();
   if (e.key === "p" || e.key === "P") debug.paused = paused = !paused;
   if (e.key === ".") debug.step();
@@ -141,7 +168,8 @@ window.addEventListener("resize", () => {
 // --- Debug API (window.__game) ----------------------------------------------------
 installDebugApi({
   getState: () => exhibit.describe(),
-  setRule: (id, value) => exhibit.setRule(id, value),
+  setRule: changeRule,
+  getRecording: () => recorder.toJSON(),
   step(n = 1) {
     for (let i = 0; i < n; i++) stepOnce();
   },
