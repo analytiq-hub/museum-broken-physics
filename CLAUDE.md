@@ -7,7 +7,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 
 | Command | What it does |
 | ------- | ------------ |
-| `npm run dev` | Vite dev server (http://localhost:5173). Debug keys: P pause, `.` step, R reset. |
+| `npm run dev` | Vite dev server (http://localhost:5173). Add `?debug` for the FPS meter and debug panel. Keys: arrows/Space set gravity, R reset, P pause, `.` step. |
 | `npm run check` | Typecheck + oxlint (warnings fail) + unit tests + step-time benchmark. Must be green before finishing; a Stop hook enforces it. |
 | `npm test` | Unit and headless exhibit tests only (`tests/**/*.test.ts`). |
 | `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |

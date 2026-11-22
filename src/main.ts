@@ -10,9 +10,13 @@ import { FIXED_DT, initPhysics } from "./engine/physics";
 import type { GravityDirection } from "./rules/Rule";
 import { GRAVITY_LABELS, GRAVITY_OPTIONS, SidewaysGravityExhibit } from "./exhibits/sideways-gravity/sim";
 import { buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
+import { GRAVITY_KEYS, createGravityPanel } from "./ui/gravityPanel";
 import "./style.css";
 
 const R = await initPhysics();
+
+/** `?debug` shows the FPS meter and the lil-gui debug panel. */
+const DEBUG = new URLSearchParams(location.search).has("debug");
 
 /** Seconds the failed state stays on screen before the room resets itself. */
 const AUTO_RESET_SECONDS = 2.5;
@@ -65,29 +69,39 @@ function setGravity(direction: GravityDirection): void {
   exhibit.setRule("gravity", direction);
 }
 
-// --- HUD -----------------------------------------------------------------------
+// --- HUD and gravity controls ---------------------------------------------------
 const hud = document.createElement("div");
 hud.className = "hud";
 document.body.appendChild(hud);
+const panel = createGravityPanel(GRAVITY_LABELS, setGravity);
 
+let lastHud = "";
 function renderHud(): void {
   const gravity = exhibit.rule("gravity").current as GravityDirection;
   let status = "Get the marble onto the brass plate.";
-  if (exhibit.isSolved()) status = "Solved. The door is open.";
-  else if (exhibit.isFailed()) status = "The marble is on the floor and can't climb back. Resetting…";
-  else if (exhibit.changesLeft === 0) status = "No gravity changes left. Press R to reset.";
-  hud.innerHTML = `
-    <div><b>Gravity:</b> ${GRAVITY_LABELS[gravity]}</div>
-    <div><b>Changes left:</b> ${exhibit.changesLeft} / ${exhibit.budget}</div>
+  if (exhibit.isSolved()) status = "Solved! The door is open.";
+  else if (exhibit.isFailed()) status = "The marble fell to the floor and can't climb back up. Resetting…";
+  else if (exhibit.changesLeft === 0) status = "Out of gravity changes. Press R to try again.";
+  const pips = "●".repeat(exhibit.changesLeft) + "○".repeat(exhibit.changesUsed);
+  const html = `
+    <div class="title">The Sideways Gallery</div>
+    <div>Gravity in this gallery is broken. Right now everything falls toward the <b>${GRAVITY_LABELS[gravity].toLowerCase()}</b>.</div>
+    <div><b>Changes left</b> <span class="pips">${pips}</span></div>
     <div class="status">${status}</div>
-    <div class="keys">${GRAVITY_OPTIONS.map((g, i) => `${i + 1} ${GRAVITY_LABELS[g]}`).join(" · ")} · R reset</div>`;
+    <div class="keys">R reset</div>`;
+  if (html !== lastHud) hud.innerHTML = lastHud = html;
+  panel.update({
+    current: gravity,
+    enabled: exhibit.changesLeft > 0 && !exhibit.isSolved() && !exhibit.isFailed(),
+  });
 }
 
 // --- Debug UI ------------------------------------------------------------------
 const stats = new Stats();
-document.body.appendChild(stats.dom);
+if (DEBUG) document.body.appendChild(stats.dom);
 
 const gui = new GUI({ title: "Debug" });
+gui.show(DEBUG);
 const debug = {
   gravity: exhibit.rule("gravity").current as GravityDirection,
   paused,
@@ -96,7 +110,7 @@ const debug = {
 };
 gui
   .add(debug, "gravity", Object.fromEntries(GRAVITY_OPTIONS.map((g) => [GRAVITY_LABELS[g], g])))
-  .name("Gravity (1–5)")
+  .name("Gravity")
   .onChange((g: GravityDirection) => setGravity(g))
   .listen();
 gui.add(debug, "paused").name("Pause (P)").onChange((v: boolean) => (paused = v)).listen();
@@ -104,8 +118,11 @@ gui.add(debug, "step").name("Step once (.)");
 gui.add(debug, "reset").name("Reset (R)");
 
 window.addEventListener("keydown", (e) => {
-  const index = Number(e.key) - 1;
-  if (index >= 0 && index < GRAVITY_OPTIONS.length) setGravity(GRAVITY_OPTIONS[index]);
+  const direction = GRAVITY_KEYS[e.key];
+  if (direction) {
+    e.preventDefault(); // arrows and space would otherwise scroll or press focused buttons
+    setGravity(direction);
+  }
   if (e.key === "r" || e.key === "R") reset();
   if (e.key === "p" || e.key === "P") debug.paused = paused = !paused;
   if (e.key === ".") debug.step();

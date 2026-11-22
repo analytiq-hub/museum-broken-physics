@@ -57,12 +57,13 @@ const BALL_ANGULAR_DAMPING = 2;
 export const BALL_START = { x: 6 - BALL_RADIUS - 0.01, y: 4.6, z: 0 } as const;
 
 export const GRAVITY_OPTIONS: readonly GravityDirection[] = ["down", "east", "west", "north", "south"];
+/** Named from the viewer's side of the window: east is on the right, north at the back. */
 export const GRAVITY_LABELS: Record<GravityDirection, string> = {
-  down: "Down",
-  east: "Toward the east wall",
-  west: "Toward the west wall",
-  north: "Toward the north wall",
-  south: "Toward the window",
+  down: "Floor",
+  east: "Right wall",
+  west: "Left wall",
+  north: "Back wall",
+  south: "Window",
 };
 
 // --- Gravity tell-tales -------------------------------------------------------

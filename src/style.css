@@ -33,3 +33,97 @@ body {
   font-size: 12px;
   color: #a99f8c;
 }
+
+.hud .title {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+}
+
+.hud .pips {
+  color: #d4a54a;
+  letter-spacing: 0.15em;
+}
+
+.gravity-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(20, 17, 12, 0.82);
+  color: #efe6d4;
+  font: 13px/1.3 system-ui, sans-serif;
+}
+
+.gravity-title {
+  text-align: center;
+  margin-bottom: 8px;
+  color: #cdbf9f;
+}
+
+.gravity-pad {
+  display: grid;
+  grid-template-areas:
+    ". top ."
+    "left mid right"
+    ". bottom .";
+  grid-template-columns: repeat(3, 84px);
+  gap: 6px;
+}
+
+.gravity-pad button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border: 1px solid #5c5040;
+  border-radius: 6px;
+  background: #2c261d;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gravity-pad button:hover:not(:disabled) {
+  border-color: #d4a54a;
+}
+
+.gravity-pad button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.gravity-pad button.active {
+  opacity: 1;
+  border-color: #d4a54a;
+  background: #5a4520;
+  color: #fff4dc;
+}
+
+.gravity-pad .glyph {
+  font-size: 16px;
+  color: #d4a54a;
+}
+
+.gravity-pad button.active .glyph {
+  color: #fff4dc;
+}
+
+.gravity-pad kbd {
+  font: 10px system-ui, sans-serif;
+  color: #a99f8c;
+}
+
+@media (max-width: 720px) {
+  .hud {
+    bottom: auto;
+    top: 16px;
+  }
+
+  .gravity-pad {
+    grid-template-columns: repeat(3, 72px);
+  }
+}
