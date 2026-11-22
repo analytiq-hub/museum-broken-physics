@@ -52,14 +52,17 @@ export function instrumentModel(ex: ExhibitBase, title: string): InstrumentModel
 }
 
 function describeRule(rule: Rule, roomAllowsChanges: boolean): InstrumentRule {
-  const labelOf = (value: unknown) => rule.options?.find((o) => o.value === value)?.label ?? String(value);
+  const choices = rule.options ?? rule.marks ?? [];
+  const labelOf = (value: unknown) => choices.find((o) => o.value === value)?.label ?? String(value);
   const reading = labelOf(rule.current);
   const law = labelOf(rule.nominal);
   const broken = rule.current !== rule.nominal;
   const noun = rule.label.toLowerCase();
   const explanation = !broken
     ? `${rule.label} behaves as it should here.`
-    : rule.id === "gravity"
+    : rule.explain
+      ? rule.explain(rule.current, rule.nominal)
+      : rule.id === "gravity"
       ? `Gravity should pull toward the ${law.toLowerCase()}. Here it pulls toward the ${reading.toLowerCase()}.`
       : `The ${noun} should be ${law.toLowerCase()}. Here it is ${reading.toLowerCase()}.`;
 
@@ -71,7 +74,7 @@ function describeRule(rule: Rule, roomAllowsChanges: boolean): InstrumentRule {
     broken,
     editable: rule.editable,
     explanation,
-    options: (rule.options ?? []).map((o) => ({
+    options: choices.map((o) => ({
       value: o.value,
       label: o.label,
       current: o.value === rule.current,

@@ -23,6 +23,13 @@ export interface Rule<T = unknown> {
   readonly options?: readonly RuleOption<T>[];
   /** For "range" rules. */
   readonly range?: { min: number; max: number; step: number };
+  /**
+   * For "range" rules: the named settings the instrument offers (and the solver
+   * samples). Each is a choice the player can make.
+   */
+  readonly marks?: readonly RuleOption<T>[];
+  /** Optional plain-language "what's wrong" sentence for the instrument. */
+  explain?(current: T, nominal: T): string;
   current: T;
   /** The "correct" law. Drives Restore and later trade-offs. */
   readonly nominal: T;
@@ -53,6 +60,7 @@ export function gravityRule(
   initial: GravityDirection,
   options: readonly GravityDirection[],
   labels: Partial<Record<GravityDirection, string>> = {},
+  editable = true,
 ): Rule<GravityDirection> {
   return {
     id: "gravity",
@@ -61,7 +69,7 @@ export function gravityRule(
     options: options.map((value) => ({ label: labels[value] ?? value, value })),
     current: initial,
     nominal: "down",
-    editable: true,
+    editable,
     apply({ world }) {
       world.gravity = { ...GRAVITY[this.current] };
       world.forEachRigidBody((body) => {

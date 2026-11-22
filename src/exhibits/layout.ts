@@ -1,0 +1,42 @@
+// Shared museum geometry. Sim only: no three.js, no DOM.
+//
+// Every gallery has its own physics world. The corridor between two galleries
+// exists in both worlds, and the player is handed from one world to the other
+// at the corridor's midpoint (see HANDOVER_X).
+import type RAPIER from "@dimforge/rapier3d-compat";
+import { ROOM_GROUPS } from "../engine/groups";
+
+export interface Box {
+  name: string;
+  kind: "floor" | "ceiling" | "wall" | "glass" | "ledge" | "pedestal";
+  center: [number, number, number];
+  half: [number, number, number];
+}
+
+const W = 0.25; // half wall thickness
+
+/**
+ * Corridor from Gallery I's west door (x = −6.5) to Gallery II's east doorway
+ * (x = −15): z 1..3, 3 m high.
+ */
+export const CORRIDOR_1_2: readonly Box[] = [
+  { name: "corridor-floor", kind: "floor", center: [-10.75, -W, 2], half: [4.25, W, 1.5] },
+  { name: "corridor-ceiling", kind: "ceiling", center: [-10.75, 3 + W, 2], half: [4.25, W, 1.5] },
+  { name: "corridor-north", kind: "wall", center: [-10.75, 1.5, 1 - W], half: [4.25, 1.5, W] },
+  { name: "corridor-south", kind: "wall", center: [-10.75, 1.5, 3 + W], half: [4.25, 1.5, W] },
+];
+
+/** West of this x the player belongs to Gallery II's world, east of it to Gallery I's. */
+export const HANDOVER_X = -10.75;
+/** Hysteresis, so standing on the line doesn't flip worlds every step. */
+export const HANDOVER_MARGIN = 0.3;
+
+/** Creates fixed colliders for `boxes` on `body`. */
+export function addStaticBoxes(R: typeof RAPIER, world: RAPIER.World, body: RAPIER.RigidBody, boxes: readonly Box[]): void {
+  for (const box of boxes) {
+    world.createCollider(
+      R.ColliderDesc.cuboid(...box.half).setTranslation(...box.center).setFriction(0.5).setCollisionGroups(ROOM_GROUPS),
+      body,
+    );
+  }
+}

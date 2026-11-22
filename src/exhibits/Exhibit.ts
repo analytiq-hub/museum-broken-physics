@@ -81,6 +81,8 @@ export abstract class ExhibitBase {
     if (!rule.editable || rule.current === value || this.changesLeft <= 0) return false;
     if (this.isSolved() || this.isFailed()) return false;
     if (rule.kind === "choice" && !rule.options?.some((o) => o.value === value)) return false;
+    if (rule.kind === "range" && typeof value !== "number") return false;
+    if (rule.kind === "range" && rule.range && (Number(value) < rule.range.min || Number(value) > rule.range.max)) return false;
     rule.current = value;
     rule.apply(this.ctx);
     this.changesUsed++;

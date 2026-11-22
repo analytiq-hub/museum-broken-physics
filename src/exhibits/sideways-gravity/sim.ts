@@ -21,15 +21,11 @@
 // Axes: +x east, +y up, +z south (the viewing window is the south wall).
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { BALL_GROUPS, ROOM_GROUPS, TELLTALE_GROUPS } from "../../engine/groups";
+import { addStaticBoxes, CORRIDOR_1_2, type Box } from "../layout";
 import { gravityRule, type GravityDirection } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 
-export interface Box {
-  name: string;
-  kind: "floor" | "ceiling" | "wall" | "glass" | "ledge" | "pedestal";
-  center: [number, number, number];
-  half: [number, number, number];
-}
+export type { Box } from "../layout";
 
 /** Interior: x -6..6, y 0..6, z -4..4. Walls are 0.5 thick, more than the ball's radius. */
 export const ROOM = { halfX: 6, height: 6, halfZ: 4, wall: 0.5 } as const;
@@ -85,12 +81,8 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "hall-east", kind: "wall", center: [6 + W, 3, 6.5], half: [W, 3, 2] },
   { name: "hall-west", kind: "wall", center: [-6 - W, 3, 6.5], half: [W, 3, 2] },
   { name: "hall-south", kind: "wall", center: [0, 3, 8.5 + W], half: [6.5, 3, W] },
-  // Exit corridor behind the west door: z 1..3, 3 m high.
-  { name: "exit-floor", kind: "floor", center: [-9.5, -W, 2], half: [3, W, 1.5] },
-  { name: "exit-ceiling", kind: "ceiling", center: [-9.5, 3 + W, 2], half: [3, W, 1.5] },
-  { name: "exit-north", kind: "wall", center: [-9.5, 1.5, 1 - W], half: [3, 1.5, W] },
-  { name: "exit-south", kind: "wall", center: [-9.5, 1.5, 3 + W], half: [3, 1.5, W] },
-  { name: "exit-end", kind: "wall", center: [-12.5 - W, 1.5, 2], half: [W, 1.5, 1.5] },
+  // The corridor to Gallery II behind the west door (shared with that gallery's world).
+  ...CORRIDOR_1_2,
 ];
 
 export const BALL_RADIUS = 0.4;
@@ -156,15 +148,7 @@ export class SidewaysGravityExhibit extends ExhibitBase {
     const world = this.world;
 
     const statics = world.createRigidBody(R.RigidBodyDesc.fixed());
-    for (const box of STATIC_BOXES) {
-      world.createCollider(
-        R.ColliderDesc.cuboid(...box.half)
-          .setTranslation(...box.center)
-          .setFriction(0.5)
-          .setCollisionGroups(ROOM_GROUPS),
-        statics,
-      );
-    }
+    addStaticBoxes(R, world, statics, STATIC_BOXES);
 
     const target = world.createCollider(
       R.ColliderDesc.cuboid(...TARGET.half).setTranslation(...TARGET.center).setSensor(true),
