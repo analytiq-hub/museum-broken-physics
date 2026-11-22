@@ -32,6 +32,8 @@ export interface GameDebugApi {
   setPlayer(feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): void;
   /** Turns the first-person view (like moving the mouse); recorded as player input. */
   setLook(yaw: number, pitch: number): void;
+  /** Raises or lowers the physics instrument in first person (like holding Q). */
+  setInstrument(open: boolean): void;
   /** Aims the first-person view at a console button (scripts; recorded like mouse look). */
   lookAtButton(direction: string): void;
   getPlayer(): {

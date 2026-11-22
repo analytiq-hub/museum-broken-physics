@@ -5,7 +5,7 @@ A Three.js puzzle adventure where the laws of physics are malfunctioning, and yo
 **Play the latest build:** https://analytiqhub.com/museum-broken-physics/ (deployed from `main` after CI passes)
 
 **Controls:** click to enter, WASD to walk, mouse to look, click the brass buttons on the
-gravity console to change where "down" points, R to reset, Esc to pause. C switches to the view
+gravity console to change where "down" points, hold Q for your physics instrument, R to reset, Esc to pause. C switches to the view
 through the window (arrow keys and Space set gravity there). Add `?debug` for the debug panel.
 
 - [CLAUDE.md](CLAUDE.md): commands, architecture rules and gotchas for contributors

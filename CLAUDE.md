@@ -13,6 +13,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |
 | `npm run solve` | Puzzle solver report (every move sequence within budget, at early/settled timings) and trajectory SVGs in `harness/out/`. Solver thresholds themselves are asserted in `tests/exhibits/*.solver.test.ts`. |
 | `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`. |
+| `npm run ui-check` | End-to-end first-person UI check in headless Chrome with a real pointer lock (enter, hold Q, steer the instrument cursor, click a law, release). Runs in CI. Run it after UI changes. |
 | `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
 | `npm run build` | Production build to `dist/`. |
 
@@ -42,6 +43,15 @@ to GitHub Pages: https://analytiqhub.com/museum-broken-physics/
 (meshes bound to the sim's bodies). Add a headless test in `tests/exhibits/<name>.test.ts`
 that replays the intended solution and asserts it is solved, and replays known
 non-solutions and asserts they are not.
+
+## UI
+
+- `src/ui/instrumentModel.ts` (pure, tested) turns an exhibit's rules into what the physics
+  instrument shows; `src/ui/instrument.ts` renders it. In first person it is raised by holding
+  Q: the pointer stays locked and mouse deltas drive a virtual cursor (`look.enabled = false`),
+  because re-locking the pointer after releasing it is restricted by browsers. In the window
+  view (C) it stays open as a normal panel.
+- Player-facing directions are named from the viewer's side: floor, left/right/back wall, window.
 
 ## Playtest recordings
 

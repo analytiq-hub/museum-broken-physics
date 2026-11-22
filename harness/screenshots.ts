@@ -17,6 +17,8 @@ interface Shot {
   moves: string[];
   /** Extra steps after the last move settles (e.g. for the door to open). */
   extraSteps?: number;
+  /** First person: hold up the physics instrument. */
+  instrument?: boolean;
 }
 
 const SHOTS: Shot[] = [
@@ -32,6 +34,8 @@ const SHOTS: Shot[] = [
   { name: "10-fp-spawn", player: { x: 0, z: 7.6, yaw: 0, pitch: -0.08 }, moves: [] },
   { name: "11-fp-at-console", player: { x: 0, z: 3.7, yaw: 0, pitch: -0.36 }, moves: [] },
   { name: "12-fp-room-from-console", player: { x: 0, z: 3.5, yaw: 0, pitch: 0.3 }, moves: [] },
+  { name: "14-fp-instrument", player: { x: 0, z: 3.6, yaw: 0, pitch: 0.15 }, moves: [], instrument: true },
+  { name: "15-fp-instrument-spent", player: { x: 0, z: 3.6, yaw: 0, pitch: 0.15 }, moves: ["north", "south", "east", "west"], instrument: true },
   { name: "13-fp-solved-door", player: { x: -3, z: 2, yaw: Math.PI / 2, pitch: 0 }, moves: ["north", "west", "down"], extraSteps: 120 },
 ];
 
@@ -56,6 +60,7 @@ try {
     const state = await page.evaluate(async (s: Shot) => {
       const game = window.__game as GameDebugApi;
       if (s.player) game.setPlayer({ x: s.player.x, z: s.player.z }, s.player.yaw, s.player.pitch);
+      if (s.instrument) game.setInstrument(true);
       else game.setCamera(s.camera ?? "window");
       for (const move of s.moves) {
         game.setRule("gravity", move);

@@ -248,7 +248,12 @@ Done before the instrument so that the instrument is designed once, for first pe
 
 ### Milestone 3: The instrument v0 (1–2 days)
 Decide open questions 2 (budget model) and 3 (touch support) before starting; both dictate
-the instrument's design.
+the instrument's design. *Decided (Nov 2026): a count of changes, desktop only.*
+*As built:* holding Q raises the instrument; the pointer stays locked and the mouse drives a
+cursor on it (the view freezes), which avoids re-locking entirely. It shows each law's reading
+vs. the law, a Broken / As it should be status, a one-line explanation, the options (gravity as
+the room-shaped pad), Restore, changes left and Reset. The in-world console stays; both share
+the budget. `npm run ui-check` tests the whole flow with a real pointer lock in CI.
 - Instrument overlay (HTML/CSS on top of the canvas): lists the room's rules, their current
   and nominal values, which are editable, and the remaining budget.
 - HTML can't be clicked while the pointer is locked. Recommendation: holding a key raises the
@@ -327,10 +332,9 @@ A new subsystem, not a variation on rigid bodies, so it gets its own milestone.
 ## Open questions
 
 1. Does room gravity affect the player? (Recommendation: not in v1. Decide by Milestone 2.)
-2. How is the instrument budget expressed: number of changes, an energy meter, or fixed "slots"?
-   (Decide before Milestone 3.)
-3. Target platform: desktop browser only, or also touch/mobile? Pointer lock and a hold-key
-   instrument assume desktop. (Decide before Milestone 3.)
+2. ~~How is the instrument budget expressed?~~ *Decided: a count of changes.* Revisit an energy
+   meter once rooms have "range" rules (damping, Milestone 5).
+3. ~~Target platform?~~ *Decided: desktop browser only for now.* Revisit touch after the visual pass.
 4. Is there a narrative layer (who broke the museum?), and how much text?
 
 ## Immediate next steps

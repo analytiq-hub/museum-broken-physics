@@ -23,7 +23,8 @@ import {
 import { CAMERA_POSES, buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
 import { installDebugApi } from "./debug/api";
 import { Recorder } from "./debug/recorder";
-import { GRAVITY_KEYS, createGravityPanel } from "./ui/gravityPanel";
+import { GRAVITY_KEYS, createInstrument } from "./ui/instrument";
+import { instrumentModel } from "./ui/instrumentModel";
 import "./style.css";
 
 const R = await initPhysics();
@@ -165,7 +166,23 @@ function updateHover(): void {
 const hud = document.createElement("div");
 hud.className = "hud";
 document.body.appendChild(hud);
-const panel = createGravityPanel(GRAVITY_LABELS, setGravity);
+const ROOM_TITLE = "The Sideways Gallery";
+const instrument = createInstrument({
+  setRule: (id, value) => changeRule(id, value),
+  resetRoom: () => reset(),
+});
+/** First person: the instrument is up while Q is held. */
+let instrumentHeld = false;
+
+function raiseInstrument(): void {
+  instrumentHeld = true;
+  look.enabled = false; // the mouse now drives the instrument's cursor, not the view
+}
+function lowerInstrument(): void {
+  instrumentHeld = false;
+  look.enabled = true;
+  if (mode === "first-person") instrument.close();
+}
 
 const crosshair = document.createElement("div");
 crosshair.className = "crosshair";
@@ -180,7 +197,8 @@ overlay.innerHTML = `
     <h1>The Museum of Broken Physics</h1>
     <p>Gallery 1: <b>The Sideways Gallery</b></p>
     <p class="controls"><b>Click</b> to enter · <b>WASD</b> walk · <b>Mouse</b> look ·
-      <b>Click</b> a brass button on the console to change gravity · <b>R</b> reset · <b>Esc</b> pause</p>
+      <b>Click</b> a brass button on the console to change gravity · hold <b>Q</b> for your physics instrument ·
+      <b>R</b> reset · <b>Esc</b> pause</p>
   </div>`;
 overlay.addEventListener("click", () => look.lock());
 document.body.appendChild(overlay);
@@ -188,11 +206,16 @@ if (AUTOMATION) overlay.classList.add("hidden");
 look.addEventListener("lock", () => overlay.classList.add("hidden"));
 look.addEventListener("unlock", () => {
   keys.clear();
+  lowerInstrument();
   if (mode === "first-person" && !AUTOMATION) overlay.classList.remove("hidden");
 });
 
-renderer.domElement.addEventListener("mousedown", () => {
-  if (pointerLocked() && hovered) setGravity(hovered);
+document.addEventListener("mousedown", () => {
+  if (instrument.usesVirtualCursor) instrument.click();
+  else if (pointerLocked() && hovered && !instrument.isOpen) setGravity(hovered);
+});
+document.addEventListener("mousemove", (e) => {
+  if (instrument.usesVirtualCursor) instrument.moveCursor(e.movementX, e.movementY);
 });
 
 let lastHud = "";
@@ -205,17 +228,21 @@ function renderHud(): void {
   else if (exhibit.isFailed()) status = "The marble fell to the floor and can't climb back up. Resetting…";
   else if (exhibit.changesLeft === 0) status = "Out of gravity changes. Press R to try again.";
   const pips = "●".repeat(exhibit.changesLeft) + "○".repeat(exhibit.changesUsed);
+  const hint = mode === "first-person" ? "Hold <b>Q</b> to read the room's laws with your instrument." : "";
   const html = `
-    <div class="title">The Sideways Gallery</div>
-    <div>Gravity in this gallery is broken. Right now everything falls toward the <b>${GRAVITY_LABELS[gravity].toLowerCase()}</b>.</div>
-    <div><b>Changes left</b> <span class="pips">${pips}</span></div>
-    <div class="status">${status}</div>`;
+    <div class="title">${ROOM_TITLE}</div>
+    <div>Gravity: <b>${GRAVITY_LABELS[gravity].toLowerCase()}</b> · Changes left <span class="pips">${pips}</span></div>
+    <div class="status">${status}</div>
+    ${hint ? `<div class="keys">${hint}</div>` : ""}`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
-  panel.setVisible(mode === "orbit");
-  panel.update({ current: gravity, enabled: canChange });
+  // The instrument: pinned open in the window view, raised with Q in first person.
+  instrument.update(instrumentModel(exhibit, ROOM_TITLE));
+  if (mode === "orbit") instrument.open(false, "Arrow keys and Space set gravity too");
+  else if (instrumentHeld) instrument.open(look.isLocked, look.isLocked ? "Move the mouse to point · release Q to put away" : "Release Q to put away");
+  else instrument.close();
 
-  const showCrosshair = mode === "first-person" && pointerLocked();
+  const showCrosshair = mode === "first-person" && pointerLocked() && !instrument.isOpen;
   crosshair.classList.toggle("hidden", !showCrosshair);
   crosshair.classList.toggle("active", !!hovered);
   crosshairHint.textContent = !hovered
@@ -278,6 +305,7 @@ gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
   keys.add(e.code);
+  if (e.code === "KeyQ" && !e.repeat && mode === "first-person") raiseInstrument();
   // In the window view, arrows and Space set gravity like the on-screen d-pad.
   const direction = mode === "orbit" ? GRAVITY_KEYS[e.key] : undefined;
   if (direction) {
@@ -295,8 +323,14 @@ window.addEventListener("keydown", (e) => {
     else setOrbitPose("window");
   }
 });
-window.addEventListener("keyup", (e) => keys.delete(e.code));
-window.addEventListener("blur", () => keys.clear());
+window.addEventListener("keyup", (e) => {
+  keys.delete(e.code);
+  if (e.code === "KeyQ") lowerInstrument();
+});
+window.addEventListener("blur", () => {
+  keys.clear();
+  lowerInstrument();
+});
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -336,6 +370,10 @@ installDebugApi({
   },
   setLook(yaw, pitch) {
     camera.rotation.set(pitch, yaw, 0);
+  },
+  setInstrument(open) {
+    if (open) raiseInstrument();
+    else lowerInstrument();
   },
   lookAtButton(direction) {
     const button = view.buttons.find((b) => b.userData.gravity === direction);
