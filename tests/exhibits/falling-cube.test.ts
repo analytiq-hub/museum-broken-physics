@@ -66,7 +66,12 @@ describe("sim/view split", () => {
   // Simulation code must run in Node, so it may not import three.js.
   const simFiles = [
     "src/engine/physics.ts",
-    ...readdirSync("src/exhibits").map((d) => join("src/exhibits", d, "sim.ts")),
+    "src/engine/loop.ts",
+    "src/exhibits/Exhibit.ts",
+    ...readdirSync("src/rules").map((f) => join("src/rules", f)),
+    ...readdirSync("src/exhibits", { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => join("src/exhibits", d.name, "sim.ts")),
   ];
 
   it.each(simFiles)("%s does not import three.js", (file) => {
