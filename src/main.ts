@@ -9,14 +9,16 @@ import { FixedStepper } from "./engine/loop";
 import { FIXED_DT, initPhysics } from "./engine/physics";
 import type { GravityDirection } from "./rules/Rule";
 import { GRAVITY_LABELS, GRAVITY_OPTIONS, SidewaysGravityExhibit } from "./exhibits/sideways-gravity/sim";
-import { buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
+import { CAMERA_POSES, buildSidewaysGravityView } from "./exhibits/sideways-gravity/view";
+import { installDebugApi } from "./debug/api";
 import { GRAVITY_KEYS, createGravityPanel } from "./ui/gravityPanel";
 import "./style.css";
 
 const R = await initPhysics();
 
+const params = new URLSearchParams(location.search);
 /** `?debug` shows the FPS meter and the lil-gui debug panel. */
-const DEBUG = new URLSearchParams(location.search).has("debug");
+const DEBUG = params.has("debug");
 
 /** Seconds the failed state stays on screen before the room resets itself. */
 const AUTO_RESET_SECONDS = 2.5;
@@ -40,9 +42,9 @@ scene.add(new THREE.HemisphereLight(0xfff4e0, 0x2a241c, 0.4));
 
 // Fixed camera at eye height, looking in through the gallery window (south wall).
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 1.7, 11);
+camera.position.set(...CAMERA_POSES.window.position);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 2.6, 0);
+controls.target.set(...CAMERA_POSES.window.target);
 controls.enableDamping = true;
 
 // --- Exhibit -------------------------------------------------------------------
@@ -50,13 +52,15 @@ const exhibit = new SidewaysGravityExhibit(R);
 const sync = new BodySync();
 const view = buildSidewaysGravityView(scene, exhibit, sync);
 
-let paused = false;
+/** `?paused` starts with the simulation stopped (for automation via window.__game). */
+let paused = params.has("paused");
 let failedFor = 0;
-const stepper = new FixedStepper(FIXED_DT, () => {
+function stepOnce(): void {
   sync.beforeStep();
   exhibit.step();
   sync.afterStep();
-});
+}
+const stepper = new FixedStepper(FIXED_DT, stepOnce);
 
 function reset(): void {
   exhibit.reset();
@@ -132,6 +136,35 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Debug API (window.__game) ----------------------------------------------------
+installDebugApi({
+  getState: () => exhibit.describe(),
+  setRule: (id, value) => exhibit.setRule(id, value),
+  step(n = 1) {
+    for (let i = 0; i < n; i++) stepOnce();
+  },
+  settle(maxSteps = 600) {
+    let n = 0;
+    while (n < maxSteps && !exhibit.isSettled() && !exhibit.isFailed()) {
+      stepOnce();
+      n++;
+    }
+    return n;
+  },
+  reset,
+  setPaused(value) {
+    debug.paused = paused = value;
+  },
+  cameras: Object.keys(CAMERA_POSES),
+  setCamera(name) {
+    const pose = CAMERA_POSES[name as keyof typeof CAMERA_POSES];
+    if (!pose) throw new Error(`unknown camera "${name}"`);
+    camera.position.set(...pose.position);
+    controls.target.set(...pose.target);
+    controls.update();
+  },
 });
 
 // --- Frame loop ------------------------------------------------------------------

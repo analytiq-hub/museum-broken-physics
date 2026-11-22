@@ -33,6 +33,18 @@ const MATERIALS: Record<Box["kind"], THREE.Material> = {
 
 const BRASS = new THREE.MeshStandardMaterial({ color: 0xb5893b, roughness: 0.3, metalness: 0.9 });
 
+type V3 = [number, number, number];
+
+/** Named camera poses: the player's fixed view plus debugging angles for screenshots. */
+export const CAMERA_POSES = {
+  /** Eye height, looking in through the gallery window. */
+  window: { position: [0, 1.7, 11] as V3, target: [0, 2.6, 0] as V3 },
+  /** Inside, up in the front-left corner by the ceiling: shows heights and the ledge's east-end gap. */
+  overview: { position: [-5.5, 5.6, 3.7] as V3, target: [2.5, 2, -2.5] as V3 },
+  /** Close on the ledge and target. */
+  ledge: { position: [-2, 4.2, 2.5] as V3, target: [-4.5, 3.2, -3.2] as V3 },
+} as const;
+
 export interface SidewaysGravityView {
   /** Call once per rendered frame with the frame time in seconds. */
   update(dt: number): void;

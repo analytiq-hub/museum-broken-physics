@@ -12,13 +12,15 @@
     "lint": "oxlint --deny-warnings",
     "bench": "vitest run --config vitest.bench.config.ts --silent=false",
     "check": "tsc --noEmit && oxlint --deny-warnings && vitest run && vitest run --config vitest.bench.config.ts",
-    "solve": "vitest run --config vitest.harness.config.ts --silent=false"
+    "solve": "vitest run --config vitest.harness.config.ts --silent=false",
+    "screenshots": "node harness/screenshots.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "@types/stats.js": "^0.17.4",
     "@types/three": "^0.187.0",
     "oxlint": "^1.94.0",
+    "playwright-core": "^1.65.1",
     "typescript": "~7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.1"

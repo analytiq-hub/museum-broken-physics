@@ -12,6 +12,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm test` | Unit and headless exhibit tests only (`tests/**/*.test.ts`). |
 | `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |
 | `npm run solve` | Puzzle solver report (every move sequence within budget, at early/settled timings) and trajectory SVGs in `harness/out/`. Solver thresholds themselves are asserted in `tests/exhibits/*.solver.test.ts`. |
+| `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`. |
 | `npm run build` | Production build to `dist/`. |
 
 CI (`.github/workflows/ci.yml`) runs check + build on every push and PR, and deploys `main`
@@ -61,4 +62,7 @@ non-solutions and asserts they are not.
   the real one inside scripts on the main dev machine. Call tools (`tsc`, `vitest`, `oxlint`)
   directly.
 - **Rapier `-compat` inlines its WASM**, so the bundle is ~5 MB (~1.8 MB gzipped). Expected.
+- **Debug API:** load with `?paused`, then `__game.setRule(...)`, `__game.settle()`,
+  `__game.setCamera("overview" | "ledge" | "window")`, `await __game.nextFrame()`. Camera
+  poses live in each exhibit's `view.ts` (`CAMERA_POSES`).
 - Vite `base` is `"./"` so the build works under the Pages subpath; keep asset URLs relative.
