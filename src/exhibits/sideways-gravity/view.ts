@@ -1,11 +1,16 @@
 // Gray-box view of the sideways-gravity gallery: meshes for the room's boxes,
-// the ball and door bound to their bodies, and a gravity arrow.
+// the ball and door bound to their bodies, and the gravity tell-tales (plumb
+// line, loose debris, drifting dust) that show the player which way is "down".
 import * as THREE from "three";
 import type { BodySync } from "../../engine/bodySync";
 import { GRAVITY } from "../../rules/Rule";
 import {
   BALL_RADIUS,
+  DEBRIS,
   DOOR,
+  PLUMB_BOB_RADIUS,
+  PLUMB_PIVOT,
+  ROOM,
   type Box,
   STATIC_BOXES,
   TARGET,
@@ -29,9 +34,13 @@ const MATERIALS: Record<Box["kind"], THREE.Material> = {
 const BRASS = new THREE.MeshStandardMaterial({ color: 0xb5893b, roughness: 0.3, metalness: 0.9 });
 
 export interface SidewaysGravityView {
-  /** Call once per rendered frame. */
-  update(): void;
+  /** Call once per rendered frame with the frame time in seconds. */
+  update(dt: number): void;
 }
+
+const DUST_COUNT = 400;
+/** Dust drifts along gravity this fast (m/s): slow, so it reads as floating motes. */
+const DUST_DRIFT = 0.35;
 
 export function buildSidewaysGravityView(
   scene: THREE.Scene,
@@ -75,9 +84,49 @@ export function buildSidewaysGravityView(
   scene.add(ball);
   sync.bind(ex.ball, ball);
 
-  // Gravity arrow in the middle of the room (stand-in until the tell-tales exist).
-  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 3, 0), 1.6, 0xd4553a, 0.45, 0.3);
-  scene.add(arrow);
+  // --- Gravity tell-tales ---------------------------------------------------
+  // Plumb line: brass bracket, a thin line, and the brass bob bound to its body.
+  const pivot = new THREE.Vector3(PLUMB_PIVOT.x, PLUMB_PIVOT.y, PLUMB_PIVOT.z);
+  const bracket = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, ROOM.height - PLUMB_PIVOT.y), BRASS);
+  bracket.position.set(pivot.x, (ROOM.height + PLUMB_PIVOT.y) / 2, pivot.z);
+  scene.add(bracket);
+  const bob = new THREE.Mesh(new THREE.ConeGeometry(PLUMB_BOB_RADIUS, PLUMB_BOB_RADIUS * 2.5, 16), BRASS);
+  bob.castShadow = true;
+  // The joint keeps the pivot at local (−L, 0, 0) in the bob's frame, so pointing
+  // the cone's tip (+y) along local +x always points it away from the pivot.
+  bob.rotation.z = -Math.PI / 2;
+  const bobHolder = new THREE.Group();
+  bobHolder.add(bob);
+  scene.add(bobHolder);
+  sync.bind(ex.plumbBob, bobHolder);
+  const lineGeometry = new THREE.BufferGeometry().setFromPoints([pivot, pivot.clone()]);
+  const plumbLine = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0xe8dcc0 }));
+  scene.add(plumbLine);
+
+  // Loose debris: chips of stone bound to their bodies.
+  const stone = new THREE.MeshStandardMaterial({ color: 0x9c9384, roughness: 0.9 });
+  ex.debris.forEach((body, i) => {
+    const s = DEBRIS[i][0] * 2;
+    const chip = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), stone);
+    chip.castShadow = true;
+    scene.add(chip);
+    sync.bind(body, chip);
+  });
+
+  // Dust: view-only motes drifting along gravity, wrapping around inside the room.
+  const dustPositions = new Float32Array(DUST_COUNT * 3);
+  for (let i = 0; i < DUST_COUNT; i++) {
+    dustPositions[i * 3] = (Math.random() * 2 - 1) * ROOM.halfX;
+    dustPositions[i * 3 + 1] = Math.random() * ROOM.height;
+    dustPositions[i * 3 + 2] = (Math.random() * 2 - 1) * ROOM.halfZ;
+  }
+  const dustGeometry = new THREE.BufferGeometry();
+  dustGeometry.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
+  const dust = new THREE.Points(
+    dustGeometry,
+    new THREE.PointsMaterial({ color: 0xfff1d0, size: 0.03, transparent: true, opacity: 0.7, depthWrite: false }),
+  );
+  scene.add(dust);
 
   // Room lights.
   const lamp = new THREE.PointLight(0xffe2b8, 40, 18, 1.6);
@@ -91,11 +140,32 @@ export function buildSidewaysGravityView(
   scene.add(spot, spot.target);
 
   const g = new THREE.Vector3();
+  const bounds = [ROOM.halfX, ROOM.height / 2, ROOM.halfZ];
+  const centre = [0, ROOM.height / 2, 0];
   return {
-    update() {
+    update(dt: number) {
       const dir = GRAVITY[ex.rule("gravity").current as keyof typeof GRAVITY];
-      arrow.setDirection(g.set(dir.x, dir.y, dir.z).normalize());
+      g.set(dir.x, dir.y, dir.z).normalize();
       plateMaterial.emissive.set(ex.isSolved() ? 0x7a5a10 : 0x000000);
+
+      // Plumb line from the pivot to the bob.
+      lineGeometry.attributes.position.setXYZ(1, bobHolder.position.x, bobHolder.position.y, bobHolder.position.z);
+      lineGeometry.attributes.position.needsUpdate = true;
+
+      // Dust drifts along gravity with a little shimmer, and wraps inside the room.
+      const p = dustGeometry.attributes.position as THREE.BufferAttribute;
+      const step = [g.x * DUST_DRIFT * dt, g.y * DUST_DRIFT * dt, g.z * DUST_DRIFT * dt];
+      for (let i = 0; i < DUST_COUNT; i++) {
+        for (let a = 0; a < 3; a++) {
+          let v = p.array[i * 3 + a] + step[a] + (Math.random() - 0.5) * 0.004;
+          const lo = centre[a] - bounds[a];
+          const hi = centre[a] + bounds[a];
+          if (v < lo) v = hi;
+          else if (v > hi) v = lo;
+          p.array[i * 3 + a] = v;
+        }
+      }
+      p.needsUpdate = true;
     },
   };
 }

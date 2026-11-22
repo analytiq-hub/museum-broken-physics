@@ -133,7 +133,7 @@ renderer.setAnimationLoop((time) => {
 
   debug.gravity = exhibit.rule("gravity").current as GravityDirection;
   sync.render(alpha);
-  view.update();
+  view.update(frameDt);
   renderHud();
   controls.update();
   renderer.render(scene, camera);

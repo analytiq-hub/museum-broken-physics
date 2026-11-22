@@ -17,6 +17,16 @@ export interface ExhibitState {
   bodies: Record<string, { pos: [number, number, number]; speed: number }>;
 }
 
+/** Everything needed to put an exhibit back exactly as it was at some step. */
+export interface ExhibitSave {
+  world: Uint8Array;
+  rules: unknown[];
+  changesUsed: number;
+  stepCount: number;
+  calmSteps: number;
+  extra: unknown;
+}
+
 /** Below this speed (m/s and rad/s) every dynamic body counts as at rest. */
 const CALM_SPEED = 0.05;
 /** Steps all bodies must stay calm to count as settled. */
@@ -31,8 +41,7 @@ export abstract class ExhibitBase {
   changesUsed = 0;
   stepCount = 0;
 
-  private snapshot: Uint8Array | undefined;
-  private initialRuleValues = new Map<string, unknown>();
+  private initial: ExhibitSave | undefined;
   private calmSteps = 0;
 
   constructor(id: string, R: typeof RAPIER, budget: number) {
@@ -44,11 +53,8 @@ export abstract class ExhibitBase {
 
   /** Subclasses call this at the end of their constructor, after building bodies and rules. */
   protected finishSetup(): void {
-    for (const rule of this.rules) {
-      this.initialRuleValues.set(rule.id, rule.current);
-      rule.apply(this.ctx);
-    }
-    this.snapshot = this.world.takeSnapshot();
+    for (const rule of this.rules) rule.apply(this.ctx);
+    this.initial = this.save();
   }
 
   get ctx(): SimContext {
@@ -106,20 +112,37 @@ export abstract class ExhibitBase {
     return n;
   }
 
-  /** Restores the initial snapshot, rule values and budget. Experimenting is free. */
+  /** Restores the initial state, rule values and budget. Experimenting is free. */
   reset(): void {
-    if (!this.snapshot) throw new Error(`${this.id}: finishSetup() was never called`);
+    if (!this.initial) throw new Error(`${this.id}: finishSetup() was never called`);
+    this.load(this.initial);
+  }
+
+  /** Captures the complete state (world, rules, budget, exhibit logic). */
+  save(): ExhibitSave {
+    return {
+      world: this.world.takeSnapshot(),
+      rules: this.rules.map((r) => r.current),
+      changesUsed: this.changesUsed,
+      stepCount: this.stepCount,
+      calmSteps: this.calmSteps,
+      extra: structuredClone(this.saveExtra()),
+    };
+  }
+
+  /** Restores a state from save(). Body and collider handles stay valid. */
+  load(state: ExhibitSave): void {
     const old = this.world;
-    this.world = this.R.World.restoreSnapshot(this.snapshot);
+    this.world = this.R.World.restoreSnapshot(state.world);
     old.free();
-    for (const rule of this.rules) {
-      rule.current = this.initialRuleValues.get(rule.id);
+    this.rules.forEach((rule, i) => {
+      rule.current = state.rules[i];
       rule.apply(this.ctx);
-    }
-    this.changesUsed = 0;
-    this.stepCount = 0;
-    this.calmSteps = 0;
-    this.onReset();
+    });
+    this.changesUsed = state.changesUsed;
+    this.stepCount = state.stepCount;
+    this.calmSteps = state.calmSteps;
+    this.loadExtra(structuredClone(state.extra));
   }
 
   describe(): ExhibitState {
@@ -153,10 +176,23 @@ export abstract class ExhibitBase {
   protected beforeStep(): void {}
   /** Per-step logic after world.step() (sensors, solve detection). */
   protected afterStep(): void {}
-  /** Clear exhibit-specific state after a reset. */
-  protected onReset(): void {}
+  /** Exhibit-specific state to include in save() (plain data). */
+  protected saveExtra(): unknown {
+    return undefined;
+  }
+  /** Restores what saveExtra() returned. */
+  protected loadExtra(_extra: unknown): void {}
+  /**
+   * Bodies whose motion decides whether the room has settled. Defaults to every
+   * dynamic body; exhibits exclude purely decorative ones (tell-tales).
+   */
+  protected settleBodies(): RAPIER.RigidBody[] | undefined {
+    return undefined;
+  }
 
   private maxDynamicSpeed(): number {
+    const bodies = this.settleBodies();
+    if (bodies) return Math.max(0, ...bodies.map(speedOf));
     let max = 0;
     this.world.forEachRigidBody((body) => {
       if (body.isDynamic()) max = Math.max(max, speedOf(body));

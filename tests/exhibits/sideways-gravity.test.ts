@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { initPhysics } from "../../src/engine/physics";
 import type { GravityDirection } from "../../src/rules/Rule";
-import { BALL_START, SidewaysGravityExhibit } from "../../src/exhibits/sideways-gravity/sim";
+import { BALL_START, PLUMB_LENGTH, PLUMB_PIVOT, SidewaysGravityExhibit } from "../../src/exhibits/sideways-gravity/sim";
 
 let R: typeof RAPIER;
 let ex: SidewaysGravityExhibit;
@@ -79,7 +79,7 @@ describe("sideways gravity: non-solutions fail visibly", () => {
 
 describe("sideways gravity: budget and reset", () => {
   it("rejects changes beyond the budget", () => {
-    ex = new SidewaysGravityExhibit(R, 2);
+    ex = new SidewaysGravityExhibit(R, { budget: 2 });
     expect(ex.setRule("gravity", "north")).toBe(true);
     ex.stepUntilSettled();
     expect(ex.setRule("gravity", "south")).toBe(true);
@@ -110,5 +110,34 @@ describe("sideways gravity: budget and reset", () => {
     }
     for (let i = 0; i < 60; i++) ex.step();
     expect(ex.isSolved()).toBe(true);
+  });
+});
+
+describe("sideways gravity: tell-tales and save/load", () => {
+  it.each([
+    ["east", [1, 0, 0]],
+    ["north", [0, 0, -1]],
+    ["down", [0, -1, 0]],
+  ] as [GravityDirection, number[]][])("the plumb bob hangs along gravity (%s)", (direction, expected) => {
+    ex = new SidewaysGravityExhibit(R, { budget: 1 });
+    if (direction !== "east") ex.setRule("gravity", direction);
+    for (let i = 0; i < 600; i++) ex.step(); // the bob swings longer than the ball takes to settle
+    const b = ex.plumbBob.translation();
+    const d = [b.x - PLUMB_PIVOT.x, b.y - PLUMB_PIVOT.y, b.z - PLUMB_PIVOT.z];
+    const len = Math.hypot(d[0], d[1], d[2]);
+    expect(len).toBeCloseTo(PLUMB_LENGTH, 1);
+    d.forEach((c, i) => expect(c / len).toBeCloseTo(expected[i], 1));
+  });
+
+  it("load() resumes mid-flight exactly where save() left off", () => {
+    ex = new SidewaysGravityExhibit(R);
+    ex.setRule("gravity", "north");
+    for (let i = 0; i < 25; i++) ex.step(); // ball is mid-flight
+    const saved = ex.save();
+    for (let i = 0; i < 100; i++) ex.step();
+    const first = ex.describe();
+    ex.load(saved);
+    for (let i = 0; i < 100; i++) ex.step();
+    expect(ex.describe()).toEqual(first);
   });
 });

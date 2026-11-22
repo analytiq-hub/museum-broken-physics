@@ -67,7 +67,10 @@ Keep four ideas separate from day one so that rooms stay easy to add:
    This handles rules of different scope (gravity is per-world, damping is per-body,
    restitution is per-collider) without a flat grab-bag object, and extends to optics or heat
    without touching the instrument. Puzzles become "which rules, in which order".
-4. **Exhibits:** each room is a module with a common interface:
+4. **Exhibits:** each room is a module with a common interface. *As built:* the sim side is
+   `ExhibitBase` in `src/exhibits/Exhibit.ts` (adds `save()`/`load()` for the solver and
+   `stepUntilSettled()`), and each exhibit's view is a separate function in its `view.ts`
+   rather than a `buildView` method, which keeps three.js out of the sim entirely.
    ```ts
    interface Exhibit {
      buildSim(ctx: SimContext): void;   // bodies, colliders, joints, sensors; Rapier only
@@ -187,8 +190,9 @@ The first puzzle. The room starts **broken**, in line with the concept:
 3. Simply restoring downward gravity drops the ball to the floor in the wrong place, too heavy
    to move. The player has to reason about where the ball will travel: first send it along the
    wall onto a track, then restore "down" so it drops onto the target.
-4. A wrong direction has a visible, explainable consequence (the ball rolls into a dead-end
-   pocket and the room needs a reset), so pressing buttons at random doesn't solve it.
+4. A wrong direction has a visible, explainable consequence, so pressing buttons at random
+   doesn't solve it. *As built:* the dead end is the floor itself. There is no "up", so once
+   the ball drops below the ledge it can never get back, and the room auto-resets.
 
 Tasks:
 - Build the room from boxes: floor, walls, track/ledge, dead-end pocket, target pedestal, door.
