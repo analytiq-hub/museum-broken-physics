@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
-import GUI from "lil-gui";
+import { GUI } from "lil-gui";
 import Stats from "stats.js";
 import { BodySync } from "./engine/bodySync";
 import { FixedStepper } from "./engine/loop";

@@ -25,6 +25,7 @@ milestone as a second playtest of the same puzzle.
 | Interaction        | `THREE.Raycaster`                        | From the mouse cursor while the camera is fixed (as in the "interactive cubes" example); from screen centre once pointer lock is in. |
 | Debug UI           | `lil-gui` + `stats.js`                   | Tweak gravity and damping live while designing puzzles. |
 | Tests              | `vitest`                                 | Rapier runs in Node, so rooms can be simulated headlessly. |
+| Lint               | `oxlint`                                 | Native linter with its own TS parser. typescript-eslint doesn't support TypeScript 7 yet (peer range `<6.1`). |
 | Browser automation | `playwright`                             | Drives the real build through a debug API and takes screenshots from fixed camera poses. |
 | Hosting            | Static host (e.g. GitHub Pages)          | A shareable URL for playtesters from Milestone 0. |
 | Assets (later)     | glTF via `GLTFLoader`                    | Gray boxes first; models replace them later. |

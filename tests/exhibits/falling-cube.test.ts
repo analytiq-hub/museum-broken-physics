@@ -11,6 +11,15 @@ beforeAll(async () => {
   R = await initPhysics();
 });
 
+/** Builds the scene, steps it `steps` times, and returns the cube's final position. */
+function runCubeFor(steps: number): number[] {
+  const { world, cube } = buildFallingCubeSim(R);
+  for (let i = 0; i < steps; i++) world.step();
+  const p = cube.translation();
+  world.free();
+  return [p.x, p.y, p.z];
+}
+
 describe("falling cube (headless)", () => {
   it("comes to rest on the floor", () => {
     const { world, cube } = buildFallingCubeSim(R);
@@ -33,14 +42,7 @@ describe("falling cube (headless)", () => {
   });
 
   it("is deterministic: two runs end in the same place", () => {
-    const run = () => {
-      const { world, cube } = buildFallingCubeSim(R);
-      for (let i = 0; i < 300; i++) world.step();
-      const p = cube.translation();
-      world.free();
-      return [p.x, p.y, p.z];
-    };
-    expect(run()).toEqual(run());
+    expect(runCubeFor(300)).toEqual(runCubeFor(300));
   });
 
   it("snapshot/restore resets the cube to its start position", () => {
