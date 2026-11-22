@@ -1,0 +1,54 @@
+# The Museum of Broken Physics
+
+Three.js + Rapier puzzle game. Vision in [docs/concept.md](docs/concept.md); milestones,
+architecture and the development harness in [docs/plan.md](docs/plan.md).
+
+## Commands
+
+| Command | What it does |
+| ------- | ------------ |
+| `npm run dev` | Vite dev server (http://localhost:5173). Debug keys: P pause, `.` step, R reset. |
+| `npm run check` | Typecheck + oxlint (warnings fail) + unit tests + step-time benchmark. Must be green before finishing; a Stop hook enforces it. |
+| `npm test` | Unit and headless exhibit tests only (`tests/**/*.test.ts`). |
+| `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |
+| `npm run build` | Production build to `dist/`. |
+
+CI (`.github/workflows/ci.yml`) runs check + build on every push and PR, and deploys `main`
+to GitHub Pages: https://analytiqhub.com/museum-broken-physics/
+
+## The one architectural rule: sim and view are split
+
+- **Sim** = Rapier only. `src/engine/physics.ts`, `src/engine/loop.ts`, every
+  `src/exhibits/*/sim.ts`, and anything they import. **No three.js, no DOM.** This is what lets
+  exhibits run headlessly in Node for tests, the puzzle solver and replays. A test fails if an
+  exhibit's `sim.ts` imports three.js.
+- **View** = three.js. `src/engine/bodySync.ts`, `src/exhibits/*/view.ts`, `src/main.ts`.
+  Views read the sim; the sim never knows the view exists.
+- Physics runs at a fixed 60 Hz (`FIXED_DT`) via `FixedStepper`; the view interpolates between
+  steps. Never step the world from render code with a variable dt.
+- Reset = `world.takeSnapshot()` after building, `World.restoreSnapshot()` on reset, then
+  `BodySync.rebind(world)` (bodies are matched by handle).
+
+## Adding an exhibit
+
+`src/exhibits/<name>/sim.ts` (build bodies, colliders, rules; pure Rapier) and `view.ts`
+(meshes bound to the sim's bodies). Add a headless test in `tests/exhibits/<name>.test.ts`
+that replays the intended solution and asserts it is solved, and replays known
+non-solutions and asserts they are not.
+
+## Gotchas (add new ones here when you find them)
+
+- **Sleeping bodies ignore gravity changes.** After changing `world.gravity`, call
+  `wakeUp()` on every dynamic body.
+- **Broken rules are explicit, capped forces**, never out-of-range engine parameters (e.g. no
+  negative `linearDamping`; apply a force along velocity with an energy cap instead).
+- **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
+  the ball's radius.
+- **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or
+  namespaces. Declare fields and assign them in the constructor.
+- **Lint is oxlint**, not ESLint: typescript-eslint doesn't support TypeScript 7 yet.
+- **Don't call `npm run` inside npm scripts.** An ancient npm in `~/node_modules/.bin` shadows
+  the real one inside scripts on the main dev machine. Call tools (`tsc`, `vitest`, `oxlint`)
+  directly.
+- **Rapier `-compat` inlines its WASM**, so the bundle is ~5 MB (~1.8 MB gzipped). Expected.
+- Vite `base` is `"./"` so the build works under the Pages subpath; keep asset URLs relative.
