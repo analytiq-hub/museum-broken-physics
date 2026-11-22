@@ -5,7 +5,8 @@
 //   __game.setRule("gravity", "north"); __game.settle()
 //   __game.getState()
 //
-// Load with ?paused so the frame loop doesn't advance the simulation on its own.
+// Load with ?paused so the frame loop doesn't advance the simulation on its own,
+// and ?automation to skip the click-to-play overlay (UI acts as if pointer-locked).
 import type { ExhibitState } from "../exhibits/Exhibit";
 import type { Recording } from "./recorder";
 
@@ -25,7 +26,21 @@ export interface GameDebugApi {
   setPaused(paused: boolean): void;
   /** Names accepted by setCamera(). */
   cameras: string[];
+  /** A pose from `cameras` (orbit view), or "player" for first person. */
   setCamera(name: string): void;
+  /** Puts the player at a floor position, looking along yaw/pitch (radians), in first person. */
+  setPlayer(feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): void;
+  /** Turns the first-person view (like moving the mouse); recorded as player input. */
+  setLook(yaw: number, pitch: number): void;
+  /** Aims the first-person view at a console button (scripts; recorded like mouse look). */
+  lookAtButton(direction: string): void;
+  getPlayer(): {
+    feet: { x: number; y: number; z: number };
+    yaw: number;
+    pitch: number;
+    /** Console button under the crosshair, if any. */
+    hovered: string | undefined;
+  };
   /** Resolves after the next two rendered frames, so a screenshot shows the latest state. */
   nextFrame(): Promise<void>;
 }

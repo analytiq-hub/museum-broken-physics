@@ -227,13 +227,18 @@ Done before the instrument so that the instrument is designed once, for first pe
   (it only computes movement; we apply the player's own gravity and step-up ourselves).
 - Raycast from screen centre and highlight the object under the crosshair (emissive tint).
   Click the brass panel to cycle gravity direction instead of using debug keys.
-- **Design decision: is the player affected by room gravity?** Recommendation for v1: the
+- **Design decision: is the player affected by room gravity?** *Decided (Nov 2026): no.* The
   player is **not** affected (the instrument "anchors" you), which keeps movement simple and the
   puzzle readable. Revisit later as a possible mechanic.
 - **Design decision: how do the player and the ball interact?** A kinematic capsule is an
-  immovable obstacle to the ball, so the player could block or trap it. Recommendation for v1:
-  keep the player out of the ball's path by design (a low brass rail around the track that the
-  capsule can't cross), so no special collision rules are needed.
+  immovable obstacle to the ball, so the player could block or trap it. *Decided: keep the
+  player out of the ball's path by design.* As built, no rail is needed: every successful path
+  keeps the ball at least 3.4 m up (ledge height or higher), far above the 1.7 m player; it only
+  comes down to head height once the room has already failed. Tell-tales pass through the player.
+- *As built:* a viewing hall south of the window where the player starts, a doorway in the
+  glass, a gravity console just inside (five brass buttons laid out like the room), and an exit
+  corridor behind the west door. Resetting while in or beyond the doorway moves the player back
+  inside, since the door closes.
 - Walk from an entrance corridor, through the exhibit, out the opened door.
 - Extend the recorder to player movement and look, and the debug API to place the player, so
   Playwright can take first-person screenshots from set positions.

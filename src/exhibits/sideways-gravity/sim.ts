@@ -12,14 +12,21 @@
 // get back to the ledge. Restoring "down" straight away, or from anywhere not
 // above the ledge, drops it there.
 //
+// Layout for walking through: a full-height viewing hall south of the window
+// (where the player starts), a doorway in the middle of the glass, a control
+// console just inside, and an exit corridor behind the west door. The ball only
+// reaches the window high up or, once failed, on the floor, so the doorway
+// can't change the puzzle, and the player (under 1.8 m) can't block the ball.
+//
 // Axes: +x east, +y up, +z south (the viewing window is the south wall).
 import type RAPIER from "@dimforge/rapier3d-compat";
+import { BALL_GROUPS, ROOM_GROUPS, TELLTALE_GROUPS } from "../../engine/groups";
 import { gravityRule, type GravityDirection } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 
 export interface Box {
   name: string;
-  kind: "floor" | "ceiling" | "wall" | "glass" | "ledge";
+  kind: "floor" | "ceiling" | "wall" | "glass" | "ledge" | "pedestal";
   center: [number, number, number];
   half: [number, number, number];
 }
@@ -40,16 +47,50 @@ export const LEDGE: Box = { name: "ledge", kind: "ledge", center: [-1, 2.8, -3.2
 /** Target zone on top of the ledge's west end. */
 export const TARGET: Box = { name: "target", kind: "ledge", center: [-5.2, 3.5, -3.25], half: [0.8, 0.5, 0.75] };
 
+/** Doorway in the middle of the window: x -1.5..1.5, y 0..2.8. */
+export const DOORWAY = { halfWidth: 1.5, height: 2.8 } as const;
+
+/** The gravity console: a pedestal just inside the doorway, facing the viewing hall. */
+export const CONSOLE: Box = { name: "console", kind: "pedestal", center: [0, 0.55, 2.6], half: [0.45, 0.55, 0.3] };
+
+/** Where the player starts: in the viewing hall, facing the window. */
+export const PLAYER_SPAWN = { x: 0, y: 0, z: 7.6 } as const;
+/** Past this x (in the exit corridor) the player has left the gallery. */
+export const EXIT_X = -9.5;
+/**
+ * Resetting closes the door. A player in the doorway or beyond would be shut
+ * out (or inside the door), so they are moved back to this spot inside the gallery.
+ */
+export const DOORWAY_X = -ROOM.halfX + 0.4;
+export const RESET_SPOT = { x: -4.8, y: 0, z: 2 } as const;
+
 export const STATIC_BOXES: readonly Box[] = [
+  // The gallery.
   { name: "floor", kind: "floor", center: [0, -W, 0], half: [6.5, W, 4.5] },
   { name: "ceiling", kind: "ceiling", center: [0, 6 + W, 0], half: [6.5, W, 4.5] },
   { name: "east", kind: "wall", center: [6 + W, 3, 0], half: [W, 3, 4.5] },
   { name: "north", kind: "wall", center: [0, 3, -4 - W], half: [6.5, 3, W] },
-  { name: "window", kind: "glass", center: [0, 3, 4 + W], half: [6.5, 3, W] },
   { name: "west-north", kind: "wall", center: [-6 - W, 3, -1.75], half: [W, 3, 2.75] },
   { name: "west-south", kind: "wall", center: [-6 - W, 3, 3.75], half: [W, 3, 0.75] },
   { name: "lintel", kind: "wall", center: [-6 - W, 4.5, 2], half: [W, 1.5, 1] },
   LEDGE,
+  CONSOLE,
+  // The window, with a doorway in the middle.
+  { name: "window-west", kind: "glass", center: [-4, 3, 4 + W], half: [2.5 + W, 3, W] },
+  { name: "window-east", kind: "glass", center: [4, 3, 4 + W], half: [2.5 + W, 3, W] },
+  { name: "window-top", kind: "glass", center: [0, 4.4, 4 + W], half: [1.5, 1.6, W] },
+  // Viewing hall: full height, so the view through the glass isn't cut off.
+  { name: "hall-floor", kind: "floor", center: [0, -W, 6.5], half: [6.5, W, 2] },
+  { name: "hall-ceiling", kind: "ceiling", center: [0, 6 + W, 6.5], half: [6.5, W, 2] },
+  { name: "hall-east", kind: "wall", center: [6 + W, 3, 6.5], half: [W, 3, 2] },
+  { name: "hall-west", kind: "wall", center: [-6 - W, 3, 6.5], half: [W, 3, 2] },
+  { name: "hall-south", kind: "wall", center: [0, 3, 8.5 + W], half: [6.5, 3, W] },
+  // Exit corridor behind the west door: z 1..3, 3 m high.
+  { name: "exit-floor", kind: "floor", center: [-9.5, -W, 2], half: [3, W, 1.5] },
+  { name: "exit-ceiling", kind: "ceiling", center: [-9.5, 3 + W, 2], half: [3, W, 1.5] },
+  { name: "exit-north", kind: "wall", center: [-9.5, 1.5, 1 - W], half: [3, 1.5, W] },
+  { name: "exit-south", kind: "wall", center: [-9.5, 1.5, 3 + W], half: [3, 1.5, W] },
+  { name: "exit-end", kind: "wall", center: [-12.5 - W, 1.5, 2], half: [W, 1.5, 1.5] },
 ];
 
 export const BALL_RADIUS = 0.4;
@@ -67,15 +108,8 @@ export const GRAVITY_LABELS: Record<GravityDirection, string> = {
 };
 
 // --- Gravity tell-tales -------------------------------------------------------
-// Decorative bodies that show which way gravity points. They collide with the
-// room but never with the ball, so they can't change the puzzle.
-
-/** Collision groups: (memberships << 16) | filter. */
-const GROUP = { room: 0b001, ball: 0b010, telltale: 0b100 } as const;
-const groups = (member: number, filter: number) => (member << 16) | filter;
-const ROOM_GROUPS = groups(GROUP.room, 0xffff);
-const BALL_GROUPS = groups(GROUP.ball, GROUP.room | GROUP.ball);
-const TELLTALE_GROUPS = groups(GROUP.telltale, GROUP.room | GROUP.telltale);
+// Decorative bodies that show which way gravity points. Their collision groups
+// (src/engine/groups.ts) keep them from ever touching the ball or the player.
 
 /** Plumb line: a brass bob on a rigid 1.6 m line from a bracket below the ceiling (a bob hanging sideways must clear it). */
 export const PLUMB_PIVOT = { x: 2.5, y: ROOM.height - 0.5, z: 1 } as const;

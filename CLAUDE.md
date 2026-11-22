@@ -63,6 +63,10 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
 - **Decorative bodies (tell-tales) must not touch puzzle bodies:** use collision groups, and
   override `settleBodies()` so a swaying plumb bob doesn't delay "settled".
 - **A joint pivot needs clearance** for the bob in every gravity direction, or it jams in a wall.
+- **`world.timestep` reads back as an f32** (0.0166666675, not 1/60). Always pass `FIXED_DT`
+  to your own per-step maths (the player), or replays drift from the browser.
+- **Resetting closes doors.** Anything standing in a doorway or beyond when the room resets
+  must be moved (see `RESET_SPOT`), or it is shut out or stuck inside the door.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

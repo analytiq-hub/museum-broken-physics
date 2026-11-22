@@ -28,7 +28,7 @@ describe.each(recordings)("replay $file", ({ recording }) => {
       const make = EXHIBITS[recording.exhibit];
       expect(make, `unknown exhibit "${recording.exhibit}"`).toBeDefined();
       const ex = make(R);
-      const { state, rejected } = replayAttempt(ex, attempt);
+      const { state, rejected, player } = replayAttempt(R, ex, attempt);
       ex.dispose();
 
       const outcome = state.solved ? "solved" : state.failed ? "failed" : "reset";
@@ -36,6 +36,8 @@ describe.each(recordings)("replay $file", ({ recording }) => {
       expect(outcome).toBe(attempt.outcome);
       // Same WASM, same fixed steps: the ball should be exactly where the browser left it.
       expect(state.bodies.ball.pos).toEqual(attempt.ball);
+      // First person: the player ends exactly where they ended in the browser.
+      expect(player?.position).toEqual(attempt.player?.end?.position);
     },
   );
 });

@@ -3,7 +3,7 @@
 // line, loose debris, drifting dust) that show the player which way is "down".
 import * as THREE from "three";
 import type { BodySync } from "../../engine/bodySync";
-import { GRAVITY } from "../../rules/Rule";
+import { GRAVITY, type GravityDirection } from "../../rules/Rule";
 import {
   BALL_RADIUS,
   DEBRIS,
@@ -12,6 +12,8 @@ import {
   PLUMB_PIVOT,
   ROOM,
   type Box,
+  CONSOLE,
+  GRAVITY_LABELS,
   STATIC_BOXES,
   TARGET,
   type SidewaysGravityExhibit,
@@ -22,6 +24,7 @@ const MATERIALS: Record<Box["kind"], THREE.Material> = {
   ceiling: new THREE.MeshStandardMaterial({ color: 0x5a554d, roughness: 0.9 }),
   wall: new THREE.MeshStandardMaterial({ color: 0xbdb5a6, roughness: 0.8 }),
   ledge: new THREE.MeshStandardMaterial({ color: 0x8f8778, roughness: 0.7 }),
+  pedestal: new THREE.MeshStandardMaterial({ color: 0x4a3f33, roughness: 0.5 }),
   glass: new THREE.MeshPhysicalMaterial({
     color: 0xcfe6ee,
     roughness: 0.05,
@@ -37,8 +40,8 @@ type V3 = [number, number, number];
 
 /** Named camera poses: the player's fixed view plus debugging angles for screenshots. */
 export const CAMERA_POSES = {
-  /** Eye height, looking in through the gallery window. */
-  window: { position: [0, 1.7, 11] as V3, target: [0, 2.6, 0] as V3 },
+  /** Eye height at the back of the viewing hall, looking in through the window. */
+  window: { position: [0, 1.7, 8.2] as V3, target: [0, 2.6, 0] as V3 },
   /** Inside, up in the front-left corner by the ceiling: shows heights and the ledge's east-end gap. */
   overview: { position: [-5.5, 5.6, 3.7] as V3, target: [2.5, 2, -2.5] as V3 },
   /** Close on the ledge and target. */
@@ -48,6 +51,10 @@ export const CAMERA_POSES = {
 export interface SidewaysGravityView {
   /** Call once per rendered frame with the frame time in seconds. */
   update(dt: number): void;
+  /** Console buttons, for raycasting; each mesh has userData.gravity. */
+  buttons: THREE.Object3D[];
+  /** Highlights the console button under the crosshair (or none). */
+  setHovered(direction: GravityDirection | undefined): void;
 }
 
 const DUST_COUNT = 400;
@@ -95,6 +102,40 @@ export function buildSidewaysGravityView(
   ball.castShadow = true;
   scene.add(ball);
   sync.bind(ex.ball, ball);
+
+  // --- Gravity console: five brass buttons on a slanted panel, laid out like the
+  // room as seen from the viewing hall (back wall at the top, window at the bottom).
+  const consoleTop = CONSOLE.center[1] + CONSOLE.half[1];
+  const panelGroup = new THREE.Group();
+  // Tilt the face toward a player approaching from the hall, with its lower edge
+  // resting on the pedestal top.
+  const tilt = 0.45;
+  panelGroup.position.set(CONSOLE.center[0], consoleTop + Math.sin(tilt) * (PANEL.depth / 2) + 0.03, CONSOLE.center[2]);
+  panelGroup.rotation.x = tilt;
+  scene.add(panelGroup);
+  const face = new THREE.Mesh(new THREE.BoxGeometry(PANEL.width, 0.04, PANEL.depth), BRASS);
+  face.castShadow = true;
+  panelGroup.add(face);
+  const labels = new THREE.Mesh(
+    new THREE.PlaneGeometry(PANEL.width - 0.04, PANEL.depth - 0.04),
+    new THREE.MeshStandardMaterial({ map: consoleLabels(), transparent: true, roughness: 0.6 }),
+  );
+  labels.rotation.x = -Math.PI / 2;
+  labels.position.y = 0.021;
+  panelGroup.add(labels);
+
+  const buttonMaterials = new Map<GravityDirection, THREE.MeshStandardMaterial>();
+  const buttonMeshes = new Map<GravityDirection, THREE.Mesh>();
+  for (const [direction, [x, z]] of Object.entries(BUTTON_LAYOUT) as [GravityDirection, [number, number]][]) {
+    const material = BRASS.clone();
+    const button = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, 0.04, 24), material);
+    button.position.set(x, 0.04, z);
+    button.userData.gravity = direction;
+    panelGroup.add(button);
+    buttonMaterials.set(direction, material);
+    buttonMeshes.set(direction, button);
+  }
+  let hovered: GravityDirection | undefined;
 
   // --- Gravity tell-tales ---------------------------------------------------
   // Plumb line: brass bracket, a thin line, and the brass bob bound to its body.
@@ -155,10 +196,22 @@ export function buildSidewaysGravityView(
   const bounds = [ROOM.halfX, ROOM.height / 2, ROOM.halfZ];
   const centre = [0, ROOM.height / 2, 0];
   return {
+    buttons: [...buttonMeshes.values()],
+    setHovered(direction) {
+      hovered = direction;
+    },
     update(dt: number) {
       const dir = GRAVITY[ex.rule("gravity").current as keyof typeof GRAVITY];
       g.set(dir.x, dir.y, dir.z).normalize();
       plateMaterial.emissive.set(ex.isSolved() ? 0x7a5a10 : 0x000000);
+
+      // Console: the active direction glows and sits pressed in; the hovered one brightens.
+      const current = ex.rule("gravity").current as GravityDirection;
+      for (const [direction, material] of buttonMaterials) {
+        const active = direction === current;
+        material.emissive.set(active ? 0x8a6418 : direction === hovered ? 0x4a3a18 : 0x000000);
+        buttonMeshes.get(direction)!.position.y = active ? 0.025 : 0.04;
+      }
 
       // Plumb line from the pivot to the bob.
       lineGeometry.attributes.position.setXYZ(1, bobHolder.position.x, bobHolder.position.y, bobHolder.position.z);
@@ -187,6 +240,48 @@ function boxMesh(box: Box, material: THREE.Material): THREE.Mesh {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, hy * 2, hz * 2), material);
   mesh.position.set(...box.center);
   return mesh;
+}
+
+/** The console's slanted brass face (m). */
+const PANEL = { width: 0.9, depth: 0.8 } as const;
+
+/** Button positions on the console face (local x, z; −z is the top edge). Labels sit below each. */
+const BUTTON_LAYOUT: Record<GravityDirection, [number, number]> = {
+  north: [0, -0.22],
+  west: [-0.28, 0],
+  down: [0, 0],
+  east: [0.28, 0],
+  south: [0, 0.22],
+};
+/** Label offset below a button's centre (m, toward the player). */
+const LABEL_OFFSET = 0.08;
+
+/** Engraved labels under each console button. */
+function consoleLabels(): THREE.Texture {
+  const w = PANEL.width - 0.04;
+  const d = PANEL.depth - 0.04;
+  const W = 512;
+  const H = Math.round((W * d) / w);
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#2a1f12";
+  ctx.font = "600 22px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for (const [direction, [x, z]] of Object.entries(BUTTON_LAYOUT) as [GravityDirection, [number, number]][]) {
+    const u = ((x + w / 2) / w) * W;
+    const v = ((z + LABEL_OFFSET + d / 2) / d) * H;
+    ctx.fillText(GRAVITY_LABELS[direction].toUpperCase(), u, v - 11);
+  }
+  ctx.font = "700 20px system-ui, sans-serif";
+  ctx.letterSpacing = "4px";
+  ctx.fillText("GRAVITY", W / 2, 10);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
 }
 
 function bandedTexture(): THREE.Texture {

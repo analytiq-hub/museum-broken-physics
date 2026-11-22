@@ -10,7 +10,10 @@ const OUT = "harness/out/screens";
 
 interface Shot {
   name: string;
-  camera: string;
+  /** An orbit pose name, or omit and give `player` for first person. */
+  camera?: string;
+  /** First person: floor position and look direction (radians; yaw 0 = north, +π/2 = west). */
+  player?: { x: number; z: number; yaw: number; pitch: number };
   moves: string[];
   /** Extra steps after the last move settles (e.g. for the door to open). */
   extraSteps?: number;
@@ -25,6 +28,11 @@ const SHOTS: Shot[] = [
   { name: "06-solved-ledge", camera: "ledge", moves: ["north", "west", "down"], extraSteps: 120 },
   { name: "07-failed-just-floor", camera: "window", moves: ["down"] },
   { name: "08-failed-overview", camera: "overview", moves: ["north", "down"] },
+  // First person.
+  { name: "10-fp-spawn", player: { x: 0, z: 7.6, yaw: 0, pitch: -0.08 }, moves: [] },
+  { name: "11-fp-at-console", player: { x: 0, z: 3.7, yaw: 0, pitch: -0.36 }, moves: [] },
+  { name: "12-fp-room-from-console", player: { x: 0, z: 3.5, yaw: 0, pitch: 0.3 }, moves: [] },
+  { name: "13-fp-solved-door", player: { x: -3, z: 2, yaw: Math.PI / 2, pitch: 0 }, moves: ["north", "west", "down"], extraSteps: 120 },
 ];
 
 mkdirSync(OUT, { recursive: true });
@@ -43,11 +51,12 @@ try {
   page.on("pageerror", (e) => console.error("page error:", e.message));
 
   for (const shot of SHOTS) {
-    await page.goto(`${url}?paused`);
+    await page.goto(`${url}?automation&paused`);
     await page.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 30_000 });
     const state = await page.evaluate(async (s: Shot) => {
       const game = window.__game as GameDebugApi;
-      game.setCamera(s.camera);
+      if (s.player) game.setPlayer({ x: s.player.x, z: s.player.z }, s.player.yaw, s.player.pitch);
+      else game.setCamera(s.camera ?? "window");
       for (const move of s.moves) {
         game.setRule("gravity", move);
         game.settle();
@@ -59,7 +68,10 @@ try {
     const file = `${OUT}/${shot.name}.png`;
     await page.screenshot({ path: file });
     const outcome = state.solved ? "solved" : state.failed ? "failed" : "in progress";
-    console.log(`${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}, ball at ${state.bodies.ball.pos.join(", ")}`);
+    const hovered = await page.evaluate(() => window.__game!.getPlayer().hovered);
+    console.log(
+      `${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}, ball at ${state.bodies.ball.pos.join(", ")}${hovered ? `, looking at "${hovered}"` : ""}`,
+    );
   }
 } finally {
   await browser.close();

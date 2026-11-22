@@ -35,6 +35,7 @@ export interface GravityPanelState {
 
 export interface GravityPanel {
   update(state: GravityPanelState): void;
+  setVisible(visible: boolean): void;
 }
 
 export function createGravityPanel(
@@ -62,6 +63,9 @@ export function createGravityPanel(
 
   let last = "";
   return {
+    setVisible(visible) {
+      panel.classList.toggle("hidden", !visible);
+    },
     update({ current, enabled }) {
       const key = `${current}|${enabled}`;
       if (key === last) return; // avoid touching the DOM every frame
