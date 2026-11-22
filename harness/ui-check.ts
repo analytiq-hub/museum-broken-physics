@@ -20,6 +20,16 @@ function expect(what: string, ok: boolean, detail = ""): void {
   if (!ok) failures++;
 }
 const q = <T>(page: Page, fn: () => T) => page.evaluate(fn);
+/**
+ * Waits (up to 10 s) for a condition in the page. UI state updates on the next
+ * rendered frame, and frames are slow on CI's software renderer, so never sleep
+ * a fixed time and then look.
+ */
+const eventually = (page: Page, fn: () => boolean) =>
+  page.waitForFunction(fn, undefined, { timeout: 10_000, polling: 50 }).then(
+    () => true,
+    () => false,
+  );
 const move = (page: Page, dx: number, dy: number) =>
   page.evaluate(([x, y]) => document.dispatchEvent(new MouseEvent("mousemove", { movementX: x, movementY: y })), [dx, dy]);
 
@@ -27,19 +37,17 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   page.on("pageerror", (e) => expect("no page errors", false, e.message));
   await page.goto(url);
-  await page.waitForFunction(() => window.__game?.ready === true);
+  await page.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 60_000 });
 
   expect("click-to-play overlay shows", await q(page, () => !document.querySelector(".overlay")!.classList.contains("hidden")));
   await page.mouse.click(600, 400);
-  await page.waitForTimeout(400);
-  expect("clicking locks the pointer", await q(page, () => document.pointerLockElement !== null));
-  expect("overlay hides", await q(page, () => document.querySelector(".overlay")!.classList.contains("hidden")));
+  expect("clicking locks the pointer", await eventually(page, () => document.pointerLockElement !== null));
+  expect("overlay hides", await eventually(page, () => document.querySelector(".overlay")!.classList.contains("hidden")));
 
   await page.keyboard.down("q");
-  await page.waitForTimeout(300);
-  expect("holding Q raises the instrument", await q(page, () => !document.querySelector(".instrument")!.classList.contains("hidden")));
-  expect("instrument cursor shows", await q(page, () => !document.querySelector(".instrument-cursor")!.classList.contains("hidden")));
-  expect("crosshair hides", await q(page, () => document.querySelector(".crosshair")!.classList.contains("hidden")));
+  expect("holding Q raises the instrument", await eventually(page, () => !document.querySelector(".instrument")!.classList.contains("hidden")));
+  expect("instrument cursor shows", await eventually(page, () => !document.querySelector(".instrument-cursor")!.classList.contains("hidden")));
+  expect("crosshair hides", await eventually(page, () => document.querySelector(".crosshair")!.classList.contains("hidden")));
   expect(
     "instrument says gravity is broken",
     await q(page, () => document.querySelector(".inst-expl")!.textContent!.includes("Here it pulls toward the right wall")),
@@ -61,13 +69,11 @@ try {
   expect("cursor hovers Back wall", (await q(page, () => document.querySelector(".vhover")?.textContent ?? "")).includes("Back wall"));
   expect("the view doesn't turn while the instrument is up", (await q(page, () => window.__game!.getPlayer().yaw)) === yawBefore);
   await page.evaluate(() => document.dispatchEvent(new MouseEvent("mousedown")));
-  await page.waitForTimeout(200);
-  expect("clicking sets gravity to the back wall", (await q(page, () => window.__game!.getState().rules.gravity)) === "north");
+  expect("clicking sets gravity to the back wall", await eventually(page, () => window.__game!.getState().rules.gravity === "north"));
   expect("one change is spent", (await q(page, () => window.__game!.getState().changesUsed)) === 1);
 
   await page.keyboard.up("q");
-  await page.waitForTimeout(200);
-  expect("releasing Q puts the instrument away", await q(page, () => document.querySelector(".instrument")!.classList.contains("hidden")));
+  expect("releasing Q puts the instrument away", await eventually(page, () => document.querySelector(".instrument")!.classList.contains("hidden")));
   expect("pointer stays locked", await q(page, () => document.pointerLockElement !== null));
   await move(page, 80, 0);
   expect("the view turns again", (await q(page, () => window.__game!.getPlayer().yaw)) !== yawBefore);
