@@ -19,7 +19,7 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { groups, GROUP, ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_1_2, type Box } from "../layout";
+import { addStaticBoxes, CORRIDOR_1_2, CORRIDOR_2_3, type Box } from "../layout";
 
 /** Interior: x −25..−15, y 0..8, z −6..6. */
 export const ROOM = { xMin: -25, xMax: -15, halfZ: 6, height: 8 } as const;
@@ -67,7 +67,10 @@ export const ENTRANCE = { x: -15.6, y: 0, z: 2 } as const;
 export const STATIC_BOXES: readonly Box[] = [
   { name: "floor", kind: "floor", center: [CX, -W, 0], half: [HX + 0.5, W, ROOM.halfZ + 0.5] },
   { name: "ceiling", kind: "ceiling", center: [CX, ROOM.height + W, 0], half: [HX + 0.5, W, ROOM.halfZ + 0.5] },
-  { name: "west", kind: "wall", center: [ROOM.xMin - W, ROOM.height / 2, 0], half: [W, ROOM.height / 2, ROOM.halfZ + 0.5] },
+  // West wall, with a door to Gallery III at z 1..3, y 0..3 (opens when solved).
+  { name: "west-north", kind: "wall", center: [ROOM.xMin - W, ROOM.height / 2, -2.75], half: [W, ROOM.height / 2, 3.75] },
+  { name: "west-south", kind: "wall", center: [ROOM.xMin - W, ROOM.height / 2, 4.75], half: [W, ROOM.height / 2, 1.75] },
+  { name: "west-lintel", kind: "wall", center: [ROOM.xMin - W, 5.5, 2], half: [W, 2.5, 1] },
   { name: "north", kind: "wall", center: [CX, ROOM.height / 2, -ROOM.halfZ - W], half: [HX + 0.5, ROOM.height / 2, W] },
   { name: "south", kind: "wall", center: [CX, ROOM.height / 2, ROOM.halfZ + W], half: [HX + 0.5, ROOM.height / 2, W] },
   // East wall, with the doorway from the corridor at z 1..3, y 0..3.
@@ -75,7 +78,16 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "east-south", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, 4.75], half: [W, ROOM.height / 2, 1.75] },
   { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 5.5, 2], half: [W, 2.5, 1] },
   ...CORRIDOR_1_2,
+  ...CORRIDOR_2_3,
 ];
+
+/** The west door, which sinks into the floor once the room is solved. */
+export const DOOR: Box = { name: "door", kind: "wall", center: [ROOM.xMin - W, 1.5, 2], half: [W, 1.5, 1] };
+const DOOR_DROP = 3.1;
+const DOOR_OPEN_SECONDS = 1.2;
+/** Resetting closes the door: a player in the doorway or beyond is moved back to this spot. */
+export const DOORWAY_X = ROOM.xMin + 0.4;
+export const RESET_SPOT = { x: ROOM.xMin + 1.4, y: 0, z: 2 } as const;
 
 /** Position on the bob's arc at `angle` degrees. */
 export function arcPoint(angle: number): { x: number; y: number; z: number } {
@@ -99,6 +111,7 @@ interface PendulumExtra {
   peak: number;
   amplitude: number;
   lastSign: number;
+  doorProgress: number;
 }
 
 export class PendulumExhibit extends ExhibitBase {
@@ -106,6 +119,7 @@ export class PendulumExhibit extends ExhibitBase {
   private readonly bobColliderHandle: number;
   private readonly targetHandles = new Map<string, number>();
   private readonly bobMass: number;
+  private readonly doorHandle: number;
   private s: PendulumExtra = {
     rung: [],
     vaseBroken: false,
@@ -115,6 +129,7 @@ export class PendulumExhibit extends ExhibitBase {
     peak: 0,
     amplitude: 0,
     lastSign: 0,
+    doorProgress: 0,
   };
 
   constructor(R: typeof RAPIER, options: PendulumOptions = {}) {
@@ -122,6 +137,10 @@ export class PendulumExhibit extends ExhibitBase {
     const world = this.world;
     const statics = world.createRigidBody(R.RigidBodyDesc.fixed());
     addStaticBoxes(R, world, statics, STATIC_BOXES);
+
+    const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
+    world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
+    this.doorHandle = door.handle;
 
     // Targets: sensors on the arc, slightly beyond where the bob's edge reaches at that angle.
     for (const target of [...BELLS, VASE]) {
@@ -158,6 +177,10 @@ export class PendulumExhibit extends ExhibitBase {
 
   get bob(): RAPIER.RigidBody {
     return this.world.getRigidBody(this.bobHandle);
+  }
+
+  get door(): RAPIER.RigidBody {
+    return this.world.getRigidBody(this.doorHandle);
   }
 
   /** Current swing angle in degrees (positive = south, +z). */
@@ -202,6 +225,13 @@ export class PendulumExhibit extends ExhibitBase {
 
   /** Damping: an impulse along the bob's velocity, −c·m·v·dt, never pushing past the energy cap. */
   protected beforeStep(): void {
+    if (this.s.solved && this.s.doorProgress < 1) {
+      this.s.doorProgress = Math.min(1, this.s.doorProgress + this.world.timestep / DOOR_OPEN_SECONDS);
+      const [x, y, z] = DOOR.center;
+      const t = this.s.doorProgress;
+      const eased = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      this.door.setNextKinematicTranslation({ x, y: y - DOOR_DROP * eased, z });
+    }
     if (this.isFailed()) return;
     const c = this.rule("damping").current as number;
     if (c === 0) return;

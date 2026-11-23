@@ -15,6 +15,7 @@ import { PLAYER, Player, type PlayerInput } from "./engine/player";
 import { HANDOVER_MARGIN } from "./exhibits/layout";
 import { PLAYER_SPAWN } from "./exhibits/sideways-gravity/sim";
 import type { Gallery, Interactable } from "./galleries/gallery";
+import { createLeaningGallery } from "./galleries/leaningGallery";
 import { createPendulumGallery } from "./galleries/pendulumGallery";
 import { createSidewaysGallery } from "./galleries/sidewaysGallery";
 import { loadEnvironment, loadMaterials } from "./render/materials";
@@ -85,6 +86,7 @@ const player = new Player(R, PLAYER_SPAWN);
 const galleries: Gallery[] = [
   createSidewaysGallery(R, scene, materials, sound, () => player),
   createPendulumGallery(R, scene, materials, sound, () => player),
+  createLeaningGallery(R, scene, materials, sound, () => player),
 ];
 let active = galleries[0];
 player.attach(active.exhibit.world);
@@ -250,7 +252,7 @@ overlay.className = "overlay";
 overlay.innerHTML = `
   <div class="card">
     <h1>The Museum of Broken Physics</h1>
-    <p>Two galleries whose laws have broken. Put them right, or put them to use.</p>
+    <p>Three galleries whose laws have broken. Put them right, or put them to use.</p>
     <p class="controls"><b>Click</b> to enter · <b>WASD</b> walk · <b>Mouse</b> look ·
       <b>Click</b> brass buttons to work the exhibits · hold <b>Q</b> for your physics instrument ·
       <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause</p>
@@ -278,7 +280,12 @@ document.addEventListener("mousemove", (e) => {
   if (instrument.usesVirtualCursor) instrument.moveCursor(e.movementX, e.movementY);
 });
 
-const gravityEditable = () => active.exhibit.rules.some((r) => r.id === "gravity" && r.editable);
+/** Arrow keys + Space set gravity only where they match the room (Gallery I's five directions). */
+const KEYED_DIRECTIONS = new Set(Object.values(GRAVITY_KEYS));
+const gravityEditable = () =>
+  active.exhibit.rules.some(
+    (r) => r.id === "gravity" && r.editable && (r.options ?? []).every((o) => KEYED_DIRECTIONS.has(o.value as GravityDirection)),
+  );
 
 let lastHud = "";
 function renderHud(): void {
@@ -352,6 +359,7 @@ const debug = {
   windowView: () => setOrbitPose("window"),
   gallery1: () => goToGallery(galleries[0]),
   gallery2: () => goToGallery(galleries[1]),
+  gallery3: () => goToGallery(galleries[2]),
 };
 gui.add(debug, "paused").name("Pause (P)").onChange((v: boolean) => (paused = v)).listen();
 gui.add(debug, "step").name("Step once (.)");
@@ -360,6 +368,7 @@ gui.add(debug, "firstPerson").name("First person (C)");
 gui.add(debug, "windowView").name("View through window (C)");
 gui.add(debug, "gallery1").name("Go to Gallery I");
 gui.add(debug, "gallery2").name("Go to Gallery II");
+gui.add(debug, "gallery3").name("Go to Gallery III");
 gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
@@ -381,7 +390,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === ".") debug.step();
   if (e.key === "c" || e.key === "C") {
     if (mode === "orbit") setMode("first-person");
-    else setOrbitPose(active === galleries[0] ? "window" : "pendulum");
+    else setOrbitPose(Object.keys(active.cameraPoses)[0]);
   }
 });
 window.addEventListener("keyup", (e) => {

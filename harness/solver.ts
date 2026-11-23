@@ -9,6 +9,8 @@ export interface Wait {
 }
 
 export interface Move {
+  /** Set only when the solver changes more than one rule. */
+  rule?: string;
   value: unknown;
   /** Label of the wait that followed this move ("settled" for the last one). */
   wait: string;
@@ -17,10 +19,12 @@ export interface Move {
 }
 
 export interface SolverOptions {
-  /** The rule the solver changes. */
-  ruleId: string;
-  /** Values to try for it. */
-  values: readonly unknown[];
+  /** The rule the solver changes (with `values`)... */
+  ruleId?: string;
+  /** ...and the values to try for it. */
+  values?: readonly unknown[];
+  /** Or: candidate moves across several rules. */
+  moves?: readonly { rule: string; value: unknown }[];
   /** Maximum moves per sequence (usually the exhibit's budget). */
   maxMoves: number;
   /** Waits tried between moves. Default: 20 steps ("early") or until settled ("settled"). */
@@ -62,6 +66,8 @@ export function solve(ex: ExhibitBase, options: SolverOptions): SolverResult {
   const finishSteps = options.finishSteps ?? 60;
   const terminal = options.terminal ?? "settle";
   const result: SolverResult = { sequences: 0, solutions: [], failures: 0, unresolved: 0, steps: 0 };
+  const multiRule = !!options.moves;
+  const candidates = options.moves ?? (options.values ?? []).map((value) => ({ rule: options.ruleId!, value }));
 
   const done = () => ex.isSolved() || ex.isFailed();
   const run = (n: number) => {
@@ -79,11 +85,11 @@ export function solve(ex: ExhibitBase, options: SolverOptions): SolverResult {
   };
 
   const visit = (state: ExhibitSave, prefix: Move[], at: number | undefined): void => {
-    for (const value of options.values) {
+    for (const { rule, value } of candidates) {
       ex.load(state);
-      if (!ex.setRule(options.ruleId, value)) continue;
+      if (!ex.setRule(rule, value)) continue;
       const afterMove = ex.save();
-      const first = prefix.length === 0 && at ? { at } : {};
+      const first = { ...(prefix.length === 0 && at ? { at } : {}), ...(multiRule ? { rule } : {}) };
 
       // This move as the last one: judge the outcome.
       if (terminal === "settle") settle();
@@ -121,7 +127,9 @@ export function formatSequence(moves: Move[]): string {
   const start = moves[0]?.at ? `after ${(moves[0].at / 60).toFixed(1)} s: ` : "";
   return (
     start +
-    moves.map((m, i) => `${String(m.value)}${m.wait !== "settled" && i < moves.length - 1 ? ` (${m.wait})` : ""}`).join(" → ")
+    moves
+      .map((m, i) => `${m.rule ? `${m.rule}=` : ""}${String(m.value)}${m.wait !== "settled" && i < moves.length - 1 ? ` (${m.wait})` : ""}`)
+      .join(" → ")
   );
 }
 

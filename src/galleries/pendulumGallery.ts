@@ -4,8 +4,8 @@ import type * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X } from "../exhibits/layout";
-import { BELLS, ENTRANCE, MAX_SWING, PendulumExhibit } from "../exhibits/pendulum/sim";
+import { HANDOVER_X, HANDOVER_X_23 } from "../exhibits/layout";
+import { BELLS, DOORWAY_X, ENTRANCE, MAX_SWING, PendulumExhibit, RESET_SPOT } from "../exhibits/pendulum/sim";
 import { CAMERA_POSES, buildPendulumView } from "../exhibits/pendulum/view";
 import { Recorder } from "../debug/recorder";
 import type { Materials } from "../render/materials";
@@ -38,7 +38,7 @@ export function createPendulumGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X + margin,
+    owns: (x, margin) => x < HANDOVER_X + margin && x > HANDOVER_X_23 - margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,
@@ -50,7 +50,7 @@ export function createPendulumGallery(
       return `Swing: <b>${Math.round(exhibit.amplitude)}°</b> · ${bells}`;
     },
     status() {
-      if (exhibit.isSolved()) return "Solved! The pendulum is at rest and both bells have rung.";
+      if (exhibit.isSolved()) return "Solved! The pendulum is at rest and both bells have rung. The far door is open.";
       if (exhibit.vaseBroken) return "The bob smashed the vase. Resetting…";
       if (exhibit.shookApart) return "The swing grew so wild the room shook itself apart. Resetting…";
       if (exhibit.rung.length === BELLS.length) return "Both bells have rung. Calm the pendulum before it reaches the vase!";
@@ -66,12 +66,17 @@ export function createPendulumGallery(
       sound.setRumble(shakeLevel());
       if (exhibit.vaseBroken && !wasFailed) sound.shatter();
       if (exhibit.isFailed() && !wasFailed) sound.failed();
-      if (exhibit.isSolved() && !wasSolved) sound.solved();
+      if (exhibit.isSolved() && !wasSolved) {
+        sound.solved();
+        sound.door();
+      }
       wasSolved = exhibit.isSolved();
       wasFailed = exhibit.isFailed();
     },
     shake: () => 0.035 * shakeLevel() ** 2,
-    beforeReset() {},
+    beforeReset(player) {
+      if (player.feet.x < DOORWAY_X) player.placeAt(RESET_SPOT); // the door is about to close
+    },
     afterReset() {
       heardRung = 0;
       sound.setWhoosh(0);

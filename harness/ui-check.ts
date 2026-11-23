@@ -93,6 +93,21 @@ try {
   await page.keyboard.up("w");
   expect("walking east hands the player back to Gallery I", back);
   expect("Gallery I kept its state (gravity still toward the back wall)", (await q(page, () => window.__game!.getState().rules.gravity)) === "north");
+
+  // The second corridor: from beyond Gallery II's west door into Gallery III.
+  await page.evaluate(() => window.__game!.setPlayer({ x: -27.5, z: 2 }, Math.PI / 2, 0));
+  expect("the second corridor belongs to Gallery II's world", (await q(page, () => window.__game!.getPlayer().gallery)) === "pendulum");
+  await page.keyboard.down("w");
+  const third = await eventually(page, () => window.__game!.getPlayer().gallery === "leaning-pendulum");
+  await page.keyboard.up("w");
+  expect("walking west hands the player to Gallery III", third);
+  expect(
+    "Gallery III's instrument lists both broken laws",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.exhibit === "leaning-pendulum" && s.rules.gravity === "north" && (s.rules.damping as number) < 0;
+    }),
+  );
 } finally {
   await browser.close();
   await server.close();

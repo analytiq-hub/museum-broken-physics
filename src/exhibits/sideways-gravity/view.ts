@@ -451,7 +451,7 @@ function brassProps(b: THREE.MeshPhysicalMaterial): THREE.MeshPhysicalMaterialPa
 const PANEL = { width: 0.9, depth: 0.8 } as const;
 
 /** Button positions on the console face (local x, z; −z is the top edge). Labels sit below each. */
-const BUTTON_LAYOUT: Record<GravityDirection, [number, number]> = {
+const BUTTON_LAYOUT: Partial<Record<GravityDirection, [number, number]>> = {
   north: [0, -0.22],
   west: [-0.28, 0],
   down: [0, 0],

@@ -311,6 +311,14 @@ the budget. `npm run ui-check` tests the whole flow with a real pointer lock in 
   other alone.
 
 ### Milestone 6: Combine rules and add trade-offs (3–4 days)
+*As built (Nov 2026): Gallery III, the Leaning Pendulum.* Gravity leans toward the right
+wall and damping is negative. The bell sits above the pivot, reachable only while gravity is
+broken. The pendulum tears loose (its joint is removed) if it swings more than 65° from where
+gravity says it should hang, so putting gravity straight back drops it 90° and fails: the
+player must ring the bell, calm the swing with drag, then bring gravity home in stages via
+"floor, leaning right". The solver changes both rules; 6 of 1049 sequences solve it (0.6%),
+all of that shape. Gallery II gained a west door that opens when solved. Not yet done: later
+rooms reading the game state from earlier ones.
 - A third room that needs both gravity direction and damping.
 - Introduce a "restoring one law worsens another" decision, driven by rules' `nominal` values
   and the game state from earlier rooms.

@@ -97,6 +97,8 @@ export const GRAVITY_LABELS: Record<GravityDirection, string> = {
   west: "Left wall",
   north: "Back wall",
   south: "Window",
+  "north-down": "Floor, leaning back",
+  "south-down": "Floor, leaning to the window",
 };
 
 // --- Gravity tell-tales -------------------------------------------------------

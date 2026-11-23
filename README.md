@@ -1,6 +1,6 @@
 # The Museum of Broken Physics
 
-A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Two galleries so far: the Sideways Gallery (gravity) and the Restless Pendulum (damping).
+A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Three galleries so far: the Sideways Gallery (gravity), the Restless Pendulum (damping) and the Leaning Pendulum (both, in the right order).
 
 **Play the latest build:** https://analytiqhub.com/museum-broken-physics/ (deployed from `main` after CI passes)
 

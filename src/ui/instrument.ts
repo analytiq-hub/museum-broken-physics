@@ -160,7 +160,8 @@ function renderModel(m: InstrumentModel, hint: string): string {
 function renderRule(rule: InstrumentRule): string {
   const status = rule.broken ? `<span class="chip broken">Broken</span>` : `<span class="chip ok">As it should be</span>`;
   const lock = rule.editable ? "" : `<span class="chip locked">Fixed here</span>`;
-  const isGravity = rule.id === "gravity";
+  // The room-shaped pad only fits Gallery I's five directions; anything else is a list.
+  const isGravity = rule.id === "gravity" && rule.options.every((o) => GRAVITY_PAD.some((s) => s.direction === o.value));
   const optionButton = (o: InstrumentRule["options"][number], i: number, extra = "") =>
     `<button type="button" data-action="set" data-rule="${rule.id}" data-option="${i}" ${extra}
       class="${o.current ? "active" : ""} ${o.nominal ? "nominal" : ""}"

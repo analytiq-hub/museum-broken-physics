@@ -48,6 +48,10 @@ export const GRAVITY = {
   west: { x: -9.81, y: 0, z: 0 },
   north: { x: 0, y: 0, z: -9.81 },
   south: { x: 0, y: 0, z: 9.81 },
+  /** Halfway between the floor and the north (−z) wall. */
+  "north-down": { x: 0, y: -9.81 * Math.SQRT1_2, z: -9.81 * Math.SQRT1_2 },
+  /** Halfway between the floor and the south (+z) wall. */
+  "south-down": { x: 0, y: -9.81 * Math.SQRT1_2, z: 9.81 * Math.SQRT1_2 },
 } as const satisfies Record<string, Vec3>;
 
 export type GravityDirection = keyof typeof GRAVITY;

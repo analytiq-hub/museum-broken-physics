@@ -47,6 +47,32 @@ const SHOTS: Shot[] = [
   { name: "23-pendulum-vase-broken", camera: "pendulum-low", moves: [], actions: [{ wait: 32 * S }] },
   { name: "24-fp-pendulum-entrance", player: { x: -16, z: 2, yaw: Math.PI / 2 + 0.25, pitch: 0.3 }, moves: [], actions: [{ wait: 22 * S }] },
   { name: "25-fp-pendulum-instrument", player: { x: -16, z: 2, yaw: Math.PI / 2 + 0.25, pitch: 0.3 }, moves: [], instrument: true },
+  // Gallery III: the Leaning Pendulum.
+  { name: "30-leaning-start", camera: "leaning", moves: [] },
+  { name: "31-leaning-bell", camera: "leaning", moves: [], actions: [{ wait: 10.6 * S }] },
+  {
+    name: "32-leaning-tilting",
+    camera: "leaning-low",
+    moves: [],
+    actions: [{ wait: 11 * S }, { rule: "damping", value: 0.4 }, { wait: 10 * S }, { rule: "gravity", value: "north-down" }, { wait: 1 * S }],
+  },
+  {
+    name: "33-leaning-solved",
+    camera: "leaning-low",
+    moves: [],
+    actions: [
+      { wait: 11 * S },
+      { rule: "damping", value: 0.4 },
+      { wait: 10 * S },
+      { rule: "gravity", value: "north-down" },
+      { wait: 14 * S },
+      { rule: "gravity", value: "down" },
+      { wait: 14 * S },
+    ],
+  },
+  { name: "34-leaning-torn-loose", camera: "leaning-low", moves: [], actions: [{ rule: "gravity", value: "down" }, { wait: 1.2 * S }] },
+  { name: "35-fp-leaning-entrance", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [] },
+  { name: "36-fp-leaning-instrument", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [], instrument: true },
   { name: "13-fp-solved-door", player: { x: -3, z: 2, yaw: Math.PI / 2, pitch: 0 }, moves: ["north", "west", "down"], extraSteps: 120 },
 ];
 

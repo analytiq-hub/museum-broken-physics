@@ -16,3 +16,22 @@ export const PENDULUM_SOLVER: Omit<SolverOptions, "maxMoves"> = {
   ],
   terminal: 60 * S,
 };
+
+/**
+ * Gallery III: moves on both laws (other gravity directions, damping marks),
+ * up to three of them (the intended solution's length; the room allows four),
+ * after a start delay of 0 or 11 s (just after the bell), waits of 5 or 12 s.
+ */
+export const LEANING_SOLVER: Omit<SolverOptions, "maxMoves"> = {
+  moves: [
+    ...(["north-down", "down", "south-down", "south"] as const).map((value) => ({ rule: "gravity", value })),
+    ...[-0.15, 0, 0.15, 0.4].map((value) => ({ rule: "damping", value })),
+  ],
+  initialWaits: [0, 11 * S],
+  waits: [
+    { label: "5 s", steps: 5 * S },
+    { label: "12 s", steps: 12 * S },
+  ],
+  terminal: 30 * S,
+};
+export const LEANING_SOLVER_MAX_MOVES = 3;

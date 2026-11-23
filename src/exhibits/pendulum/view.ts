@@ -1,24 +1,47 @@
-// View of the Restless Pendulum gallery: marble room, brass pivot, rod and bob,
-// two bells on wall arms that swing when struck, a glass vase on a high bracket
-// that shatters, a placard, and side/corner lighting (nothing bright overhead).
+// Views of the pendulum galleries. buildPendulumRoom draws any pendulum room
+// from a spec: marble room, brass pivot (from the ceiling or a wall arm), rod
+// and bob, bells on wall arms that swing when struck, an optional glass vase
+// that shatters, an optional door that sinks when solved, a placard, dust,
+// and side/corner lighting (nothing bright overhead).
 import * as THREE from "three";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import type { BodySync } from "../../engine/bodySync";
 import type { Materials } from "../../render/materials";
 import { worldBoxGeometry } from "../../render/materials";
 import type { Box } from "../layout";
-import {
-  BELLS,
-  BOB_RADIUS,
-  PIVOT,
-  ROOM,
-  STATIC_BOXES,
-  VASE,
-  arcPoint,
-  type PendulumExhibit,
-} from "./sim";
+import { BELLS, BOB_RADIUS, DOOR, PIVOT, ROD_LENGTH, ROOM, STATIC_BOXES, VASE, type PendulumExhibit } from "./sim";
 
 type V3 = [number, number, number];
+type Vec = { x: number; y: number; z: number };
 
+export interface PendulumRoomSpec {
+  room: { xMin: number; xMax: number; halfZ: number; height: number };
+  pivot: Vec;
+  rodLength: number;
+  bobRadius: number;
+  /** Physics boxes; those whose name starts with a `skip` prefix are drawn by another gallery. */
+  boxes: readonly Box[];
+  skip: string[];
+  /** "ceiling": a housing above the pivot; "west-arm": a beam out of the west wall. */
+  mount: "ceiling" | "west-arm";
+  bells: readonly { name: string; angle: number }[];
+  vase?: { angle: number };
+  door?: { box: Box; body: () => RAPIER.RigidBody };
+  placard: { kicker: string; title: string; lines: string[] };
+  bob: () => RAPIER.RigidBody;
+  rung: () => readonly string[];
+  vaseBroken: () => boolean;
+  /** True once the bob has torn loose (the rod disappears). */
+  detached: () => boolean;
+  /** Dust drifts along this (normalised) direction; default straight down. */
+  gravity?: () => Vec;
+}
+
+export interface PendulumView {
+  update(dt: number): void;
+}
+
+/** Gallery II's camera poses. */
 export const CAMERA_POSES = {
   /** High in the entrance corner, looking across the swing. */
   pendulum: { position: [-15.6, 6.8, 5.6] as V3, target: [-20.5, 3.8, -1] as V3 },
@@ -26,14 +49,46 @@ export const CAMERA_POSES = {
   "pendulum-low": { position: [-24.4, 1.6, 4.5] as V3, target: [-20, 5, -0.5] as V3 },
 } as const;
 
-export interface PendulumView {
-  update(dt: number): void;
+/** Gallery II. */
+export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync: BodySync, m: Materials): PendulumView {
+  return buildPendulumRoom(scene, sync, m, {
+    room: ROOM,
+    pivot: PIVOT,
+    rodLength: ROD_LENGTH,
+    bobRadius: BOB_RADIUS,
+    boxes: STATIC_BOXES,
+    skip: ["corridor-"], // the Gallery I–II corridor is drawn by Gallery I
+    mount: "ceiling",
+    bells: BELLS,
+    vase: VASE,
+    door: { box: DOOR, body: () => ex.door },
+    placard: {
+      kicker: "GALLERY II",
+      title: "The Restless Pendulum",
+      lines: [
+        "Here, every swing gains energy instead of losing it.",
+        "Let it ring both bells, then read your instrument",
+        "and calm it, before it reaches the glass vase.",
+        "Too high, and the whole room shakes itself apart.",
+      ],
+    },
+    bob: () => ex.bob,
+    rung: () => ex.rung,
+    vaseBroken: () => ex.vaseBroken,
+    detached: () => false,
+  });
 }
 
 const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, glass: 1, ledge: 2, pedestal: 1.2 };
 const DUST_COUNT = 400;
+const DUST_DRIFT = 0.12;
 
-export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync: BodySync, m: Materials): PendulumView {
+export function buildPendulumRoom(scene: THREE.Scene, sync: BodySync, m: Materials, spec: PendulumRoomSpec): PendulumView {
+  const { room, pivot: P } = spec;
+  const arcPoint = (angle: number): Vec => {
+    const a = (angle * Math.PI) / 180;
+    return { x: P.x, y: P.y - spec.rodLength * Math.cos(a), z: P.z + spec.rodLength * Math.sin(a) };
+  };
   const byKind: Record<Box["kind"], THREE.Material> = {
     floor: m.floor,
     ceiling: m.ceiling,
@@ -42,23 +97,30 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
     ledge: m.ledge,
     pedestal: m.wood,
   };
-  // The shared corridor is drawn once, by Gallery I.
-  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-"))) {
+  for (const box of spec.boxes.filter((b) => !spec.skip.some((prefix) => b.name.startsWith(prefix)))) {
     const mesh = new THREE.Mesh(worldBoxGeometry(box.half, box.center, TILE[box.kind]), byKind[box.kind]);
     mesh.position.set(...box.center);
     mesh.receiveShadow = true;
     scene.add(mesh);
   }
-  buildTrim(scene, m);
+  buildTrim(scene, m, room);
 
-  // --- Pivot housing and axle at the ceiling.
-  const housing = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.4, 0.6), m.wallDark);
-  housing.position.set(PIVOT.x, ROOM.height - 0.2, PIVOT.z);
-  housing.castShadow = true;
-  scene.add(housing);
+  // --- Pivot mount and axle.
+  if (spec.mount === "ceiling") {
+    const housing = new THREE.Mesh(new THREE.BoxGeometry(0.9, room.height - P.y, 0.6), m.wallDark);
+    housing.position.set(P.x, (room.height + P.y) / 2 + 0.2, P.z);
+    housing.castShadow = true;
+    scene.add(housing);
+  } else {
+    const length = P.x - room.xMin;
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(length, 0.35, 0.35), m.wallDark);
+    beam.position.set(room.xMin + length / 2 - 0.3, P.y, P.z);
+    beam.castShadow = true;
+    scene.add(beam);
+  }
   const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 24), m.brass);
   axle.rotation.z = Math.PI / 2;
-  axle.position.set(PIVOT.x, PIVOT.y, PIVOT.z);
+  axle.position.set(P.x, P.y, P.z);
   scene.add(axle);
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.16, 24), m.brass);
   hub.rotation.z = Math.PI / 2;
@@ -69,19 +131,19 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
   const bobMaterial = m.brass.clone();
   bobMaterial.color.set(0xb08d57);
   bobMaterial.roughness = 0.35;
-  const bob = new THREE.Mesh(new THREE.SphereGeometry(BOB_RADIUS, 48, 24), bobMaterial);
+  const bob = new THREE.Mesh(new THREE.SphereGeometry(spec.bobRadius, 48, 24), bobMaterial);
   bob.castShadow = true;
   scene.add(bob);
-  sync.bind(ex.bob, bob);
+  sync.bind(spec.bob(), bob);
   const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1, 12), m.brass);
   rod.castShadow = true;
   scene.add(rod);
-  const pivot = new THREE.Vector3(PIVOT.x, PIVOT.y, PIVOT.z);
+  const pivot = new THREE.Vector3(P.x, P.y, P.z);
 
   // --- Bells on arms from the nearest side wall.
-  const bells = BELLS.map((b, i) => {
+  const bells = spec.bells.map((b, i) => {
     const p = arcPoint(b.angle);
-    const wallZ = Math.sign(p.z) * ROOM.halfZ;
+    const wallZ = Math.sign(p.z) * room.halfZ;
     const group = new THREE.Group(); // pivots at the top of the bell, so it can swing
     group.position.set(p.x, p.y + 0.38, p.z);
     scene.add(group);
@@ -103,12 +165,6 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
   });
 
   // --- The vase on a high bracket, and its shards once broken.
-  const vp = arcPoint(VASE.angle);
-  const vaseWallZ = ROOM.halfZ;
-  const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, vaseWallZ - vp.z + 0.25), m.brass);
-  shelf.position.set(vp.x, vp.y - 0.32, (vp.z + vaseWallZ) / 2);
-  shelf.castShadow = true;
-  scene.add(shelf);
   const vaseMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x9fd0c8,
     roughness: 0.05,
@@ -117,18 +173,27 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
     transparent: true,
     opacity: 0.75,
   });
-  const vase = new THREE.Mesh(vaseGeometry(), vaseMaterial);
-  vase.position.set(vp.x, vp.y - 0.3, vp.z);
-  scene.add(vase);
+  let vase: THREE.Mesh | undefined;
+  if (spec.vase) {
+    const vp = arcPoint(spec.vase.angle);
+    const wallZ = Math.sign(vp.z) * room.halfZ;
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, Math.abs(wallZ - vp.z) + 0.25), m.brass);
+    shelf.position.set(vp.x, vp.y - 0.32, (vp.z + wallZ) / 2);
+    shelf.castShadow = true;
+    scene.add(shelf);
+    vase = new THREE.Mesh(vaseGeometry(), vaseMaterial);
+    vase.position.set(vp.x, vp.y - 0.3, vp.z);
+    scene.add(vase);
+  }
   const shards: { mesh: THREE.Mesh; v: THREE.Vector3; spin: THREE.Vector3; resting: boolean }[] = [];
-  const spawnShards = () => {
+  const spawnShards = (at: THREE.Vector3) => {
     for (let i = 0; i < 18; i++) {
       const shard = new THREE.Mesh(new THREE.TetrahedronGeometry(0.04 + Math.random() * 0.05), vaseMaterial);
-      shard.position.copy(vase.position).add(new THREE.Vector3((Math.random() - 0.5) * 0.2, 0.15, (Math.random() - 0.5) * 0.2));
+      shard.position.copy(at).add(new THREE.Vector3((Math.random() - 0.5) * 0.2, 0.15, (Math.random() - 0.5) * 0.2));
       scene.add(shard);
       shards.push({
         mesh: shard,
-        v: new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2, -Math.random() * 3),
+        v: new THREE.Vector3((Math.random() - 0.5) * 3, Math.random() * 2, -Math.sign(at.z) * Math.random() * 3),
         spin: new THREE.Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10),
         resting: false,
       });
@@ -139,20 +204,42 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
     shards.length = 0;
   };
 
+  // --- Door (sinks when solved) and its surround.
+  if (spec.door) {
+    const { box } = spec.door;
+    const door = new THREE.Mesh(worldBoxGeometry(box.half, box.center, 1), m.wood);
+    door.position.set(...box.center);
+    door.castShadow = true;
+    scene.add(door);
+    sync.bind(spec.door.body(), door);
+    const x = room.xMin + 0.03;
+    const [, , dz] = box.center;
+    const dh = box.half[1] * 2;
+    for (const [half, c] of [
+      [[0.03, dh / 2 + 0.1, 0.1], [x, dh / 2 + 0.1, dz - box.half[2] - 0.1]],
+      [[0.03, dh / 2 + 0.1, 0.1], [x, dh / 2 + 0.1, dz + box.half[2] + 0.1]],
+      [[0.03, 0.1, box.half[2] + 0.2], [x, dh + 0.1, dz]],
+    ] as [V3, V3][]) {
+      const trim = new THREE.Mesh(worldBoxGeometry(half, c, 2), m.wallDark);
+      trim.position.set(...c);
+      scene.add(trim);
+    }
+  }
+
   // --- Placard just inside the entrance, facing the doorway.
   const placard = new THREE.Mesh(
     new THREE.BoxGeometry(0.02, 0.5, 0.7),
-    [new THREE.MeshStandardMaterial({ map: placardTexture(), roughness: 0.7 }), m.wood, m.wood, m.wood, m.wood, m.wood],
+    [new THREE.MeshStandardMaterial({ map: placardTexture(spec.placard), roughness: 0.7 }), m.wood, m.wood, m.wood, m.wood, m.wood],
   );
-  placard.position.set(ROOM.xMax - 0.04, 1.5, 4.3);
+  placard.position.set(room.xMax - 0.04, 1.5, 4.3);
   scene.add(placard);
 
-  // --- Dust.
+  // --- Dust, drifting with gravity.
   const dustPositions = new Float32Array(DUST_COUNT * 3);
   for (let i = 0; i < DUST_COUNT; i++) {
-    dustPositions[i * 3] = ROOM.xMin + Math.random() * (ROOM.xMax - ROOM.xMin);
-    dustPositions[i * 3 + 1] = Math.random() * ROOM.height;
-    dustPositions[i * 3 + 2] = (Math.random() * 2 - 1) * ROOM.halfZ;
+    dustPositions[i * 3] = room.xMin + Math.random() * (room.xMax - room.xMin);
+    dustPositions[i * 3 + 1] = Math.random() * room.height;
+    dustPositions[i * 3 + 2] = (Math.random() * 2 - 1) * room.halfZ;
   }
   const dustGeometry = new THREE.BufferGeometry();
   dustGeometry.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
@@ -163,31 +250,33 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
     ),
   );
 
-  // --- Lighting: a corner key spot (the room's one shadow map), side washes, sconces.
-  const key = new THREE.SpotLight(0xfff3e2, 150, 26, Math.PI / 3.4, 0.9, 1.6);
-  key.position.set(ROOM.xMax - 0.5, ROOM.height - 0.2, 5.4);
-  key.target.position.set(PIVOT.x, 3.5, -1.5);
+  // --- Lighting: a corner key spot (the room's one shadow map), side washes, a bell light.
+  const key = new THREE.SpotLight(0xfff3e2, 150, 28, Math.PI / 3.4, 0.9, 1.6);
+  key.position.set(room.xMax - 0.5, Math.min(room.height - 0.2, P.y + 2), room.halfZ - 0.6);
+  key.target.position.set(P.x, P.y - spec.rodLength * 0.6, -1.5);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.02;
   scene.add(key, key.target);
-  for (const z of [-4.8, 4.8]) {
-    const wash = new THREE.PointLight(0xfff1de, 10, 10, 1.6);
-    wash.position.set(-22.5, 5.6, z);
+  for (const z of [-room.halfZ + 1.2, room.halfZ - 1.2]) {
+    const wash = new THREE.PointLight(0xfff1de, 10, 11, 1.6);
+    wash.position.set(room.xMin + 2.5, Math.min(room.height - 2, P.y - 1.4), z);
     scene.add(wash);
   }
-  const bellLight = new THREE.SpotLight(0xfff4e4, 40, 14, Math.PI / 5, 0.6, 1.5);
-  bellLight.position.set(ROOM.xMin + 0.5, 7.5, 0);
-  bellLight.target.position.set(PIVOT.x, 4.5, 0);
+  const bellLight = new THREE.SpotLight(0xfff4e4, 40, 16, Math.PI / 4.5, 0.6, 1.5);
+  bellLight.position.set(room.xMin + 0.5, Math.min(room.height - 0.5, P.y + 1), 0);
+  bellLight.target.position.set(P.x, P.y - 2.5, 0);
   scene.add(bellLight, bellLight.target);
 
+  const room3 = { lo: [room.xMin, 0, -room.halfZ], hi: [room.xMax, room.height, room.halfZ] };
   const up = new THREE.Vector3(0, 1, 0);
   const dir = new THREE.Vector3();
   let wasBroken = false;
   return {
     update(dt) {
-      // Rod from the pivot to the (interpolated) bob.
+      // Rod from the pivot to the (interpolated) bob, unless it has torn loose.
+      rod.visible = !spec.detached();
       dir.subVectors(bob.position, pivot);
       const length = dir.length();
       rod.scale.set(1, length, 1);
@@ -195,9 +284,10 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
       rod.quaternion.setFromUnitVectors(up, dir.normalize());
 
       // Bells swing (and glint) when struck.
+      const rung = spec.rung();
       for (const b of bells) {
-        if (ex.rung.includes(b.name) && b.swing === 0 && b.phase === 0) b.swing = 0.5;
-        if (!ex.rung.includes(b.name)) {
+        if (rung.includes(b.name) && b.swing === 0 && b.phase === 0) b.swing = 0.5;
+        if (!rung.includes(b.name)) {
           b.swing = 0;
           b.phase = 0;
         }
@@ -208,15 +298,16 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
       }
 
       // The vase breaks into falling shards; a reset restores it.
-      if (ex.vaseBroken && !wasBroken) {
+      const broken = spec.vaseBroken();
+      if (vase && broken && !wasBroken) {
         vase.visible = false;
-        spawnShards();
+        spawnShards(vase.position);
       }
-      if (!ex.vaseBroken && wasBroken) {
+      if (vase && !broken && wasBroken) {
         vase.visible = true;
         clearShards();
       }
-      wasBroken = ex.vaseBroken;
+      wasBroken = broken;
       for (const s of shards) {
         if (s.resting) continue;
         s.v.y -= 9.81 * dt;
@@ -229,36 +320,40 @@ export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync:
         }
       }
 
-      // Dust settles slowly.
+      // Dust drifts along gravity, wrapping around inside the room.
+      const g = spec.gravity?.() ?? { x: 0, y: -1, z: 0 };
+      const step = [g.x * DUST_DRIFT * dt, g.y * DUST_DRIFT * dt, g.z * DUST_DRIFT * dt];
       const p = dustGeometry.attributes.position as THREE.BufferAttribute;
       for (let i = 0; i < DUST_COUNT; i++) {
-        let y = p.array[i * 3 + 1] - 0.08 * dt + (Math.random() - 0.5) * 0.004;
-        if (y < 0) y = ROOM.height;
-        p.array[i * 3 + 1] = y;
+        for (let a = 0; a < 3; a++) {
+          let v = p.array[i * 3 + a] + step[a] + (Math.random() - 0.5) * 0.004;
+          if (v < room3.lo[a]) v = room3.hi[a];
+          else if (v > room3.hi[a]) v = room3.lo[a];
+          p.array[i * 3 + a] = v;
+        }
       }
       p.needsUpdate = true;
     },
   };
 }
 
-function buildTrim(scene: THREE.Scene, m: Materials): void {
+function buildTrim(scene: THREE.Scene, m: Materials, room: PendulumRoomSpec["room"]): void {
   const add = (half: V3, center: V3) => {
     const mesh = new THREE.Mesh(worldBoxGeometry(half, center, 2), m.wallDark);
     mesh.position.set(...center);
     mesh.receiveShadow = true;
     scene.add(mesh);
   };
-  const cx = (ROOM.xMin + ROOM.xMax) / 2;
-  const hx = (ROOM.xMax - ROOM.xMin) / 2;
-  const Z = ROOM.halfZ;
-  const H = ROOM.height;
+  const cx = (room.xMin + room.xMax) / 2;
+  const hx = (room.xMax - room.xMin) / 2;
+  const Z = room.halfZ;
+  const H = room.height;
   add([hx, 0.09, 0.02], [cx, 0.09, -Z + 0.02]);
   add([hx, 0.09, 0.02], [cx, 0.09, Z - 0.02]);
-  add([0.02, 0.09, Z], [ROOM.xMin + 0.02, 0.09, 0]);
   add([hx, 0.14, 0.09], [cx, H - 0.14, -Z + 0.09]);
   add([hx, 0.14, 0.09], [cx, H - 0.14, Z - 0.09]);
-  add([0.09, 0.14, Z], [ROOM.xMin + 0.09, H - 0.14, 0]);
-  add([0.09, 0.14, Z], [ROOM.xMax - 0.09, H - 0.14, 0]);
+  add([0.09, 0.14, Z], [room.xMin + 0.09, H - 0.14, 0]);
+  add([0.09, 0.14, Z], [room.xMax - 0.09, H - 0.14, 0]);
 }
 
 function bellGeometry(radius: number): THREE.LatheGeometry {
@@ -297,7 +392,7 @@ function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2
   return texture;
 }
 
-function placardTexture(): THREE.Texture {
+function placardTexture(text: PendulumRoomSpec["placard"]): THREE.Texture {
   return canvasTexture(560, 400, (ctx) => {
     ctx.fillStyle = "#efe6d4";
     ctx.fillRect(0, 0, 560, 400);
@@ -308,17 +403,12 @@ function placardTexture(): THREE.Texture {
     ctx.textAlign = "center";
     ctx.font = "600 22px Georgia, serif";
     ctx.letterSpacing = "4px";
-    ctx.fillText("GALLERY II", 280, 70);
+    ctx.fillText(text.kicker, 280, 70);
     ctx.letterSpacing = "0px";
     ctx.font = "700 38px Georgia, serif";
-    ctx.fillText("The Restless Pendulum", 280, 120);
+    ctx.fillText(text.title, 280, 120);
     ctx.font = "italic 21px Georgia, serif";
-    [
-      "Here, every swing gains energy instead of losing it.",
-      "Let it ring both bells, then read your instrument",
-      "and calm it, before it reaches the glass vase.",
-      "Too high, and the whole room shakes itself apart.",
-    ].forEach((line, i) => ctx.fillText(line, 280, 190 + i * 38));
+    text.lines.forEach((line, i) => ctx.fillText(line, 280, 190 + i * 38));
   });
 }
 

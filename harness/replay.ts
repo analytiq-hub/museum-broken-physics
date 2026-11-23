@@ -6,12 +6,14 @@ import { Player, type PlayerInput, type PlayerState } from "../src/engine/player
 import type { ExhibitBase, ExhibitState } from "../src/exhibits/Exhibit";
 import { SidewaysGravityExhibit } from "../src/exhibits/sideways-gravity/sim";
 import { PendulumExhibit } from "../src/exhibits/pendulum/sim";
+import { LeaningPendulumExhibit } from "../src/exhibits/leaning-pendulum/sim";
 import type { Attempt } from "../src/debug/recorder";
 
 /** Builds a fresh exhibit by id, as it starts in the game. */
 export const EXHIBITS: Record<string, (R: typeof RAPIER) => ExhibitBase> = {
   "sideways-gravity": (R) => new SidewaysGravityExhibit(R),
   pendulum: (R) => new PendulumExhibit(R),
+  "leaning-pendulum": (R) => new LeaningPendulumExhibit(R),
 };
 
 export interface ReplayResult {

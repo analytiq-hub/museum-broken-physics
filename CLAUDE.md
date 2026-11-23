@@ -57,6 +57,13 @@ non-solutions and asserts they are not.
 - Gallery I: the Sideways Gallery (gravity direction, console + instrument).
   Gallery II: the Restless Pendulum (negative damping, instrument only; damping is a "range"
   rule whose named `marks` are what the instrument offers and the solver samples).
+  Gallery III: the Leaning Pendulum (both laws broken; the pendulum tears loose if it swings
+  more than 65° from gravity's hanging direction, so gravity must come home in stages).
+- Pendulum rooms share one view builder (`buildPendulumRoom` in `src/exhibits/pendulum/view.ts`)
+  driven by a spec. Corridor geometry is drawn by the gallery on its east side (each view's
+  `skip` lists the prefixes another gallery draws).
+- The solver can change several rules (`moves: [{rule, value}]`); per-exhibit settings live
+  in `harness/solverConfigs.ts`, shared by the threshold tests and `npm run solve`.
 
 ## UI
 
@@ -110,7 +117,11 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
 - **`renderer.info` resets per render call**, and post-processing renders several passes. It is
   set to reset once per frame in `main.ts`, so `__game.getRenderInfo()` reports whole frames.
 - **Shared geometry is drawn once.** Corridor boxes are in both galleries' physics worlds, but
-  only Gallery I's view draws them (Gallery II's view skips `corridor-*`), or they z-fight.
+  only the eastern gallery's view draws them (the western one lists them in `skip`), or they
+  z-fight.
+- **Removing a joint is part of the world snapshot.** A torn-loose pendulum (joint removed)
+  comes back on `reset()`/`load()` because the snapshot includes joints; keep any "torn" flag
+  in `saveExtra()` so state and world agree.
 - **A pendulum never "settles".** Solver runs for it use fixed waits and a terminal horizon,
   and the robustness check models a player reacting to an event (the bell), not a clock.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
