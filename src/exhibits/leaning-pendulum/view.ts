@@ -5,7 +5,7 @@ import type { BodySync } from "../../engine/bodySync";
 import type { Materials } from "../../render/materials";
 import { GRAVITY, type GravityDirection } from "../../rules/Rule";
 import { buildPendulumRoom, type PendulumView } from "../pendulum/view";
-import { BELL, BOB_RADIUS, PIVOT, ROD_LENGTH, ROOM, STATIC_BOXES, type LeaningPendulumExhibit } from "./sim";
+import { BELL, BOB_RADIUS, DOOR, PIVOT, ROD_LENGTH, ROOM, STATIC_BOXES, type LeaningPendulumExhibit } from "./sim";
 
 type V3 = [number, number, number];
 
@@ -31,6 +31,7 @@ export function buildLeaningPendulumView(
     skip: ["corridor23-"], // drawn by Gallery II
     mount: "west-arm",
     bells: [BELL],
+    door: { box: DOOR, body: () => ex.door },
     placard: {
       kicker: "GALLERY III",
       title: "The Leaning Pendulum",

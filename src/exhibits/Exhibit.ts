@@ -78,14 +78,15 @@ export abstract class ExhibitBase {
    */
   setRule(id: string, value: unknown): boolean {
     const rule = this.rule(id);
-    if (!rule.editable || rule.current === value || this.changesLeft <= 0) return false;
+    if (!rule.editable || rule.current === value) return false;
+    if (!rule.control && this.changesLeft <= 0) return false;
     if (this.isSolved() || this.isFailed()) return false;
     if (rule.kind === "choice" && !rule.options?.some((o) => o.value === value)) return false;
     if (rule.kind === "range" && typeof value !== "number") return false;
     if (rule.kind === "range" && rule.range && (Number(value) < rule.range.min || Number(value) > rule.range.max)) return false;
     rule.current = value;
     rule.apply(this.ctx);
-    this.changesUsed++;
+    if (!rule.control) this.changesUsed++;
     this.calmSteps = 0; // the room is about to move again
     return true;
   }

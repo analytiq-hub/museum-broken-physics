@@ -35,6 +35,11 @@ export interface Rule<T = unknown> {
   readonly nominal: T;
   /** May the instrument change it in this room? */
   readonly editable: boolean;
+  /**
+   * A control, not a law (e.g. a mirror's angle): changing it costs nothing from
+   * the budget, and the instrument doesn't list it. It's operated in the world.
+   */
+  readonly control?: boolean;
   /** Pushes `current` into the world, bodies or colliders. */
   apply(ctx: SimContext): void;
 }

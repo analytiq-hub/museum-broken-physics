@@ -44,7 +44,7 @@ export function instrumentModel(ex: ExhibitBase, title: string): InstrumentModel
 
   return {
     title,
-    rules: ex.rules.map((rule) => describeRule(rule, !locked)),
+    rules: ex.rules.filter((rule) => !rule.control).map((rule) => describeRule(rule, !locked)),
     changesLeft: ex.changesLeft,
     budget: ex.budget,
     locked,

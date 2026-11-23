@@ -109,6 +109,31 @@ try {
       return s.exhibit === "leaning-pendulum" && s.rules.gravity === "north" && (s.rules.damping as number) < 0;
     }),
   );
+
+  // Gallery IV: walk in through the third corridor, aim at a mirror, click it.
+  await page.evaluate(() => window.__game!.setPlayer({ x: -46.5, z: 2 }, Math.PI / 2, 0));
+  await page.keyboard.down("w");
+  const fourth = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", WALK);
+  await page.keyboard.up("w");
+  expect("walking west hands the player to Gallery IV", fourth);
+  await page.evaluate(async () => {
+    window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.nextFrame(); // the camera follows the player on the next frame
+    window.__game!.lookAtButton("mirror-b");
+  });
+  expect("the crosshair finds the floor mirror", await eventually(page, () => window.__game!.getPlayer().hovered === "mirror-b"));
+  await page.mouse.click(600, 400);
+  expect(
+    "clicking turns the mirror a notch, for free",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.rules["mirror-b"] === 15 && s.changesUsed === 0;
+    }),
+  );
+  expect(
+    "the instrument shows only the index law (no mirror rows)",
+    await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
+  );
 } finally {
   await browser.close();
   await server.close();

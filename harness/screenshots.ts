@@ -73,6 +73,19 @@ const SHOTS: Shot[] = [
   { name: "34-leaning-torn-loose", camera: "leaning-low", moves: [], actions: [{ rule: "gravity", value: "down" }, { wait: 1.2 * S }] },
   { name: "35-fp-leaning-entrance", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [] },
   { name: "36-fp-leaning-instrument", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [], instrument: true },
+  // Gallery IV: the Hidden Door.
+  { name: "40-optics-start", camera: "optics", moves: [] },
+  { name: "41-optics-door-revealed", camera: "optics-door", moves: [] },
+  { name: "42-optics-index-fixed", camera: "optics", moves: [], actions: [{ rule: "index", value: 1.5 }] },
+  { name: "43-optics-solved", camera: "optics", moves: [], actions: [{ rule: "index", value: 1.5 }, { rule: "mirror-b", value: 120 }, { wait: 3 * S }] },
+  { name: "44-fp-optics-entrance", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [] },
+  { name: "45-fp-optics-instrument", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [], instrument: true },
+  {
+    name: "46-fp-alcove",
+    player: { x: -61.5, z: 1.8, yaw: Math.PI / 2, pitch: 0 },
+    moves: [],
+    actions: [{ rule: "index", value: 1.5 }, { rule: "mirror-b", value: 120 }, { wait: 3 * S }],
+  },
   { name: "13-fp-solved-door", player: { x: -3, z: 2, yaw: Math.PI / 2, pitch: 0 }, moves: ["north", "west", "down"], extraSteps: 120 },
 ];
 

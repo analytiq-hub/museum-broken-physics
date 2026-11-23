@@ -59,6 +59,11 @@ non-solutions and asserts they are not.
   rule whose named `marks` are what the instrument offers and the solver samples).
   Gallery III: the Leaning Pendulum (both laws broken; the pendulum tears loose if it swings
   more than 65° from gravity's hanging direction, so gravity must come home in stages).
+  Gallery IV: the Hidden Door (optics: a beam traced in 2D by `src/exhibits/optics/trace.ts`;
+  the broken law is the prism's refractive index; mirrors are **control** rules).
+- **Control rules** (`control: true`, e.g. a mirror's angle) cost nothing from the budget and
+  aren't listed on the instrument; they're operated in the world by click targets with
+  `cycle: true` (each click steps to the next option).
 - Pendulum rooms share one view builder (`buildPendulumRoom` in `src/exhibits/pendulum/view.ts`)
   driven by a spec. Corridor geometry is drawn by the gallery on its east side (each view's
   `skip` lists the prefixes another gallery draws).
@@ -124,6 +129,8 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   in `saveExtra()` so state and world agree.
 - **A pendulum never "settles".** Solver runs for it use fixed waits and a terminal horizon,
   and the robustness check models a player reacting to an event (the bell), not a clock.
+- **The camera follows the player on the next frame.** After `__game.setPlayer`, await
+  `nextFrame()` before anything that reads the camera (`lookAtButton`, raycasts).
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

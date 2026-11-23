@@ -16,6 +16,7 @@ import { HANDOVER_MARGIN } from "./exhibits/layout";
 import { PLAYER_SPAWN } from "./exhibits/sideways-gravity/sim";
 import type { Gallery, Interactable } from "./galleries/gallery";
 import { createLeaningGallery } from "./galleries/leaningGallery";
+import { createOpticsGallery } from "./galleries/opticsGallery";
 import { createPendulumGallery } from "./galleries/pendulumGallery";
 import { createSidewaysGallery } from "./galleries/sidewaysGallery";
 import { loadEnvironment, loadMaterials } from "./render/materials";
@@ -87,6 +88,7 @@ const galleries: Gallery[] = [
   createSidewaysGallery(R, scene, materials, sound, () => player),
   createPendulumGallery(R, scene, materials, sound, () => player),
   createLeaningGallery(R, scene, materials, sound, () => player),
+  createOpticsGallery(R, scene, materials, sound, () => player),
 ];
 let active = galleries[0];
 player.attach(active.exhibit.world);
@@ -212,6 +214,18 @@ function changeRule(id: string, value: unknown): boolean {
   return changed;
 }
 
+/** Clicking an in-world control: set its value, or step a cycling control to its next option. */
+function pressInteractable(target: Interactable): void {
+  if (!target.cycle) {
+    changeRule(target.rule, target.value);
+    return;
+  }
+  const rule = active.exhibit.rule(target.rule);
+  const options = rule.options ?? [];
+  const i = options.findIndex((o) => o.value === rule.current);
+  changeRule(target.rule, options[(i + 1) % options.length].value);
+}
+
 /** Saves this gallery's attempts as JSON, to drop into tests/replays/. */
 function downloadRecording(): void {
   const blob = new Blob([JSON.stringify(active.recorder.toJSON(), null, 2)], { type: "application/json" });
@@ -277,7 +291,7 @@ overlay.className = "overlay";
 overlay.innerHTML = `
   <div class="card">
     <h1>The Museum of Broken Physics</h1>
-    <p>Three galleries whose laws have broken. Put them right, or put them to use.</p>
+    <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
     <p class="controls"><b>Click</b> to enter · <b>WASD</b> walk · <b>Mouse</b> look ·
       <b>Click</b> brass buttons to work the exhibits · hold <b>Q</b> for your physics instrument ·
       <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause</p>
@@ -299,7 +313,7 @@ look.addEventListener("unlock", () => {
 
 document.addEventListener("mousedown", () => {
   if (instrument.usesVirtualCursor) instrument.click();
-  else if (pointerLocked() && hovered && !instrument.isOpen) changeRule(hovered.rule, hovered.value);
+  else if (pointerLocked() && hovered && !instrument.isOpen) pressInteractable(hovered);
 });
 document.addEventListener("mousemove", (e) => {
   if (instrument.usesVirtualCursor) instrument.moveCursor(e.movementX, e.movementY);
@@ -336,7 +350,9 @@ function renderHud(): void {
   crosshair.classList.toggle("hidden", !showCrosshair);
   crosshair.classList.toggle("active", !!hovered);
   let text = "";
-  if (hovered) {
+  if (hovered?.cycle) {
+    text = ex.isSolved() ? hovered.label.replace(/^Turn/, "") : `Click: ${hovered.label.charAt(0).toLowerCase()}${hovered.label.slice(1)}`;
+  } else if (hovered) {
     const current = ex.rule(hovered.rule).current === hovered.value;
     const action = hovered.rule === "gravity" ? `gravity toward the ${hovered.label.toLowerCase()}` : hovered.label;
     text = current ? `${hovered.label} (current)` : canChange ? `Click: ${action}` : hovered.label;
@@ -385,6 +401,7 @@ const debug = {
   gallery1: () => goToGallery(galleries[0]),
   gallery2: () => goToGallery(galleries[1]),
   gallery3: () => goToGallery(galleries[2]),
+  gallery4: () => goToGallery(galleries[3]),
 };
 gui.add(debug, "paused").name("Pause (P)").onChange((v: boolean) => (paused = v)).listen();
 gui.add(debug, "step").name("Step once (.)");
@@ -394,6 +411,7 @@ gui.add(debug, "windowView").name("View through window (C)");
 gui.add(debug, "gallery1").name("Go to Gallery I");
 gui.add(debug, "gallery2").name("Go to Gallery II");
 gui.add(debug, "gallery3").name("Go to Gallery III");
+gui.add(debug, "gallery4").name("Go to Gallery IV");
 gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {

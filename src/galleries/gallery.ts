@@ -12,8 +12,11 @@ type V3 = [number, number, number];
 /** Something in the world the player can point at and click (a console button). */
 export interface Interactable {
   rule: string;
+  /** The value a click sets; ignored when `cycle` is set. */
   value: unknown;
   label: string;
+  /** A click steps the rule to its next option (wrapping), e.g. turning a mirror a notch. */
+  cycle?: boolean;
 }
 
 export interface Gallery {

@@ -331,10 +331,125 @@ A new subsystem, not a variation on rigid bodies, so it gets its own milestone.
 - Broken rule: a wrong refractive index, which reveals a hidden door.
 - Checks that the `Rule` descriptor really does extend beyond mechanics.
 - **Done when:** the room is solvable through the instrument with no optics-specific UI code.
+- *As built (Nov 2026): Gallery IV, the Hidden Door.* A lamp, two mirrors on stands, a glass
+  prism; the broken index (0.7) bends light the wrong way, and the misbent beam lands on the
+  west wall, revealing a hidden door's outline beside its photocell. Put the index right
+  (1.5) and turn the mirrors (free control rules, clicked in the world) to light the
+  photocell; the door opens on an alcove with the museum's last placard. The layout was found
+  by searching prism and mirror positions so that, of all 720 index × mirror arrangements,
+  only the glass index works (one mirror setting). The instrument needed no optics code: the
+  index is a range rule with marks; mirrors are `control` rules (not listed, no budget).
+- *In progress (Nov 2026): Gallery IV, the Hidden Door.* Sim, tracer (`trace.ts`) and
+  solver test exist: prism index 0.7 ("Backwards"), two mirrors turned by clicking them
+  (`control` rules, free), and one solution (index 1.5, mirrors at 135° and 120°). Still to
+  do: the view (beam as glowing lines, clickable mirrors, the door outline revealed by light),
+  the gallery descriptor, corridor 3–4 and Gallery III's west door. The space behind the
+  hidden door is an alcove for now; Gallery V replaces it.
+
+### Milestone 8: Gallery V, the Singing Glass (waves; 4–5 days)
+The second subsystem that isn't rigid bodies. It teaches one new law, resonance, and
+the player can **hear** that law being wrong.
+
+- **Room.** The hidden door in Gallery IV leads into a narrow hall. On the far wall is a small
+  organ with five open pipes of different lengths. Glass stands on shelves along both side walls:
+  - the exit is a tall **glass pane** in the left wall (the door to Gallery VI);
+  - an antique **glass harmonica** sits in a case on the right wall; shattering it fails the
+    room;
+  - two or three decoy glasses only ring and wobble.
+- **Broken law: the speed of sound.** It is 229 m/s instead of 343. An open pipe sounds at
+  v / 2L, so every pipe plays flat, by about a fifth. The glasses' own frequencies don't depend
+  on v, so retuning v retunes the organ and nothing else. It is a range rule with marks:
+  "Too slow (229)", "Carbon dioxide (259)", "Air (343)", "Helium (972)".
+- **Controls.** Clicking a pipe sounds it until it's clicked again: a `control` rule
+  "sounding pipe" (none, 1–5), which costs nothing from the budget, like the mirrors in Gallery IV.
+- **Sim** (`src/exhibits/singing-glass/resonance.ts`, pure maths like `trace.ts`). Real
+  frequencies of hundreds of hertz can't be integrated at 60 Hz. Instead, each glass tracks
+  the *envelope* of its vibration:
+  `dA/dt = −A/τ + k · L(f_drive, f₀, Q)`, where L is the Lorentzian response.
+  This is a closed form, deterministic and cheap. A glass shatters at A ≥ 1 and shows a
+  crack at 0.5. When the pipe stops, the amplitude decays, so experimenting is safe for a
+  player who reacts to the crack. The Rapier world holds only the room.
+- **Tuning** (the solver tunes it, as in earlier rooms):
+  - At 229 m/s, no pipe matches the pane, and one pipe sits close to the harmonica: the
+    obvious "play every pipe" experiment cracks it.
+  - At air, exactly one pipe matches the pane, and the pane (high Q, thick glass) needs about
+    8 s of sustained tone.
+  - Helium and CO₂ each put a different pipe onto the harmonica or a decoy. That way the
+    marks are wrong in ways the player can see, not just ineffective.
+- **Hypothesis loop.** The placard (`explain`) says "an open pipe sounds at v / 2L; sound
+  should travel at 343 m/s here, it travels at 229". The player hears the pitch slide live
+  if they change v while a pipe is sounding.
+- **View and sound.** Synthesise the pipes' real pitch in `sound.ts`. Each glass rings at its
+  own pitch with gain ∝ A and wobbles visibly with A, and a crack decal appears at 0.5.
+  Shards are decorative debris in their own collision group (see Gotchas).
+- **Harness.**
+  - Headless test: the intended solution (restore air, sustain the matching pipe) solves.
+  - Headless test: sounding every pipe at 229 m/s fails or does nothing.
+  - Solver thresholds in `harness/solverConfigs.ts`. The moves are "sound pipe *p* for *t*
+    seconds", sampled over a time grid.
+  - A screenshot of the cracked harmonica.
+- **Layout.** Corridor 4–5 replaces the alcove. The hidden door is 1.6 m wide, against the
+  standard 2 m of the corridors. Widen it to z 1..3 so corridor code stays uniform, and rerun
+  the optics solver test, because the reveal band moves.
+- **Done when:**
+  - a playtester explains which pipe broke the pane *and why that pipe*, not just that it
+    worked;
+  - the room needs no waves-specific instrument UI.
+
+### Milestone 9: Gallery VI, the Backwards Furnace (thermodynamics + optics; 4–5 days)
+This room teaches heat flowing backwards and combines it with optics from Gallery IV. It also
+delivers Milestone 6's unfinished trade-off: the broken law is the tool, and restoring it
+too early or too late both lose.
+
+- **Room.** A cold, abandoned boiler room at −8 °C:
+  - the exit door is latched by an **ice plug** in a brass frame;
+  - a lamp and one clickable mirror (the Gallery IV tracer, moved to `src/optics/`) can aim a
+    beam at the ice, at a cold iron stove, or at a wax-sealed display case.
+- **Broken law: heat flows from cold to hot.** It is a choice rule: "hot → cold" (the law) /
+  "cold → hot". It could also have "insulated"; the solver decides whether that third option
+  makes the room too easy.
+- **What the player sees on entering.** Under the reversed law, the warmest thing gets warmer.
+  The unlit stove slowly glows red, and frost creeps over the ice and the walls. These are the
+  tell-tales, like the plumb bobs in Gallery I.
+- **Sim** (`src/exhibits/furnace/heat.ts`, pure maths). It is a lumped thermal network: nodes
+  for ice, stove, wax and room air, each with a heat capacity, joined by links with a conductance.
+  - Each step: `dT_i = s · Σ k_ij (T_j − T_i) / C_i · dt`, where s = +1 under the law and −1
+    when broken, plus the beam's power on whichever node it hits.
+  - The ice node also has latent heat to absorb before it melts.
+  - The broken law is explicit and capped, per the Gotchas: temperatures are clamped
+    (−60…400 °C), so the runaway can't blow up.
+- **Puzzle.**
+  - Under the law, the beam warms the ice only to about −3 °C, because the cold room drains
+    the heat away. So it never melts, and "just restore" fails.
+  - Under the reversed law, a beam-warmed ice plug becomes a warm spot and pulls heat in from
+    the room. It runs away, melts, and the latch drops.
+  - Left reversed, the meltwater keeps heating, flashes to steam at 100 °C and bursts the frame,
+    which jams the door (fail, auto-reset).
+  - Intended solution: aim the mirror at the ice, wait for the melt, restore the law before
+    it boils.
+  - Wrong but tempting: aim at the stove ("heat the stove to melt the ice") or at the wax
+    case. Both run away somewhere useless, and the wax seal melting is a second fail.
+- **Waiting costs.** Under the broken law the ice gets colder the longer the player waits
+  without aiming the beam, so the melt takes longer. The window between the melt and boiling
+  is a few seconds that the player watches happen, not a frame-perfect timing. As in Gallery
+  II, the solver's robustness check models a player who reacts to an event (the latch
+  dropping, with a hiss), not to a clock.
+- **Cross-gallery state** (the other half of Milestone 6). If Gallery V was solved with
+  helium rather than air, the stove's flue whistles high. That is a cosmetic first use of
+  `GameState`. A mechanical dependency is an open question below.
+- **Harness.**
+  - Headless tests: intended solution solves; just-restore fails; aiming at the stove fails.
+  - Solver thresholds: mirror angle × heat-law changes × timing grid.
+  - Trajectory SVGs become temperature-over-time plots for each node in `harness/out/`.
+- **Done when:**
+  - a playtester can say why they had to leave heat flowing backwards for a while;
+  - every solver threshold passes;
+  - the instrument needs no heat-specific UI.
 
 ## Later backlog
 
-- Waves (resonance) and thermodynamics (reversed heat flow) exhibits.
+- Exhibits after Gallery VI. Reversed heat flow could also freeze something on purpose, a
+  room about the opposite runaway.
 - Save/load progress between rooms (serialise the game-state object).
 - Hub gallery connecting exhibits; museum map.
 - Hint system ("museum placards" that explain the real law).
