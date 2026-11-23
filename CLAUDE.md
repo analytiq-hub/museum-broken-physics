@@ -16,6 +16,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm run ui-check` | End-to-end first-person UI check in headless Chrome with a real pointer lock (enter, hold Q, steer the instrument cursor, click a law, release). Runs in CI. Run it after UI changes. |
 | `node harness/record-pendulum-fixture.ts` | Same for Gallery II via the debug API (rewrites `tests/replays/pendulum-fixture.json`). |
 | `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
+| `node harness/preview-image.ts` | Renders 1200×630 link-preview candidates (HUD hidden, title overlaid) to `harness/out/preview/`; copy the chosen one to `public/og-image.jpg`. |
 | `npm run build` | Production build to `dist/`. |
 
 CI (`.github/workflows/ci.yml`) runs check + build on every push and PR, and deploys `main`
