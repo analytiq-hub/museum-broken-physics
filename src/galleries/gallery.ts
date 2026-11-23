@@ -18,6 +18,10 @@ export interface Interactable {
 
 export interface Gallery {
   id: string;
+  /** Everything this gallery draws (main.ts switches its lights on and off). */
+  group: THREE.Group;
+  /** The gallery's x extent, for deciding when its lights are needed. */
+  xRange: [number, number];
   /** "The Sideways Gallery". */
   title: string;
   exhibit: ExhibitBase;

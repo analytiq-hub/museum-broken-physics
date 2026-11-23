@@ -131,6 +131,31 @@ function switchTo(next: Gallery): void {
   failedFor = 0;
 }
 
+/**
+ * Lights cost on every surface in the scene, so only galleries the player can
+ * see into are lit: the one they're in, plus any whose doorway is within reach
+ * (standing in a corridor lights both ends). Far galleries stay visible, unlit.
+ */
+const LIGHT_REACH = 10;
+/** Galleries further than this (m) can't be seen at all (two rooms away), so aren't drawn. */
+const DRAW_REACH = 22;
+const galleryLights = galleries.map((g) => {
+  const lights: THREE.Light[] = [];
+  g.group.traverse((o) => {
+    if (o instanceof THREE.Light) lights.push(o);
+  });
+  return lights;
+});
+function updateGalleryLights(): void {
+  const x = player.feet.x;
+  galleries.forEach((g, i) => {
+    const within = (reach: number) => x > g.xRange[0] - reach && x < g.xRange[1] + reach;
+    const lit = g === active || within(LIGHT_REACH);
+    for (const light of galleryLights[i]) light.visible = lit;
+    g.group.visible = g === active || within(DRAW_REACH) || mode === "orbit";
+  });
+}
+
 /** Hands the player over if they crossed into another gallery's side of the museum. */
 function checkHandover(margin = HANDOVER_MARGIN): void {
   const x = player.feet.x;
@@ -298,7 +323,7 @@ function renderHud(): void {
     <div class="title">${active.title}</div>
     <div>${active.summary()} · Changes left <span class="pips">${pips}</span></div>
     <div class="status">${active.status(player)}</div>
-    <div class="keys">Galleries restored: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
+    <div class="keys">Galleries solved: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
   // The instrument: pinned open in the window view, raised with Q in first person.
@@ -493,6 +518,7 @@ renderer.setAnimationLoop((time) => {
   } else {
     orbit.update();
   }
+  updateGalleryLights();
   updateHover();
   active.update(frameDt);
   if (stride > 0.7) {

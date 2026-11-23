@@ -50,7 +50,7 @@ export const CAMERA_POSES = {
 } as const;
 
 /** Gallery II. */
-export function buildPendulumView(scene: THREE.Scene, ex: PendulumExhibit, sync: BodySync, m: Materials): PendulumView {
+export function buildPendulumView(scene: THREE.Object3D, ex: PendulumExhibit, sync: BodySync, m: Materials): PendulumView {
   return buildPendulumRoom(scene, sync, m, {
     room: ROOM,
     pivot: PIVOT,
@@ -83,7 +83,7 @@ const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, gla
 const DUST_COUNT = 400;
 const DUST_DRIFT = 0.12;
 
-export function buildPendulumRoom(scene: THREE.Scene, sync: BodySync, m: Materials, spec: PendulumRoomSpec): PendulumView {
+export function buildPendulumRoom(scene: THREE.Object3D, sync: BodySync, m: Materials, spec: PendulumRoomSpec): PendulumView {
   const { room, pivot: P } = spec;
   const arcPoint = (angle: number): Vec => {
     const a = (angle * Math.PI) / 180;
@@ -337,7 +337,7 @@ export function buildPendulumRoom(scene: THREE.Scene, sync: BodySync, m: Materia
   };
 }
 
-function buildTrim(scene: THREE.Scene, m: Materials, room: PendulumRoomSpec["room"]): void {
+function buildTrim(scene: THREE.Object3D, m: Materials, room: PendulumRoomSpec["room"]): void {
   const add = (half: V3, center: V3) => {
     const mesh = new THREE.Mesh(worldBoxGeometry(half, center, 2), m.wallDark);
     mesh.position.set(...center);

@@ -25,8 +25,8 @@ const q = <T>(page: Page, fn: () => T) => page.evaluate(fn);
  * rendered frame, and frames are slow on CI's software renderer, so never sleep
  * a fixed time and then look.
  */
-const eventually = (page: Page, fn: () => boolean) =>
-  page.waitForFunction(fn, undefined, { timeout: 10_000, polling: 50 }).then(
+const eventually = (page: Page, fn: () => boolean, timeout = 10_000) =>
+  page.waitForFunction(fn, undefined, { timeout, polling: 50 }).then(
     () => true,
     () => false,
   );
@@ -81,7 +81,8 @@ try {
   // Walk down the corridor into Gallery II, reset it, and walk back: Gallery I keeps its state.
   await page.evaluate(() => window.__game!.setPlayer({ x: -9, z: 2 }, Math.PI / 2, 0));
   await page.keyboard.down("w");
-  const arrived = await eventually(page, () => window.__game!.getPlayer().gallery === "pendulum");
+  const WALK = 45_000; // walking runs slower than real time on CI's software renderer
+  const arrived = await eventually(page, () => window.__game!.getPlayer().gallery === "pendulum", WALK);
   await page.keyboard.up("w");
   expect("walking west hands the player to Gallery II", arrived);
   expect("Gallery II's laws are on the instrument", await eventually(page, () => window.__game!.getState().exhibit === "pendulum"));
@@ -89,7 +90,7 @@ try {
   expect("R resets Gallery II", await eventually(page, () => window.__game!.getState().step < 30));
   await page.evaluate(() => window.__game!.setLook(-Math.PI / 2, 0));
   await page.keyboard.down("w");
-  const back = await eventually(page, () => window.__game!.getPlayer().gallery === "sideways-gravity");
+  const back = await eventually(page, () => window.__game!.getPlayer().gallery === "sideways-gravity", WALK);
   await page.keyboard.up("w");
   expect("walking east hands the player back to Gallery I", back);
   expect("Gallery I kept its state (gravity still toward the back wall)", (await q(page, () => window.__game!.getState().rules.gravity)) === "north");
@@ -98,7 +99,7 @@ try {
   await page.evaluate(() => window.__game!.setPlayer({ x: -27.5, z: 2 }, Math.PI / 2, 0));
   expect("the second corridor belongs to Gallery II's world", (await q(page, () => window.__game!.getPlayer().gallery)) === "pendulum");
   await page.keyboard.down("w");
-  const third = await eventually(page, () => window.__game!.getPlayer().gallery === "leaning-pendulum");
+  const third = await eventually(page, () => window.__game!.getPlayer().gallery === "leaning-pendulum", WALK);
   await page.keyboard.up("w");
   expect("walking west hands the player to Gallery III", third);
   expect(

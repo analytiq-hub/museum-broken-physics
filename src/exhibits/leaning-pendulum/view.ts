@@ -17,7 +17,7 @@ export const CAMERA_POSES = {
 } as const;
 
 export function buildLeaningPendulumView(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   ex: LeaningPendulumExhibit,
   sync: BodySync,
   m: Materials,

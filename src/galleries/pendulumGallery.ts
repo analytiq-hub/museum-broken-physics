@@ -1,6 +1,6 @@
 // Gallery II, the Restless Pendulum, as the game runs it.
 import type RAPIER from "@dimforge/rapier3d-compat";
-import type * as THREE from "three";
+import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
@@ -17,14 +17,17 @@ const BELL_PITCH: Record<string, number> = { "bell-low": 392, "bell-high": 587.3
 
 export function createPendulumGallery(
   R: typeof RAPIER,
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   materials: Materials,
   sound: Sound,
   getPlayer: () => Player,
 ): Gallery {
+  const group = new THREE.Group();
+  group.name = "gallery";
+  scene.add(group);
   const exhibit = new PendulumExhibit(R);
   const sync = new BodySync();
-  const view = buildPendulumView(scene, exhibit, sync, materials);
+  const view = buildPendulumView(group, exhibit, sync, materials);
   const recorder = new Recorder(exhibit.id, () => getPlayer().getState());
 
   let heardRung = 0;
@@ -35,6 +38,8 @@ export function createPendulumGallery(
   return {
     id: "pendulum",
     title: "The Restless Pendulum",
+    group,
+    xRange: [-25.5, -15],
     exhibit,
     sync,
     recorder,

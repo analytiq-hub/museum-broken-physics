@@ -1,6 +1,6 @@
 // Gallery III, the Leaning Pendulum, as the game runs it.
 import type RAPIER from "@dimforge/rapier3d-compat";
-import type * as THREE from "three";
+import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
@@ -17,14 +17,17 @@ const SHAKE_WITHIN = 25;
 
 export function createLeaningGallery(
   R: typeof RAPIER,
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   materials: Materials,
   sound: Sound,
   getPlayer: () => Player,
 ): Gallery {
+  const group = new THREE.Group();
+  group.name = "gallery";
+  scene.add(group);
   const exhibit = new LeaningPendulumExhibit(R);
   const sync = new BodySync();
-  const view = buildLeaningPendulumView(scene, exhibit, sync, materials);
+  const view = buildLeaningPendulumView(group, exhibit, sync, materials);
   const recorder = new Recorder(exhibit.id, () => getPlayer().getState());
 
   let heardBell = false;
@@ -36,6 +39,8 @@ export function createLeaningGallery(
   return {
     id: "leaning-pendulum",
     title: "The Leaning Pendulum",
+    group,
+    xRange: [-44.5, -34],
     exhibit,
     sync,
     recorder,
@@ -50,10 +55,10 @@ export function createLeaningGallery(
       return `Gravity: <b>${gravity.toLowerCase()}</b> · Swing <b>${Math.round(exhibit.amplitude)}°</b> · ${exhibit.rung ? "bell rung" : "bell silent"}`;
     },
     status() {
-      if (exhibit.isSolved()) return "Solved! Both laws are right and the pendulum hangs at rest.";
+      if (exhibit.isSolved()) return "Solved! Gravity points at the floor, a drag has calmed the swing, and the pendulum hangs at rest.";
       if (exhibit.tornLoose) return "The pendulum tore loose from its hook. Resetting…";
-      if (exhibit.rung) return "The bell rang. Now put both laws right without tearing the pendulum loose.";
-      return "Ring the bell, then put both laws right. Hold Q to read the room's laws.";
+      if (exhibit.rung) return "The bell rang. Now bring gravity back to the floor and calm the swing, without tearing the pendulum loose.";
+      return "Ring the bell, then bring gravity back to the floor and calm the swing. Hold Q to read the room's laws.";
     },
     afterStep() {},
     update(dt) {

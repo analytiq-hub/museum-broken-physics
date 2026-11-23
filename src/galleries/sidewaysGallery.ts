@@ -1,6 +1,6 @@
 // Gallery I, the Sideways Gallery, as the game runs it.
 import type RAPIER from "@dimforge/rapier3d-compat";
-import type * as THREE from "three";
+import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
@@ -23,14 +23,17 @@ const IMPACT_THRESHOLD = 1.2;
 
 export function createSidewaysGallery(
   R: typeof RAPIER,
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   materials: Materials,
   sound: Sound,
   getPlayer: () => Player,
 ): Gallery {
+  const group = new THREE.Group();
+  group.name = "gallery";
+  scene.add(group);
   const exhibit = new SidewaysGravityExhibit(R);
   const sync = new BodySync();
-  const view = buildSidewaysGravityView(scene, exhibit, sync, materials);
+  const view = buildSidewaysGravityView(group, exhibit, sync, materials);
   const recorder = new Recorder(exhibit.id, () => getPlayer().getState());
 
   // Console buttons become generic click targets.
@@ -47,6 +50,8 @@ export function createSidewaysGallery(
   return {
     id: "sideways-gravity",
     title: "The Sideways Gallery",
+    group,
+    xRange: [-6.5, 6.5],
     exhibit,
     sync,
     recorder,

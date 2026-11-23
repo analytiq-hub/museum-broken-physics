@@ -61,7 +61,7 @@ const TILE: Record<Box["kind"], number> = {
 };
 
 export function buildSidewaysGravityView(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   ex: SidewaysGravityExhibit,
   sync: BodySync,
   m: Materials,
@@ -374,7 +374,7 @@ function buildTrim(add: AddFn, m: Materials): void {
 }
 
 /** Brass frames for the glass and the doorway, plus cracks in the panes. */
-function buildWindowDetails(scene: THREE.Scene, m: Materials): void {
+function buildWindowDetails(scene: THREE.Object3D, m: Materials): void {
   const zWin = ROOM.halfZ + 0.25;
   const frame = (w: number, h: number, x: number, y: number) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.56), m.brass);
