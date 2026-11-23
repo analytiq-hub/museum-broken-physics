@@ -185,6 +185,6 @@ function renderRule(rule: InstrumentRule): string {
       </dl>
       <p class="inst-expl">${rule.explanation}</p>
       ${rule.editable ? controls : ""}
-      ${rule.editable && rule.broken ? `<button type="button" class="inst-restore" data-action="restore" data-rule="${rule.id}" ${rule.canChange ? "" : "disabled"}>Restore the law (${rule.law})</button>` : ""}
+      ${rule.editable && rule.broken ? `<button type="button" class="inst-restore" data-action="restore" data-rule="${rule.id}" ${rule.canChange ? "" : "disabled"}>Restore the law: ${rule.law}</button>` : ""}
     </section>`;
 }

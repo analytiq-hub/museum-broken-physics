@@ -77,6 +77,22 @@ try {
   expect("pointer stays locked", await q(page, () => document.pointerLockElement !== null));
   await move(page, 80, 0);
   expect("the view turns again", (await q(page, () => window.__game!.getPlayer().yaw)) !== yawBefore);
+
+  // Walk down the corridor into Gallery II, reset it, and walk back: Gallery I keeps its state.
+  await page.evaluate(() => window.__game!.setPlayer({ x: -9, z: 2 }, Math.PI / 2, 0));
+  await page.keyboard.down("w");
+  const arrived = await eventually(page, () => window.__game!.getPlayer().gallery === "pendulum");
+  await page.keyboard.up("w");
+  expect("walking west hands the player to Gallery II", arrived);
+  expect("Gallery II's laws are on the instrument", await eventually(page, () => window.__game!.getState().exhibit === "pendulum"));
+  await page.keyboard.press("r");
+  expect("R resets Gallery II", await eventually(page, () => window.__game!.getState().step < 30));
+  await page.evaluate(() => window.__game!.setLook(-Math.PI / 2, 0));
+  await page.keyboard.down("w");
+  const back = await eventually(page, () => window.__game!.getPlayer().gallery === "sideways-gravity");
+  await page.keyboard.up("w");
+  expect("walking east hands the player back to Gallery I", back);
+  expect("Gallery I kept its state (gravity still toward the back wall)", (await q(page, () => window.__game!.getState().rules.gravity)) === "north");
 } finally {
   await browser.close();
   await server.close();

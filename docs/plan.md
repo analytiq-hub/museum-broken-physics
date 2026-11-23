@@ -301,6 +301,14 @@ the budget. `npm run ui-check` tests the whole flow with a real pointer lock in 
   grid sampling and jitter.
 - **Done when:** two rooms are connected by a corridor and playable back to back, and
   resetting one room doesn't disturb the other.
+- *As built (option b, chosen Nov 2026):* bells at 40° and −65°, a glass vase at 80°, the room
+  "shakes apart" past 85°; solved = both bells rung, then at rest (< 8° for 2 s). From the
+  start the low bell rings at ~7 s, the high one at ~23 s, the vase breaks at ~31 s. Damping
+  is a range rule with five named marks (strong push … heavy drag); the room has no console,
+  so it teaches the instrument. The solver found a second strategy (strong push first, then
+  drag) and showed that a fixed-time robustness check was the wrong model of a player.
+  `npm run ui-check` walks between the galleries and checks that resetting one leaves the
+  other alone.
 
 ### Milestone 6: Combine rules and add trade-offs (3–4 days)
 - A third room that needs both gravity direction and damping.

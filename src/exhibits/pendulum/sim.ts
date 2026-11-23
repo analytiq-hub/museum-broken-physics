@@ -166,9 +166,9 @@ export class PendulumExhibit extends ExhibitBase {
     return (Math.atan2(p.z - PIVOT.z, PIVOT.y - p.y) * 180) / Math.PI;
   }
 
-  /** Amplitude of the latest completed half-swing (degrees). */
+  /** How wide the pendulum is swinging (degrees): the larger of the last and current half-swing. */
   get amplitude(): number {
-    return Math.max(this.s.amplitude, Math.abs(this.angle));
+    return Math.max(this.s.amplitude, this.s.peak, Math.abs(this.angle));
   }
 
   /** Targets struck so far, in order. */

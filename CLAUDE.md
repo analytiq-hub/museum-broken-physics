@@ -14,6 +14,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm run solve` | Puzzle solver report (every move sequence within budget, at early/settled timings) and trajectory SVGs in `harness/out/`. Solver thresholds themselves are asserted in `tests/exhibits/*.solver.test.ts`. |
 | `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`. |
 | `npm run ui-check` | End-to-end first-person UI check in headless Chrome with a real pointer lock (enter, hold Q, steer the instrument cursor, click a law, release). Runs in CI. Run it after UI changes. |
+| `node harness/record-pendulum-fixture.ts` | Same for Gallery II via the debug API (rewrites `tests/replays/pendulum-fixture.json`). |
 | `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
 | `npm run build` | Production build to `dist/`. |
 
@@ -43,6 +44,19 @@ to GitHub Pages: https://analytiqhub.com/museum-broken-physics/
 (meshes bound to the sim's bodies). Add a headless test in `tests/exhibits/<name>.test.ts`
 that replays the intended solution and asserts it is solved, and replays known
 non-solutions and asserts they are not.
+
+## Galleries
+
+- Each gallery is an exhibit with **its own physics world** (`src/exhibits/<name>/sim.ts`) and
+  a descriptor in `src/galleries/` (view, recorder, HUD lines, sounds, reset rules). `main.ts`
+  steps only the active gallery's world.
+- Galleries are joined by corridors that exist in **both** worlds (`src/exhibits/layout.ts`);
+  the player is handed over at the corridor midpoint (`HANDOVER_X`, with hysteresis), and the
+  arrival is recorded so replays can follow (`Recorder.playerArrived`).
+- R resets only the gallery the player is in. `src/state/gameState.ts` records solved galleries.
+- Gallery I: the Sideways Gallery (gravity direction, console + instrument).
+  Gallery II: the Restless Pendulum (negative damping, instrument only; damping is a "range"
+  rule whose named `marks` are what the instrument offers and the solver samples).
 
 ## UI
 
@@ -95,6 +109,10 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   bloom makes it a blaze. Light the room from the sides and corners; keep ceiling panels dim.
 - **`renderer.info` resets per render call**, and post-processing renders several passes. It is
   set to reset once per frame in `main.ts`, so `__game.getRenderInfo()` reports whole frames.
+- **Shared geometry is drawn once.** Corridor boxes are in both galleries' physics worlds, but
+  only Gallery I's view draws them (Gallery II's view skips `corridor-*`), or they z-fight.
+- **A pendulum never "settles".** Solver runs for it use fixed waits and a terminal horizon,
+  and the robustness check models a player reacting to an event (the bell), not a clock.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

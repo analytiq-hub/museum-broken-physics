@@ -25,6 +25,12 @@ export interface Attempt {
   /** First person only. */
   player?: { start: PlayerState; end?: PlayerState };
   inputs?: RecordedInput[];
+  /**
+   * The player re-entering this gallery's world partway through the attempt
+   * (after time in another gallery, where this world didn't step): their state
+   * on arrival, applied before that step on replay.
+   */
+  syncs?: { step: number; state: PlayerState }[];
   outcome: AttemptOutcome;
   /** Step count when the outcome was reached. */
   endStep: number;
@@ -59,6 +65,13 @@ export class Recorder {
     if (last && last.forward === input.forward && last.right === input.right && last.yaw === input.yaw) return;
     this.current.inputs.push({ step, forward: input.forward, right: input.right, yaw: input.yaw });
     this.lastInput = { ...input };
+  }
+
+  /** The player just (re)entered this gallery's world: record where they arrived. */
+  playerArrived(step: number): void {
+    if (!this.getPlayer || this.current.outcome !== "in-progress") return;
+    (this.current.syncs ??= []).push({ step, state: this.getPlayer() });
+    this.lastInput = undefined; // record the next input even if unchanged
   }
 
   change(step: number, rule: string, value: unknown): void {

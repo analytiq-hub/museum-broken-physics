@@ -35,7 +35,7 @@ describe.each(recordings)("replay $file", ({ recording }) => {
       expect(rejected).toBe(0);
       expect(outcome).toBe(attempt.outcome);
       // Same WASM, same fixed steps: the ball should be exactly where the browser left it.
-      expect(state.bodies.ball.pos).toEqual(attempt.ball);
+      expect(Object.values(state.bodies)[0].pos).toEqual(attempt.ball);
       // First person: the player ends exactly where they ended in the browser.
       expect(player?.position).toEqual(attempt.player?.end?.position);
     },

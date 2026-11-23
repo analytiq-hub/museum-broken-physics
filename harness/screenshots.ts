@@ -19,7 +19,11 @@ interface Shot {
   extraSteps?: number;
   /** First person: hold up the physics instrument. */
   instrument?: boolean;
+  /** After `moves`: wait a number of steps, or set a rule. */
+  actions?: ({ wait: number } | { rule: string; value: unknown })[];
 }
+
+const S = 60; // steps per second
 
 const SHOTS: Shot[] = [
   { name: "01-start", camera: "window", moves: [] },
@@ -36,6 +40,13 @@ const SHOTS: Shot[] = [
   { name: "12-fp-room-from-console", player: { x: 0, z: 3.5, yaw: 0, pitch: 0.3 }, moves: [] },
   { name: "14-fp-instrument", player: { x: 0, z: 3.6, yaw: 0, pitch: 0.15 }, moves: [], instrument: true },
   { name: "15-fp-instrument-spent", player: { x: 0, z: 3.6, yaw: 0, pitch: 0.15 }, moves: ["north", "south", "east", "west"], instrument: true },
+  // Gallery II: the Restless Pendulum.
+  { name: "20-pendulum-start", camera: "pendulum", moves: [] },
+  { name: "21-pendulum-both-bells", camera: "pendulum", moves: [], actions: [{ wait: 24 * S }] },
+  { name: "22-pendulum-solved", camera: "pendulum-low", moves: [], actions: [{ wait: 25 * S }, { rule: "damping", value: 0.4 }, { wait: 30 * S }] },
+  { name: "23-pendulum-vase-broken", camera: "pendulum-low", moves: [], actions: [{ wait: 32 * S }] },
+  { name: "24-fp-pendulum-entrance", player: { x: -16, z: 2, yaw: Math.PI / 2 + 0.25, pitch: 0.3 }, moves: [], actions: [{ wait: 22 * S }] },
+  { name: "25-fp-pendulum-instrument", player: { x: -16, z: 2, yaw: Math.PI / 2 + 0.25, pitch: 0.3 }, moves: [], instrument: true },
   { name: "13-fp-solved-door", player: { x: -3, z: 2, yaw: Math.PI / 2, pitch: 0 }, moves: ["north", "west", "down"], extraSteps: 120 },
 ];
 
@@ -66,16 +77,20 @@ try {
         game.setRule("gravity", move);
         game.settle();
       }
+      for (const a of s.actions ?? []) {
+        if ("wait" in a) game.step(a.wait);
+        else game.setRule(a.rule, a.value);
+      }
       game.step(s.extraSteps ?? 60);
       await game.nextFrame();
       return game.getState();
     }, shot);
     const file = `${OUT}/${shot.name}.png`;
     await page.screenshot({ path: file });
-    const outcome = state.solved ? "solved" : state.failed ? "failed" : "in progress";
+    const outcome = `${state.exhibit}: ${state.solved ? "solved" : state.failed ? "failed" : "in progress"}`;
     const hovered = await page.evaluate(() => window.__game!.getPlayer().hovered);
     console.log(
-      `${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}, ball at ${state.bodies.ball.pos.join(", ")}${hovered ? `, looking at "${hovered}"` : ""}`,
+      `${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}, ${Object.keys(state.bodies)[0]} at ${Object.values(state.bodies)[0].pos.join(", ")}${hovered ? `, looking at "${hovered}"` : ""}`,
     );
   }
 } finally {

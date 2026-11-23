@@ -9,6 +9,9 @@ export class Sound {
   private noise: AudioBuffer | undefined;
   private rollGain: GainNode | undefined;
   private rollFilter: BiquadFilterNode | undefined;
+  private whooshGain: GainNode | undefined;
+  private whooshFilter: BiquadFilterNode | undefined;
+  private rumbleGain: GainNode | undefined;
   private muted = false;
 
   get isMuted(): boolean {
@@ -51,6 +54,59 @@ export class Sound {
     this.rollGain = ctx.createGain();
     this.rollGain.gain.value = 0;
     roll.connect(this.rollFilter).connect(this.rollGain).connect(this.master);
+
+    // Pendulum swoosh: air rushing as the bob passes.
+    const whoosh = this.loop(noise);
+    this.whooshFilter = ctx.createBiquadFilter();
+    this.whooshFilter.type = "bandpass";
+    this.whooshFilter.Q.value = 0.6;
+    this.whooshFilter.frequency.value = 500;
+    this.whooshGain = ctx.createGain();
+    this.whooshGain.gain.value = 0;
+    whoosh.connect(this.whooshFilter).connect(this.whooshGain).connect(this.master);
+
+    // The building rumbling as a swing gets dangerous.
+    const rumble = this.loop(noise);
+    const rumbleFilter = ctx.createBiquadFilter();
+    rumbleFilter.type = "lowpass";
+    rumbleFilter.frequency.value = 90;
+    this.rumbleGain = ctx.createGain();
+    this.rumbleGain.gain.value = 0;
+    rumble.connect(rumbleFilter).connect(this.rumbleGain).connect(this.master);
+  }
+
+  /** 0..1: how fast the pendulum bob is moving. */
+  setWhoosh(level: number): void {
+    if (!this.ctx || !this.whooshGain || !this.whooshFilter) return;
+    const t = this.ctx.currentTime;
+    const l = Math.min(1, Math.max(0, level));
+    this.whooshGain.gain.setTargetAtTime(l * l * 0.18, t, 0.05);
+    this.whooshFilter.frequency.setTargetAtTime(300 + l * 900, t, 0.08);
+  }
+
+  /** 0..1: how hard the building is shaking. */
+  setRumble(level: number): void {
+    if (!this.ctx || !this.rumbleGain) return;
+    this.rumbleGain.gain.setTargetAtTime(Math.min(1, Math.max(0, level)) * 0.6, this.ctx.currentTime, 0.2);
+  }
+
+  /** A struck brass bell. */
+  bell(freq: number): void {
+    for (const [ratio, gain, decay] of [
+      [1, 0.2, 3.2],
+      [2.0, 0.08, 2.2],
+      [2.76, 0.06, 1.6],
+      [5.4, 0.025, 0.8],
+    ] as [number, number, number][]) {
+      this.tone({ freq: freq * ratio, gain, attack: 0.003, decay });
+    }
+  }
+
+  /** Glass breaking. */
+  shatter(): void {
+    this.burst({ type: "highpass", freq: 3000, q: 0.5, gain: 0.45, attack: 0.002, decay: 0.5 });
+    this.burst({ type: "bandpass", freq: 5200, q: 3, gain: 0.25, attack: 0.002, decay: 0.9 });
+    for (let i = 0; i < 6; i++) this.tone({ freq: 2500 + Math.random() * 3500, gain: 0.04, attack: 0.001, decay: 0.15, delay: Math.random() * 0.4 });
   }
 
   setMuted(muted: boolean): void {

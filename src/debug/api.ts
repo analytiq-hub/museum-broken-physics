@@ -36,15 +36,19 @@ export interface GameDebugApi {
   setLook(yaw: number, pitch: number): void;
   /** Raises or lowers the physics instrument in first person (like holding Q). */
   setInstrument(open: boolean): void;
-  /** Aims the first-person view at a console button (scripts; recorded like mouse look). */
-  lookAtButton(direction: string): void;
+  /** Aims the first-person view at a button in the current gallery (scripts; recorded like mouse look). */
+  lookAtButton(value: string): void;
   getPlayer(): {
     feet: { x: number; y: number; z: number };
     yaw: number;
     pitch: number;
     /** Console button under the crosshair, if any. */
     hovered: string | undefined;
+    /** The gallery whose physics world the player is in. */
+    gallery: string;
   };
+  /** Which galleries are solved, with their final laws. */
+  getGameState(): Record<string, { rules: Record<string, unknown> }>;
   /** Resolves after the next two rendered frames, so a screenshot shows the latest state. */
   nextFrame(): Promise<void>;
 }

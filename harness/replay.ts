@@ -5,11 +5,13 @@ import { FIXED_DT } from "../src/engine/physics";
 import { Player, type PlayerInput, type PlayerState } from "../src/engine/player";
 import type { ExhibitBase, ExhibitState } from "../src/exhibits/Exhibit";
 import { SidewaysGravityExhibit } from "../src/exhibits/sideways-gravity/sim";
+import { PendulumExhibit } from "../src/exhibits/pendulum/sim";
 import type { Attempt } from "../src/debug/recorder";
 
 /** Builds a fresh exhibit by id, as it starts in the game. */
 export const EXHIBITS: Record<string, (R: typeof RAPIER) => ExhibitBase> = {
   "sideways-gravity": (R) => new SidewaysGravityExhibit(R),
+  pendulum: (R) => new PendulumExhibit(R),
 };
 
 export interface ReplayResult {
@@ -33,6 +35,8 @@ export function replayAttempt(R: typeof RAPIER, ex: ExhibitBase, attempt: Attemp
     player.attach(ex.world);
   }
   const inputs = attempt.inputs ?? [];
+  const syncs = attempt.syncs ?? [];
+  let y = 0;
   let input: PlayerInput = { forward: 0, right: 0, yaw: 0 };
   let rejected = 0;
   let c = 0;
@@ -43,6 +47,7 @@ export function replayAttempt(R: typeof RAPIER, ex: ExhibitBase, attempt: Attemp
       const change = attempt.changes[c];
       if (!ex.setRule(change.rule, change.value)) rejected++;
     }
+    for (; y < syncs.length && syncs[y].step === step; y++) player?.setState(syncs[y].state);
     for (; i < inputs.length && inputs[i].step === step; i++) input = inputs[i];
     // FIXED_DT, as the game passes it: world.timestep reads back Rapier's f32
     // copy (0.0166666675), and that tiny difference makes the player drift.
