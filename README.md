@@ -9,5 +9,6 @@ gravity console to change where "down" points, hold Q for your physics instrumen
 through the window (arrow keys and Space set gravity there). Add `?debug` for the debug panel.
 
 - [CLAUDE.md](CLAUDE.md): commands, architecture rules and gotchas for contributors
+- [docs/project-summary.md](docs/project-summary.md): what was built and how
 - [docs/concept.md](docs/concept.md): game concept and design pillars
 - [docs/plan.md](docs/plan.md): tech stack, architecture, and milestone plan
