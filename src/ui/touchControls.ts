@@ -8,6 +8,7 @@ export interface TouchHandlers {
   tap(x: number, y: number): void;
   toggleInstrument(): void;
   reset(): void;
+  pause(): void;
 }
 
 export interface TouchControls {
@@ -36,6 +37,7 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
     <div class="touch-buttons">
       <button type="button" data-touch="laws">Laws</button>
       <button type="button" data-touch="reset">Reset</button>
+      <button type="button" data-touch="pause" aria-label="Pause">❚❚</button>
     </div>
     <div class="touch-hint">Left thumb: walk · Right thumb: look · Tap things to use them</div>`;
   document.body.appendChild(root);
@@ -43,6 +45,7 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
   const knob = root.querySelector<HTMLDivElement>(".knob")!;
   const lawsButton = root.querySelector<HTMLButtonElement>('[data-touch="laws"]')!;
   root.querySelector<HTMLButtonElement>('[data-touch="reset"]')!.addEventListener("click", () => handlers.reset());
+  root.querySelector<HTMLButtonElement>('[data-touch="pause"]')!.addEventListener("click", () => handlers.pause());
   lawsButton.addEventListener("click", () => handlers.toggleInstrument());
   const hint = root.querySelector<HTMLDivElement>(".touch-hint")!;
   let hintTimer: ReturnType<typeof setTimeout> | undefined;

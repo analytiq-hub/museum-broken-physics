@@ -47,6 +47,8 @@ export interface GameDebugApi {
     /** The gallery whose physics world the player is in. */
     gallery: string;
   };
+  /** Paused by the player (Esc, ❚❚, leaving the tab)? */
+  isPaused(): boolean;
   /** Which galleries are solved, with their final laws. */
   getGameState(): Record<string, { rules: Record<string, unknown> }>;
   /** Resolves after the next two rendered frames, so a screenshot shows the latest state. */

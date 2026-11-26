@@ -86,6 +86,11 @@ non-solutions and asserts they are not.
   (`?quality=high` overrides). `npm run ui-check` drives it on an emulated phone with real
   touch events.
 
+- **Pausing:** Esc (it releases the pointer lock), the ❚❚ touch button, or leaving the tab
+  pauses the game (`menuPaused` in `main.ts`): no steps, sound suspended, a "Paused" card;
+  clicking/tapping it resumes without simulating the time spent paused. Separate from the
+  debug pause (P / `?paused`).
+
 ## Rendering and sound
 
 - `src/render/materials.ts`: shared PBR materials. Marble/plaster textures and the HDRI are CC0

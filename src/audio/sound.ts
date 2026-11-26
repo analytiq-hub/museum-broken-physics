@@ -109,6 +109,15 @@ export class Sound {
     for (let i = 0; i < 6; i++) this.tone({ freq: 2500 + Math.random() * 3500, gain: 0.04, attack: 0.001, decay: 0.15, delay: Math.random() * 0.4 });
   }
 
+  /** Freezes all sound (the game is paused). */
+  suspend(): void {
+    void this.ctx?.suspend();
+  }
+
+  resume(): void {
+    if (this.ctx?.state === "suspended") void this.ctx.resume();
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
     if (this.master && this.ctx) this.master.gain.setTargetAtTime(muted ? 0 : 0.8, this.ctx.currentTime, 0.05);

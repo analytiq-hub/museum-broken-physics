@@ -78,6 +78,19 @@ try {
   await move(page, 80, 0);
   expect("the view turns again", (await q(page, () => window.__game!.getPlayer().yaw)) !== yawBefore);
 
+  // Esc releases the pointer lock (simulated here, as headless Chrome has no real Esc handling): the game pauses.
+  await page.evaluate(() => document.exitPointerLock());
+  expect("Esc pauses: the card says Paused", await eventually(page, () => document.querySelector(".overlay h1")?.textContent === "Paused"));
+  const frozenAt = await q(page, () => window.__game!.getState().step);
+  await page.waitForTimeout(1500);
+  expect("while paused, the simulation doesn't advance", (await q(page, () => window.__game!.getState().step)) === frozenAt);
+  await page.mouse.click(600, 400);
+  expect("clicking the card resumes (pointer locked again)", await eventually(page, () => document.pointerLockElement !== null && !window.__game!.isPaused()));
+  const advanced = await page
+    .waitForFunction((n) => window.__game!.getState().step > n + 10, frozenAt, { timeout: 30_000, polling: 100 })
+    .then(() => true, () => false);
+  expect("after resuming, the simulation advances", advanced);
+
   // Walk down the corridor into Gallery II, reset it, and walk back: Gallery I keeps its state.
   await page.evaluate(() => window.__game!.setPlayer({ x: -9, z: 2 }, Math.PI / 2, 0));
   await page.keyboard.down("w");
@@ -186,6 +199,12 @@ try {
   expect("tapping a law on the instrument changes it", await eventually(tp, () => window.__game!.getState().rules.gravity === "north"));
   await tp.tap('[data-touch="laws"]');
   expect("Laws again puts the instrument away", await eventually(tp, () => document.querySelector(".instrument")!.classList.contains("hidden")));
+
+  // Pause button: freezes the game; tapping the card resumes.
+  await tp.tap('[data-touch="pause"]');
+  expect("the ❚❚ button pauses", await eventually(tp, () => window.__game!.isPaused() && document.querySelector(".overlay h1")?.textContent === "Paused"));
+  await tp.tap(".overlay");
+  expect("tapping the card resumes", await eventually(tp, () => !window.__game!.isPaused() && !document.querySelector(".touch-ui")!.classList.contains("hidden")));
 
   // Tap-to-use: aim at the console's Left wall button and tap it on screen.
   await tp.evaluate(async () => {

@@ -311,50 +311,87 @@ const crosshairHint = crosshair.querySelector<HTMLDivElement>(".hint")!;
 
 const overlay = document.createElement("div");
 overlay.className = "overlay";
-overlay.innerHTML = TOUCH
-  ? `
-  <div class="card">
-    <h1>The Museum of Broken Physics</h1>
-    <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
-    <p class="controls"><b>Tap</b> to enter · <b>Left thumb</b>: drag to walk · <b>Right thumb</b>: drag to look ·
+const CONTROLS = TOUCH
+  ? `<b>Left thumb</b>: drag to walk · <b>Right thumb</b>: drag to look ·
       <b>Tap</b> brass buttons and mirrors to use them · <b>Laws</b>: your physics instrument ·
-      <b>Reset</b>: start the room again</p>
-    <p class="portrait-hint">Turn your phone sideways for a better view.</p>
-  </div>`
-  : `
-  <div class="card">
-    <h1>The Museum of Broken Physics</h1>
-    <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
-    <p class="controls"><b>Click</b> to enter · <b>WASD</b> walk · <b>Mouse</b> look ·
+      <b>Reset</b>: start the room again · <b>❚❚</b>: pause`
+  : `<b>WASD</b> walk · <b>Mouse</b> look ·
       <b>Click</b> brass buttons to work the exhibits · hold <b>Q</b> for your physics instrument ·
-      <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause</p>
-  </div>`;
+      <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause`;
+/** The start card, or once the player has entered, the pause card. */
+function showOverlay(pausedCard: boolean): void {
+  const action = TOUCH ? "Tap" : "Click";
+  overlay.innerHTML = pausedCard
+    ? `<div class="card"><h1>Paused</h1><p><b>${action}</b> to continue.</p><p class="controls">${CONTROLS}</p></div>`
+    : `<div class="card">
+        <h1>The Museum of Broken Physics</h1>
+        <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
+        <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
+        ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
+      </div>`;
+  overlay.classList.remove("hidden");
+}
+showOverlay(false);
+
+/**
+ * Paused by the player (Esc, the ❚❚ button, or leaving the tab): the simulation
+ * and sound stop until they click or tap the card. Separate from the debug pause.
+ */
+let menuPaused = false;
+/** Set on resume, so the time spent paused isn't simulated in the next frame. */
+let skipFrameTime = false;
+let entered = false;
+
+function pauseGame(): void {
+  if (AUTOMATION || mode !== "first-person" || !entered || menuPaused) return;
+  menuPaused = true;
+  keys.clear();
+  lowerInstrument();
+  touch.setVisible(false);
+  sound.suspend();
+  showOverlay(true);
+}
+
+function resumeGame(): void {
+  entered = true;
+  menuPaused = false;
+  skipFrameTime = true;
+  stepper.clear();
+  overlay.classList.add("hidden");
+  sound.resume();
+  if (TOUCH) touch.setVisible(true);
+}
+
 overlay.addEventListener("click", () => {
   sound.unlock();
   if (!TOUCH) {
-    look.lock();
+    look.lock(); // resumes on the "lock" event
     return;
   }
   // Touch: no pointer lock; go fullscreen where the browser allows it (not iOS Safari).
   touchEntered = true;
-  overlay.classList.add("hidden");
-  touch.setVisible(true);
+  resumeGame();
   document.documentElement.requestFullscreen?.().catch(() => {});
 });
 const touch = createTouchControls(renderer.domElement, {
   tap: (x, y) => tapAt(x, y),
   toggleInstrument: () => (instrumentHeld ? lowerInstrument() : raiseInstrument()),
   reset: () => reset(),
+  pause: () => pauseGame(),
 });
 // Audio may only start after a gesture; any key or click will do.
 window.addEventListener("pointerdown", () => sound.unlock());
 document.body.appendChild(overlay);
 if (AUTOMATION) overlay.classList.add("hidden");
-look.addEventListener("lock", () => overlay.classList.add("hidden"));
+look.addEventListener("lock", () => resumeGame());
 look.addEventListener("unlock", () => {
+  // Esc (or anything else that releases the mouse) pauses the game.
   keys.clear();
   lowerInstrument();
-  if (mode === "first-person" && !AUTOMATION) overlay.classList.remove("hidden");
+  pauseGame();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) pauseGame();
 });
 
 document.addEventListener("mousedown", () => {
@@ -421,7 +458,7 @@ function setMode(next: CameraMode): void {
     overlay.classList.add("hidden");
   } else {
     camera.rotation.set(camera.rotation.x, camera.rotation.y, 0);
-    if (!pointerLocked()) overlay.classList.remove("hidden");
+    if (!pointerLocked()) showOverlay(entered);
   }
 }
 
@@ -558,6 +595,7 @@ installDebugApi({
     gallery: active.id,
   }),
   getGameState: () => gameState.toJSON(),
+  isPaused: () => menuPaused,
 });
 
 // --- Frame loop ------------------------------------------------------------------
@@ -566,11 +604,13 @@ const eye = new THREE.Vector3();
 renderer.setAnimationLoop((time) => {
   stats.begin();
   clock.update(time);
-  const frameDt = clock.getDelta();
+  const frameDt = skipFrameTime ? 0 : clock.getDelta();
+  skipFrameTime = false;
+  const frozen = paused || menuPaused;
   // Paused: show the latest step exactly, so "Step once" is visible immediately.
-  const alpha = paused ? 1 : stepper.advance(frameDt);
+  const alpha = frozen ? 1 : stepper.advance(frameDt);
 
-  if (active.exhibit.isFailed() && !paused) {
+  if (active.exhibit.isFailed() && !frozen) {
     failedFor += frameDt;
     if (failedFor > AUTO_RESET_SECONDS) reset();
   }
@@ -589,7 +629,7 @@ renderer.setAnimationLoop((time) => {
     const q = player.position;
     const feetOffset = PLAYER.eyeHeight - (PLAYER.halfHeight + PLAYER.radius);
     eye.set(p.x + (q.x - p.x) * alpha, p.y + (q.y - p.y) * alpha + feetOffset, p.z + (q.z - p.z) * alpha);
-    const shake = paused ? 0 : active.shake();
+    const shake = frozen ? 0 : active.shake();
     if (shake > 0) eye.add(new THREE.Vector3((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake));
     camera.position.copy(eye);
   } else {
