@@ -476,6 +476,8 @@ too early or too late both lose.
 2. ~~How is the instrument budget expressed?~~ *Decided: a count of changes.* Revisit an energy
    meter once rooms have "range" rules (damping, Milestone 5).
 3. ~~Target platform?~~ *Decided: desktop browser only for now.* Revisit touch after the visual pass.
+   *Revisited (Nov 2026): touch is supported* (joystick, drag to look, tap to use, Laws/Reset
+   buttons), after a player couldn't play on a phone.
 4. Is there a narrative layer (who broke the museum?), and how much text?
 
 ## Immediate next steps

@@ -79,6 +79,12 @@ non-solutions and asserts they are not.
   because re-locking the pointer after releasing it is restricted by browsers. In the window
   view (C) it stays open as a normal panel.
 - Player-facing directions are named from the viewer's side: floor, left/right/back wall, window.
+- **Touch mode** (`src/ui/touchControls.ts`, `body.touch`): on automatically for touchscreens
+  without a mouse, `?touch` forces it. Left-thumb floating joystick, right-thumb drag to look,
+  tap to use in-world controls (raycast from the tap, no crosshair), Laws/Reset buttons; the
+  instrument is a normal panel down the right. No pointer lock. Defaults to `?quality=low`
+  (`?quality=high` overrides). `npm run ui-check` drives it on an emulated phone with real
+  touch events.
 
 ## Rendering and sound
 
@@ -132,6 +138,9 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   and the robustness check models a player reacting to an event (the bell), not a clock.
 - **The camera follows the player on the next frame.** After `__game.setPlayer`, await
   `nextFrame()` before anything that reads the camera (`lookAtButton`, raycasts).
+- **Tap detection uses `PointerEvent.timeStamp`**, not the time it was handled: on a slow frame
+  a quick tap would otherwise look like a long press. Injected test touches carry explicit
+  timestamps for the same reason.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

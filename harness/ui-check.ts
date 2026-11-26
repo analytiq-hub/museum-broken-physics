@@ -134,6 +134,70 @@ try {
     "the instrument shows only the index law (no mirror rows)",
     await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
   );
+
+  // --- Touch: an emulated phone (landscape), real touch events via the DevTools protocol.
+  await page.close(); // the desktop page's rendering would slow the phone's input handling
+  const phone = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+  const tp = await phone.newPage();
+  tp.on("pageerror", (e) => expect("no page errors (touch)", false, e.message));
+  await tp.goto(url);
+  await tp.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 60_000 });
+  const cdp = await phone.newCDPSession(tp);
+  // Events carry their own timestamps, like a real touchscreen's, so a slow software-rendered
+  // frame between injecting "down" and "up" doesn't stretch a tap into a long press.
+  let clock = Date.now() / 1000;
+  const touchAt = (type: "touchStart" | "touchMove" | "touchEnd", points: { x: number; y: number; id: number }[]) => {
+    clock = Math.max(clock + 0.05, Date.now() / 1000);
+    return cdp.send("Input.dispatchTouchEvent", { type, touchPoints: points, timestamp: clock });
+  };
+  const tapScreen = async (x: number, y: number, id: number) => {
+    const t = Date.now() / 1000;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y, id }], timestamp: t });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [], timestamp: t + 0.06 });
+    clock = Math.max(clock, t + 0.06);
+  };
+  expect("touch mode switches on for a touchscreen", await q(tp, () => document.body.classList.contains("touch")));
+  expect("the start screen explains touch controls", await q(tp, () => document.querySelector(".overlay")!.textContent!.includes("Left thumb")));
+  await tp.tap(".overlay");
+  expect("tapping enters the museum", await eventually(tp, () => document.querySelector(".overlay")!.classList.contains("hidden")));
+  expect("the touch buttons appear", await q(tp, () => !document.querySelector(".touch-ui")!.classList.contains("hidden")));
+  await tp.screenshot({ path: "harness/out/screens/50-touch.png" });
+
+  // Walk: left thumb pushes the joystick up (forward) and holds.
+  const zBefore = await q(tp, () => window.__game!.getPlayer().feet.z);
+  await touchAt("touchStart", [{ x: 140, y: 300, id: 1 }]);
+  await touchAt("touchMove", [{ x: 140, y: 240, id: 1 }]);
+  const walked = await eventually(tp, () => window.__game!.getPlayer().feet.z < 6.6, WALK);
+  await touchAt("touchEnd", []);
+  expect("the joystick walks the player forward", walked, `z ${zBefore.toFixed(2)} → ${(await q(tp, () => window.__game!.getPlayer().feet.z)).toFixed(2)}`);
+
+  // Look: right thumb drags left, turning the view left.
+  const yawBefore2 = await q(tp, () => window.__game!.getPlayer().yaw);
+  await touchAt("touchStart", [{ x: 650, y: 200, id: 2 }]);
+  for (const x of [620, 590, 560]) await touchAt("touchMove", [{ x, y: 200, id: 2 }]);
+  await touchAt("touchEnd", []);
+  expect("dragging on the right turns the view", await eventually(tp, () => window.__game!.getPlayer().yaw !== 0), `yaw ${yawBefore2} → ${(await q(tp, () => window.__game!.getPlayer().yaw)).toFixed(3)}`);
+
+  // Laws: open the instrument, tap a law, close it.
+  await tp.tap('[data-touch="laws"]');
+  expect("Laws opens the instrument", await eventually(tp, () => !document.querySelector(".instrument")!.classList.contains("hidden")));
+  await tp.screenshot({ path: "harness/out/screens/51-touch-instrument.png" });
+  await tp.locator(".instrument button", { hasText: "Back wall" }).tap();
+  expect("tapping a law on the instrument changes it", await eventually(tp, () => window.__game!.getState().rules.gravity === "north"));
+  await tp.tap('[data-touch="laws"]');
+  expect("Laws again puts the instrument away", await eventually(tp, () => document.querySelector(".instrument")!.classList.contains("hidden")));
+
+  // Tap-to-use: aim at the console's Left wall button and tap it on screen.
+  await tp.evaluate(async () => {
+    window.__game!.setPlayer({ x: 0, z: 3.7 }, 0, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("west");
+    await window.__game!.nextFrame();
+  });
+  expect("the console's Left wall button is under the tap point", await eventually(tp, () => window.__game!.getPlayer().hovered === "west"));
+  await tapScreen(422, 195, 3);
+  expect("tapping a console button uses it", await eventually(tp, () => window.__game!.getState().rules.gravity === "west"));
+  await phone.close();
 } finally {
   await browser.close();
   await server.close();

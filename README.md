@@ -8,6 +8,10 @@ A Three.js puzzle adventure where the laws of physics are malfunctioning, and yo
 gravity console to change where "down" points, hold Q for your physics instrument, R to reset, M to mute, Esc to pause. C switches to the view
 through the window (arrow keys and Space set gravity there). Add `?debug` for the debug panel.
 
+**On a phone or tablet:** tap to enter, drag with your left thumb to walk (a joystick appears
+under it), drag with your right thumb to look, tap brass buttons and mirrors to use them,
+**Laws** opens the physics instrument, **Reset** restarts the room. Landscape works best.
+
 ## How it was built
 
 The game is TypeScript and Vite, with **three.js** for rendering and **Rapier** (WASM) for

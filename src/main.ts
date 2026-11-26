@@ -25,6 +25,7 @@ import type { GravityDirection } from "./rules/Rule";
 import { GameState } from "./state/gameState";
 import { GRAVITY_KEYS, createInstrument } from "./ui/instrument";
 import { instrumentModel } from "./ui/instrumentModel";
+import { createTouchControls } from "./ui/touchControls";
 import "./style.css";
 
 const R = await initPhysics();
@@ -32,8 +33,18 @@ const R = await initPhysics();
 const params = new URLSearchParams(location.search);
 /** `?debug` shows the FPS meter and the lil-gui debug panel. */
 const DEBUG = params.has("debug");
-/** `?quality=low`: no bloom, smaller shadow map, pixel ratio 1 (slow machines). */
-const LOW_QUALITY = params.get("quality") === "low";
+/**
+ * Touch mode (phones, tablets): a joystick to walk, drag to look, tap to use
+ * things, on-screen Laws and Reset buttons. On automatically for touchscreens
+ * without a mouse; `?touch` forces it (testing on a desktop).
+ */
+const TOUCH = params.has("touch") || (matchMedia("(pointer: coarse)").matches && !matchMedia("(pointer: fine)").matches);
+/**
+ * `?quality=low`: no bloom, smaller shadow map, pixel ratio 1 (slow machines).
+ * Touch devices default to it; `?quality=high` overrides.
+ */
+const LOW_QUALITY = params.get("quality") === "low" || (TOUCH && params.get("quality") !== "high");
+if (TOUCH) document.body.classList.add("touch");
 /**
  * `?automation` (screenshots, scripts): no click-to-play overlay,
  * and the UI behaves as if the pointer were locked (crosshair, hover hints).
@@ -103,7 +114,9 @@ const post = createPost(renderer, scene, camera, !LOW_QUALITY);
 
 /** `?paused` starts with the simulation stopped (drive it via window.__game). */
 let paused = params.has("paused");
-const pointerLocked = () => look.isLocked || AUTOMATION;
+/** Touch mode: true once the player has tapped through the start screen. */
+let touchEntered = false;
+const pointerLocked = () => look.isLocked || AUTOMATION || touchEntered;
 let failedFor = 0;
 /** Distance walked since the last footstep (m). */
 let stride = 0;
@@ -113,11 +126,12 @@ const primaryPosition = (g: Gallery) => Object.values(g.exhibit.describe().bodie
 const keys = new Set<string>();
 /** 1 if any of the key codes is held, else 0. */
 const held = (...codes: string[]) => (codes.some((c) => keys.has(c)) ? 1 : 0);
+const clamp = (v: number) => Math.max(-1, Math.min(1, v));
 function playerInput(): PlayerInput {
   if (mode !== "first-person") return { forward: 0, right: 0, yaw: camera.rotation.y };
   return {
-    forward: held("KeyW", "ArrowUp") - held("KeyS", "ArrowDown"),
-    right: held("KeyD", "ArrowRight") - held("KeyA", "ArrowLeft"),
+    forward: clamp(held("KeyW", "ArrowUp") - held("KeyS", "ArrowDown") + touch.move.forward),
+    right: clamp(held("KeyD", "ArrowRight") - held("KeyA", "ArrowLeft") + touch.move.right),
     yaw: camera.rotation.y,
   };
 }
@@ -259,6 +273,15 @@ function updateHover(): void {
   active.setHovered(hovered);
 }
 
+/** Touch: a tap uses whatever in-world control is under the finger (no crosshair aiming). */
+function tapAt(x: number, y: number): void {
+  if (mode !== "first-person" || !active.interactables.length) return;
+  raycaster.setFromCamera(new THREE.Vector2((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1), camera);
+  const hit = raycaster.intersectObjects(active.interactables, false)[0];
+  const target = hit?.object.userData.interact as Interactable | undefined;
+  if (target) pressInteractable(target);
+}
+
 // --- HUD, crosshair, instrument, click-to-play overlay -------------------------------
 const hud = document.createElement("div");
 hud.className = "hud";
@@ -288,7 +311,17 @@ const crosshairHint = crosshair.querySelector<HTMLDivElement>(".hint")!;
 
 const overlay = document.createElement("div");
 overlay.className = "overlay";
-overlay.innerHTML = `
+overlay.innerHTML = TOUCH
+  ? `
+  <div class="card">
+    <h1>The Museum of Broken Physics</h1>
+    <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
+    <p class="controls"><b>Tap</b> to enter · <b>Left thumb</b>: drag to walk · <b>Right thumb</b>: drag to look ·
+      <b>Tap</b> brass buttons and mirrors to use them · <b>Laws</b>: your physics instrument ·
+      <b>Reset</b>: start the room again</p>
+    <p class="portrait-hint">Turn your phone sideways for a better view.</p>
+  </div>`
+  : `
   <div class="card">
     <h1>The Museum of Broken Physics</h1>
     <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
@@ -298,7 +331,20 @@ overlay.innerHTML = `
   </div>`;
 overlay.addEventListener("click", () => {
   sound.unlock();
-  look.lock();
+  if (!TOUCH) {
+    look.lock();
+    return;
+  }
+  // Touch: no pointer lock; go fullscreen where the browser allows it (not iOS Safari).
+  touchEntered = true;
+  overlay.classList.add("hidden");
+  touch.setVisible(true);
+  document.documentElement.requestFullscreen?.().catch(() => {});
+});
+const touch = createTouchControls(renderer.domElement, {
+  tap: (x, y) => tapAt(x, y),
+  toggleInstrument: () => (instrumentHeld ? lowerInstrument() : raiseInstrument()),
+  reset: () => reset(),
 });
 // Audio may only start after a gesture; any key or click will do.
 window.addEventListener("pointerdown", () => sound.unlock());
@@ -331,7 +377,7 @@ function renderHud(): void {
   const ex = active.exhibit;
   const canChange = ex.changesLeft > 0 && !ex.isSolved() && !ex.isFailed();
   const pips = "●".repeat(ex.changesLeft) + "○".repeat(ex.changesUsed);
-  const hint = mode === "first-person" ? "Hold <b>Q</b> to read the room's laws with your instrument." : "";
+  const hint = mode !== "first-person" ? "" : TOUCH ? "Tap <b>Laws</b> to read the room's laws." : "Hold <b>Q</b> to read the room's laws with your instrument.";
   const restored = galleries.filter((g) => gameState.isSolved(g.id)).length;
   const html = `
     <div class="title">${active.title}</div>
@@ -343,10 +389,16 @@ function renderHud(): void {
   // The instrument: pinned open in the window view, raised with Q in first person.
   instrument.update(instrumentModel(ex, active.title));
   if (mode === "orbit") instrument.open(false, gravityEditable() ? "Arrow keys and Space set gravity too" : "");
-  else if (instrumentHeld) instrument.open(look.isLocked, look.isLocked ? "Move the mouse to point · release Q to put away" : "Release Q to put away");
+  else if (instrumentHeld)
+    instrument.open(
+      look.isLocked,
+      TOUCH ? "Tap Laws again to put it away" : look.isLocked ? "Move the mouse to point · release Q to put away" : "Release Q to put away",
+    );
   else instrument.close();
+  touch.setInstrumentOpen(instrument.isOpen && mode === "first-person");
 
-  const showCrosshair = mode === "first-person" && pointerLocked() && !instrument.isOpen;
+  // Touch players tap things directly, so there's no crosshair to aim.
+  const showCrosshair = mode === "first-person" && pointerLocked() && !instrument.isOpen && !TOUCH;
   crosshair.classList.toggle("hidden", !showCrosshair);
   crosshair.classList.toggle("active", !!hovered);
   let text = "";
@@ -526,6 +578,13 @@ renderer.setAnimationLoop((time) => {
   // Inactive galleries don't step, so draw them exactly at their last step.
   for (const g of galleries) g.sync.render(g === active ? alpha : 1);
   if (mode === "first-person") {
+    // Touch: dragging on the right half turns the view.
+    const drag = touch.takeLook();
+    if (drag.dx || drag.dy) {
+      const k = 0.0055;
+      camera.rotation.y -= drag.dx * k;
+      camera.rotation.x = Math.max(-1.45, Math.min(1.45, camera.rotation.x - drag.dy * k));
+    }
     const p = player.previous;
     const q = player.position;
     const feetOffset = PLAYER.eyeHeight - (PLAYER.halfHeight + PLAYER.radius);

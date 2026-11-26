@@ -383,3 +383,147 @@ body {
     left: 16px;
   }
 }
+
+/* --- Touch mode (phones, tablets) ------------------------------------------- */
+
+body.touch,
+body.touch canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.touch-ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.touch-ui .stick {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 2px solid rgba(233, 196, 106, 0.55);
+  background: rgba(20, 17, 12, 0.25);
+}
+
+.touch-ui .knob {
+  position: absolute;
+  left: 35px;
+  top: 35px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(233, 196, 106, 0.7);
+}
+
+.touch-buttons {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.touch-buttons button {
+  min-width: 72px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #6b5a3c;
+  border-radius: 22px;
+  background: rgba(36, 29, 19, 0.85);
+  color: #efe6d4;
+  font: 600 15px system-ui, sans-serif;
+}
+
+.touch-buttons button.active {
+  border-color: #e9c46a;
+  background: #5a4520;
+}
+
+.touch-hint {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: rgba(20, 17, 12, 0.7);
+  color: #cdbf9f;
+  font: 13px system-ui, sans-serif;
+  white-space: nowrap;
+  transition: opacity 1s;
+}
+
+.touch-hint.faded {
+  opacity: 0;
+}
+
+/* Smaller HUD, and the instrument as a sheet along the bottom, on touch screens. */
+body.touch .hud {
+  top: max(10px, env(safe-area-inset-top));
+  bottom: auto;
+  left: max(10px, env(safe-area-inset-left));
+  max-width: min(380px, calc(44vw - 20px)); /* clear of the instrument panel on the right */
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+body.touch .hud .keys {
+  display: none;
+}
+
+/* A panel down the right side, below the Laws/Reset buttons, leaving the left thumb free to walk. */
+body.touch .instrument {
+  left: auto;
+  right: max(8px, env(safe-area-inset-right));
+  top: calc(max(12px, env(safe-area-inset-top)) + 54px);
+  bottom: max(8px, env(safe-area-inset-bottom));
+  width: min(400px, 56vw);
+  max-height: none;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+body.touch .instrument .inst-rule {
+  padding: 8px;
+}
+
+body.touch .instrument .gravity-pad {
+  grid-template-columns: repeat(3, minmax(60px, 84px));
+  gap: 4px;
+}
+
+body.touch .instrument .gravity-pad button {
+  padding: 4px 2px;
+}
+
+body.touch .instrument button {
+  min-height: 36px;
+}
+
+@media (orientation: portrait) {
+  body.touch .instrument {
+    left: max(8px, env(safe-area-inset-left));
+    top: auto;
+    width: auto;
+    max-height: 55vh;
+  }
+}
+
+.overlay .portrait-hint {
+  display: none;
+  color: #e9c46a;
+}
+
+@media (orientation: portrait) {
+  body.touch .overlay .portrait-hint {
+    display: block;
+  }
+}
