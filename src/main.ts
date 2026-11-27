@@ -28,6 +28,7 @@ import { GameState } from "./state/gameState";
 import { clearProgress, loadProgress, saveProgress, type SavedProgress } from "./state/progress";
 import { GRAVITY_KEYS, createInstrument } from "./ui/instrument";
 import { instrumentModel } from "./ui/instrumentModel";
+import { cachedStars, fetchStars, repoLinkHtml, repoText } from "./ui/repoLink";
 import { createTouchControls } from "./ui/touchControls";
 import "./style.css";
 
@@ -487,11 +488,30 @@ function ticketHtml(solved: (id: string) => boolean): string {
   return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${GALLERIES.length} galleries restored</div>${rows}</div>`;
 }
 
+/** The repo's star count for the cards' GitHub link: from the build, a fresh cache, then GitHub. */
+let repoStars = BUILD_REPO_STARS;
+function storageOrUndefined(): Storage | undefined {
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+repoStars = cachedStars(storageOrUndefined(), Date.now()) ?? repoStars;
+if (!AUTOMATION) {
+  void fetchStars(fetch, storageOrUndefined(), Date.now()).then((stars) => {
+    if (stars === null) return;
+    repoStars = stars;
+    for (const link of document.querySelectorAll(".repo-link")) link.textContent = repoText(stars);
+  });
+}
+const repoLine = () => `<p class="repo">${repoLinkHtml(repoStars)}</p>`;
+
 function showOverlay(pausedCard: boolean): void {
   const action = TOUCH ? "Tap" : "Click";
   const saved = savedVisit;
   overlay.innerHTML = pausedCard
-    ? `<div class="card"><h1>Paused</h1>${ticketHtml((id) => gameState.isSolved(id))}<p><b>${action}</b> to continue.</p><p class="controls">${CONTROLS}</p></div>`
+    ? `<div class="card"><h1>Paused</h1>${ticketHtml((id) => gameState.isSolved(id))}<p><b>${action}</b> to continue.</p><p class="controls">${CONTROLS}</p>${repoLine()}</div>`
     : saved
       ? `<div class="card">
         <h1>Welcome back</h1>
@@ -499,12 +519,14 @@ function showOverlay(pausedCard: boolean): void {
         <p class="visit-buttons"><button type="button" data-visit="continue">Continue your visit</button><button type="button" data-visit="new">Start a new visit</button></p>
         <p class="controls">${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
+        ${repoLine()}
       </div>`
       : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
-        <p>Two floors of galleries whose laws have broken. Put them right, or put them to use.</p>
+        <p>Three floors of galleries whose laws have broken. Put them right, or put them to use.</p>
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
+        ${repoLine()}
       </div>`;
   overlay.classList.remove("hidden");
 }
@@ -540,6 +562,8 @@ function resumeGame(): void {
 }
 
 overlay.addEventListener("click", (e) => {
+  // The GitHub link opens in a new tab and leaves the card up: it doesn't enter the game.
+  if ((e.target as HTMLElement).closest(".repo-link")) return;
   // A returning visitor's card: "Start a new visit" starts over; anywhere else continues.
   chooseVisit((e.target as HTMLElement).closest("[data-visit]")?.getAttribute("data-visit") === "new");
   sound.unlock();

@@ -36,10 +36,27 @@ const move = (page: Page, dx: number, dy: number) =>
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   page.on("pageerror", (e) => expect("no page errors", false, e.message));
+  // GitHub, stubbed: the cards' link refreshes its star count from the API and opens the repo.
+  await page.context().route("https://api.github.com/**", (route) => route.fulfill({ json: { stargazers_count: 1234 } }));
+  await page.context().route("https://github.com/**", (route) => route.fulfill({ body: "<title>repo</title>", contentType: "text/html" }));
   await page.goto(url);
   await page.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 60_000 });
 
   expect("click-to-play overlay shows", await q(page, () => !document.querySelector(".overlay")!.classList.contains("hidden")));
+  expect(
+    "the card links to the repo with its live star count",
+    await eventually(page, () => document.querySelector(".overlay .repo-link")?.textContent === "★ 1,234 · Source on GitHub"),
+    await q(page, () => document.querySelector(".overlay .repo-link")?.textContent ?? "no link"),
+  );
+  const [repoTab] = await Promise.all([page.context().waitForEvent("page"), page.click(".overlay .repo-link")]);
+  await repoTab.waitForLoadState();
+  expect("clicking it opens the repo in a new tab", repoTab.url().startsWith("https://github.com/analytiq-hub/museum-broken-physics"), repoTab.url());
+  await repoTab.close();
+  await page.bringToFront();
+  expect(
+    "…and doesn't enter the game",
+    await q(page, () => !document.querySelector(".overlay")!.classList.contains("hidden") && document.pointerLockElement === null),
+  );
   await page.mouse.click(600, 400);
   expect("clicking locks the pointer", await eventually(page, () => document.pointerLockElement !== null));
   expect("overlay hides", await eventually(page, () => document.querySelector(".overlay")!.classList.contains("hidden")));

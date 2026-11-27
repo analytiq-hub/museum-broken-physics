@@ -780,7 +780,7 @@ Background for further Floor 1 rooms, or a mechanics wing. Not scheduled.
 
 More candidates from famous experiments are in [room-ideas.md](room-ideas.md).
 
-### Small feature: the GitHub link and star count (planned)
+### Small feature: the GitHub link and star count (done, Nov 2026)
 A line at the foot of the title, "Welcome back" and "Paused" cards: "★ 128 · Source on GitHub",
 linking to https://github.com/analytiq-hub/museum-broken-physics in a new tab.
 
@@ -794,8 +794,7 @@ linking to https://github.com/analytiq-hub/museum-broken-physics in a new tab.
 - `src/ui/repoLink.ts` (fetch, cache, format), with a unit test for formatting, the threshold,
   the cache and failures; `?automation` skips the live fetch. A ui-check step: clicking the
   link opens a new tab and leaves the card up.
-- While there: the title card still says "Two floors"; it's three. Pick a license for the repo
-  (none yet) before pointing visitors at it.
+- Also done: the title card now says "Three floors", and the repo has an MIT license.
 
 ## Later backlog
 

@@ -50,3 +50,7 @@ The full story, including what the tests caught along the way, is in
 - [docs/project-summary.md](docs/project-summary.md): what was built and how
 - [docs/concept.md](docs/concept.md): game concept and design pillars
 - [docs/plan.md](docs/plan.md): tech stack, architecture, and milestone plan
+
+## License
+
+[MIT](LICENSE). The third-party textures and HDRI are CC0 (see the [credits](public/assets/CREDITS.md)).

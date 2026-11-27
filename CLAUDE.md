@@ -146,6 +146,12 @@ non-solutions and asserts they are not.
   `arrangeSolved()`; `tests/exhibits/restoreSolved.test.ts` covers them. Restored rooms aren't
   recorded until reset (`Recorder.skipUntilReset`). `?automation` ignores saved progress.
 
+- **GitHub link** (`src/ui/repoLink.ts`): the title, welcome-back and pause cards end with
+  "★ N · Source on GitHub" (no number below 10 stars). The count is baked in at build time
+  (`BUILD_REPO_STARS`, a Vite `define` from `REPO_STARS`, which CI reads from the GitHub API)
+  and refreshed live on load, cached in `localStorage` for an hour; `?automation` skips the
+  fetch. The overlay's click handler ignores clicks on the link, so it doesn't enter the game.
+
 - **Pausing:** Esc (it releases the pointer lock), the ❚❚ touch button, or leaving the tab
   pauses the game (`menuPaused` in `main.ts`): no steps, sound suspended, a "Paused" card;
   clicking/tapping it resumes without simulating the time spent paused. Separate from the

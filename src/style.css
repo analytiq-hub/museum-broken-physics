@@ -261,6 +261,22 @@ body {
   font-weight: 600;
 }
 
+.overlay .repo {
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
+.repo-link {
+  color: #cdbf9f;
+  text-decoration: none;
+  border-bottom: 1px dotted #8a7a5c;
+}
+
+.repo-link:hover {
+  color: #e9c46a;
+  border-bottom-color: #e9c46a;
+}
+
 .overlay .controls {
   color: #cdbf9f;
   font-size: 14px;
