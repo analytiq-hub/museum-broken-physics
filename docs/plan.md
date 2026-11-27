@@ -410,7 +410,7 @@ window is several seconds after the ball lands at any drop height (tested). The 
 `control` rule. The closing alcove sits behind its exit door.
 
 **Order from here (agreed Nov 2026):** Gallery VI, the Singing Glass (Milestone 8), then
-streaming (Milestone 9), then Gallery VII, the Backwards Furnace (Milestone 10).
+streaming (Milestone 9), then the rest of Floor 2 (Milestones 10–12; see "Museum layout").
 
 ### Milestone 8: Gallery VI, the Singing Glass (waves; 4–5 days)
 *Done (Nov 2026).* Built as below, with two changes: the pane is the west doorway rather
