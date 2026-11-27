@@ -461,6 +461,19 @@ body.touch canvas {
   transition: opacity 1s;
 }
 
+.touch-toast {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border-radius: 14px;
+  background: rgba(20, 17, 12, 0.78);
+  color: #f0e2c0;
+  font-size: 14px;
+  pointer-events: none;
+}
+
 .touch-hint.faded {
   opacity: 0;
 }

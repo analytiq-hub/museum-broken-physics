@@ -38,6 +38,8 @@ export interface GameDebugApi {
   setInstrument(open: boolean): void;
   /** Aims the first-person view at a button in the current gallery (scripts; recorded like mouse look). */
   lookAtButton(value: string): void;
+  /** Where a button in the current gallery appears on screen, in CSS pixels (touch tests tap there). */
+  screenPosition(value: string): { x: number; y: number; distance: number };
   getPlayer(): {
     feet: { x: number; y: number; z: number };
     yaw: number;

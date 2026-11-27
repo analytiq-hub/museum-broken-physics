@@ -1,6 +1,6 @@
 // Touch controls for phones and tablets: a floating joystick under the left
 // thumb to walk, dragging on the right to look, tapping to use things, and two
-// on-screen buttons (Laws = the physics instrument, Reset). Uses Pointer
+// on-screen buttons (Laws = the physics instrument, Reset, pause). Uses Pointer
 // Events, so several fingers work at once.
 
 export interface TouchHandlers {
@@ -19,6 +19,8 @@ export interface TouchControls {
   setVisible(visible: boolean): void;
   /** Marks the Laws button as active while the instrument is open. */
   setInstrumentOpen(open: boolean): void;
+  /** Shows a short message above the thumbs for a moment. */
+  flash(text: string): void;
 }
 
 /** Joystick travel (px) for full speed. */
@@ -39,6 +41,7 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
       <button type="button" data-touch="reset">Reset</button>
       <button type="button" data-touch="pause" aria-label="Pause">❚❚</button>
     </div>
+    <div class="touch-toast hidden"></div>
     <div class="touch-hint">Left thumb: walk · Right thumb: look · Tap things to use them</div>`;
   document.body.appendChild(root);
   const stick = root.querySelector<HTMLDivElement>(".stick")!;
@@ -49,6 +52,8 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
   lawsButton.addEventListener("click", () => handlers.toggleInstrument());
   const hint = root.querySelector<HTMLDivElement>(".touch-hint")!;
   let hintTimer: ReturnType<typeof setTimeout> | undefined;
+  const toast = root.querySelector<HTMLDivElement>(".touch-toast")!;
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   const move = { forward: 0, right: 0 };
   let lookDx = 0;
@@ -56,6 +61,9 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
   let stickId: number | undefined;
   let stickX = 0;
   let stickY = 0;
+  let stickT = 0;
+  /** Furthest the joystick finger got from where it landed: a stick touch that barely moves is a tap. */
+  let stickTravel = 0;
   const looks = new Map<number, { x: number; y: number; startX: number; startY: number; t: number }>();
 
   surface.addEventListener("pointerdown", (e) => {
@@ -66,6 +74,8 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
       stickId = e.pointerId;
       stickX = e.clientX;
       stickY = e.clientY;
+      stickT = e.timeStamp;
+      stickTravel = 0;
       stick.style.transform = `translate(${stickX}px, ${stickY}px)`;
       knob.style.transform = "translate(0px, 0px)";
       stick.classList.remove("hidden");
@@ -82,6 +92,7 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
       let dx = e.clientX - stickX;
       let dy = e.clientY - stickY;
       const len = Math.hypot(dx, dy);
+      stickTravel = Math.max(stickTravel, len);
       if (len > STICK_RADIUS) {
         dx *= STICK_RADIUS / len;
         dy *= STICK_RADIUS / len;
@@ -106,6 +117,8 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
       stickId = undefined;
       move.forward = move.right = 0;
       stick.classList.add("hidden");
+      // A quick touch that didn't walk anywhere is a tap, on this side of the screen too.
+      if (e.type === "pointerup" && stickTravel < TAP_SLOP && e.timeStamp - stickT < TAP_MS) handlers.tap(e.clientX, e.clientY);
       return;
     }
     const look = looks.get(e.pointerId);
@@ -136,6 +149,12 @@ export function createTouchControls(surface: HTMLElement, handlers: TouchHandler
     setInstrumentOpen(open) {
       lawsButton.classList.toggle("active", open);
       hint.classList.toggle("hidden", open); // it would sit under the instrument panel
+    },
+    flash(text) {
+      toast.textContent = text;
+      toast.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add("hidden"), 1600);
     },
   };
 }

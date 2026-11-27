@@ -28,8 +28,10 @@ export function createOpticsGallery(
 
   // Mirrors are click targets: each click turns one a notch (free; they're controls, not laws).
   const ids = Object.keys(MIRRORS) as (keyof typeof MIRRORS)[];
-  view.mirrors.forEach((panel, i) => {
-    panel.userData.interact = { rule: ids[i], value: ids[i], label: `Turn ${MIRRORS[ids[i]].label}`, cycle: true } satisfies Interactable;
+  // The whole mirror counts (glass, frame and stand), so it's easy to hit with a finger.
+  view.mirrors.forEach((parts, i) => {
+    const interact = { rule: ids[i], value: ids[i], label: `Turn ${MIRRORS[ids[i]].label}`, cycle: true } satisfies Interactable;
+    for (const part of parts) part.userData.interact = interact;
   });
 
   let wasLit = false;
@@ -48,7 +50,7 @@ export function createOpticsGallery(
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,
-    interactables: view.mirrors,
+    interactables: view.mirrors.flat(),
     setHovered() {},
     summary() {
       const index = exhibit.rule("index").current;

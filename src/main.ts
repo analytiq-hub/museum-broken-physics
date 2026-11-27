@@ -54,6 +54,8 @@ const AUTOMATION = params.has("automation");
 const AUTO_RESET_SECONDS = 2.5;
 /** How far away (m) a console button can be pressed from. */
 const REACH = 2.6;
+/** Touch taps reach a little further: there is no crosshair to tell you you're in range. */
+const TAP_REACH = 3.4;
 
 // --- Renderer, scene, camera -------------------------------------------------
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -277,9 +279,13 @@ function updateHover(): void {
 function tapAt(x: number, y: number): void {
   if (mode !== "first-person" || !active.interactables.length) return;
   raycaster.setFromCamera(new THREE.Vector2((x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1), camera);
+  raycaster.far = 30;
   const hit = raycaster.intersectObjects(active.interactables, false)[0];
+  raycaster.far = REACH;
   const target = hit?.object.userData.interact as Interactable | undefined;
-  if (target) pressInteractable(target);
+  if (!target) return;
+  if (hit.distance > TAP_REACH) touch.flash("Walk closer to use it");
+  else pressInteractable(target);
 }
 
 // --- HUD, crosshair, instrument, click-to-play overlay -------------------------------
@@ -409,6 +415,10 @@ const gravityEditable = () =>
     (r) => r.id === "gravity" && r.editable && (r.options ?? []).every((o) => KEYED_DIRECTIONS.has(o.value as GravityDirection)),
   );
 
+/** Room text is written for mouse and keyboard; on a touchscreen, say it in taps. */
+const touchWording = (text: string) =>
+  text.replace(/\bClick\b/g, "Tap").replace(/\bclick\b/g, "tap").replace(/\bhold Q\b/g, "tap Laws").replace(/\bHold Q\b/g, "Tap Laws");
+
 let lastHud = "";
 function renderHud(): void {
   const ex = active.exhibit;
@@ -419,7 +429,7 @@ function renderHud(): void {
   const html = `
     <div class="title">${active.title}</div>
     <div>${active.summary()} · Changes left <span class="pips">${pips}</span></div>
-    <div class="status">${active.status(player)}</div>
+    <div class="status">${TOUCH ? touchWording(active.status(player)) : active.status(player)}</div>
     <div class="keys">Galleries solved: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
@@ -585,6 +595,14 @@ installDebugApi({
     if (!button) throw new Error(`no button "${value}" in ${active.id}`);
     const d = button.getWorldPosition(new THREE.Vector3()).sub(camera.position);
     camera.rotation.set(Math.atan2(d.y, Math.hypot(d.x, d.z)), Math.atan2(-d.x, -d.z), 0);
+  },
+  screenPosition(value) {
+    const button = active.interactables.find((b) => (b.userData.interact as Interactable).value === value);
+    if (!button) throw new Error(`no button "${value}" in ${active.id}`);
+    const p = button.getWorldPosition(new THREE.Vector3());
+    const distance = p.distanceTo(camera.position);
+    p.project(camera);
+    return { x: ((p.x + 1) / 2) * window.innerWidth, y: ((1 - p.y) / 2) * window.innerHeight, distance };
   },
   getRenderInfo: () => ({ ...renderer.info.render, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
   getPlayer: () => ({

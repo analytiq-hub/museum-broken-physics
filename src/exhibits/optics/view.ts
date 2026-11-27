@@ -35,8 +35,8 @@ export const CAMERA_POSES = {
 
 export interface OpticsView {
   update(dt: number): void;
-  /** Mirror panels, for raycasting (userData.interact set by the gallery). */
-  mirrors: THREE.Object3D[];
+  /** Per mirror: its panel first, then frame and stand, for raycasting (userData.interact set by the gallery). */
+  mirrors: THREE.Object3D[][];
 }
 
 const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, glass: 1, ledge: 2, pedestal: 1.2 };
@@ -98,7 +98,7 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
     scene.add(base);
     const angle = () => ((ex.rule(id).current as number) * Math.PI) / 180;
     group.rotation.y = -angle();
-    return { id, group, panel, angle };
+    return { id, group, panel, parts: [panel, frame, pole], angle };
   });
 
   // --- The prism: an extruded glass triangle on its pedestal.
@@ -231,7 +231,7 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
 
   let reveal = 0;
   return {
-    mirrors: mirrors.map((mm) => mm.panel),
+    mirrors: mirrors.map((mm) => mm.parts),
     update(dt) {
       // Mirrors swing toward their angles.
       for (const mm of mirrors) {

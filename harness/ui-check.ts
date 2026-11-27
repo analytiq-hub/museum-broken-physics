@@ -216,6 +216,39 @@ try {
   expect("the console's Left wall button is under the tap point", await eventually(tp, () => window.__game!.getPlayer().hovered === "west"));
   await tapScreen(422, 195, 3);
   expect("tapping a console button uses it", await eventually(tp, () => window.__game!.getState().rules.gravity === "west"));
+
+  // Gallery IV on the phone: a mirror on the left of the screen (the joystick side) still taps.
+  const mirrorAt = await tp.evaluate(async () => {
+    window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("mirror-b");
+    const p = window.__game!.getPlayer();
+    window.__game!.setLook(p.yaw - 0.35, p.pitch); // turn right: the mirror slides to the left
+    await window.__game!.nextFrame();
+    return window.__game!.screenPosition("mirror-b");
+  });
+  expect("the floor mirror sits on the joystick side", mirrorAt.x < 844 * 0.45, `x=${mirrorAt.x.toFixed(0)}`);
+  await tapScreen(Math.round(mirrorAt.x), Math.round(mirrorAt.y), 4);
+  expect(
+    "tapping a mirror on the left half turns it",
+    await eventually(tp, () => window.__game!.getState().rules["mirror-b"] === 15),
+  );
+  // Too far away: nothing turns, and the player is told to walk closer.
+  const farAt = await tp.evaluate(async () => {
+    window.__game!.setPlayer({ x: -54.5, z: 3.6 }, 0, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("mirror-b");
+    await window.__game!.nextFrame();
+    return window.__game!.screenPosition("mirror-b");
+  });
+  await tapScreen(Math.round(farAt.x), Math.round(farAt.y), 5);
+  expect(
+    "a mirror out of reach says to walk closer",
+    await eventually(tp, () => document.querySelector(".touch-toast")!.textContent === "Walk closer to use it" && !document.querySelector(".touch-toast")!.classList.contains("hidden")),
+    `distance ${farAt.distance.toFixed(1)} m`,
+  );
+  expect("…and doesn't turn it", await q(tp, () => window.__game!.getState().rules["mirror-b"] === 15));
+  expect("the room's text says Tap, not Click", await q(tp, () => document.querySelector(".hud .status")!.textContent!.includes("Tap a mirror")));
   await phone.close();
 } finally {
   await browser.close();
