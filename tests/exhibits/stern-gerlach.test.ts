@@ -22,7 +22,7 @@ describe("stern–gerlach", () => {
     expect(ex.isSolved() || ex.isFailed()).toBe(false);
   });
 
-  it("with spin pointing any way, the beam smears: the detectors starve and the middle cell slowly cracks", () => {
+  it("with spin taking any value along the field, the beam smears: the detectors starve and the middle cell slowly cracks", () => {
     ex = new SternGerlachExhibit(R);
     ex.setRule("oven", "on");
     const c = ex.cells();

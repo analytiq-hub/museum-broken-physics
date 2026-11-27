@@ -6,7 +6,7 @@
 // and behind the glass is the vault. The lower half lands on a brass dump plate.
 // The door opens when the vault is found holding enough silver.
 //
-// Spin is broken (any direction): the beam smears, and little of it reaches the
+// Spin is broken (any value along the field, ../spin.ts): the beam smears, and little of it reaches the
 // glass. Planck's constant is broken (enormous): silver on the glass tunnels
 // through it into the vault, and on out through the vault's back grate. Putting
 // Planck's constant right measures the silver: it stays where it is found. So:
@@ -21,6 +21,7 @@ import { FIXED_DT } from "../../engine/physics";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
+import { spinRule, type Spin } from "../spin";
 import { leak } from "../tunnel/leak";
 
 export const ROOM: RoomBounds = { xMin: -12.5, xMax: -0.5, halfZ: 4, height: 4.5 };
@@ -34,12 +35,7 @@ export const MAGNET = { x0: -4.2, x1: -6.6 } as const;
 export const VAULT = { glass: -9.0, back: -10.2, halfZ: 0.35, halfY: 0.3 } as const;
 export const LEVER = { x: -3.0, z: AXIS_Z + 0.9 } as const;
 
-export type Spin = "any" | "two" | "three";
-export const SPIN_MARKS: { value: Spin; label: string }[] = [
-  { value: "any", label: "Any direction" },
-  { value: "two", label: "Two values: up or down" },
-  { value: "three", label: "Three values" },
-];
+export { SPIN_MARKS, type Spin } from "../spin";
 export const PLANCK_MARKS = [
   { value: 0, label: "True (6.6 × 10⁻³⁴ J·s)" },
   { value: 1, label: "Huge (0.66 J·s)" },
@@ -189,29 +185,6 @@ export class VaultExhibit extends ExhibitBase {
   protected loadExtra(extra: VaultExtra): void {
     this.s = extra;
   }
-}
-
-function spinRule(): Rule<Spin> {
-  return {
-    id: "spin",
-    label: "Spin of the silver atoms",
-    kind: "choice",
-    options: SPIN_MARKS,
-    current: "any",
-    nominal: "two",
-    editable: true,
-    observe: (current) =>
-      current === "any"
-        ? "Here an atom's spin can point any way at all, so the magnet pushes each atom by its own amount."
-        : current === "two"
-          ? "Here an atom's spin can only be up or down: the magnet pushes every atom one of two ways."
-          : "Here an atom's spin can take three values: up, down, or neither.",
-    explain: (current) =>
-      current === "two"
-        ? "A silver atom's spin is up or down, nothing between, as it should be."
-        : "A silver atom's spin should take exactly two values, up or down. Here it does not.",
-    apply() {},
-  };
 }
 
 function planckRule(): Rule<number> {

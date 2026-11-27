@@ -30,7 +30,7 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Pl
 | IX | 2 | Young's Double Slit (finale) | The light's wavelength *and* the tank's refractive index | Only both laws put a bright band on the sensor. An observer lamp wipes the bands out. |
 | | | **The Upper Stair** | | Up to Floor 3. |
 | X | 3 | Rutherford's Gold Foil | The atom's charge is spread out, not in a nucleus | Restore the nucleus, read the alpha tracks, slide the source until particles bounce straight back. |
-| XI | 3 | Stern–Gerlach | Spin can point any way | The beam smears and slowly cracks a glass cell; with two spin values it splits cleanly onto the detectors. |
+| XI | 3 | Stern–Gerlach | Spin isn't quantised: along the field it can take any value | The beam smears and slowly cracks a glass cell; with two spin values it splits cleanly onto the detectors. |
 | XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely in the cup. |
 | XIII | 3 | Slow Light | Light travels at 4 m/s | A coincidence lock wants one flash at two cells at once; slow light reaches them 1.75 s apart. Restore it and fire while the shutter is open. |
 | XIV | 3 | Galileo's Ledge | Gravity pulls cork half as hard as brass | Kick both balls off a ledge under the broken law so cork flies into the far pan; then restore it so the balance hangs level. |

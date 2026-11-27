@@ -6,8 +6,10 @@
 // Two brass detectors sit where the atoms should land; between them, a fragile
 // glass cell.
 //
-// The broken law is spin: here it can point any way, so each atom is pushed by a
-// different amount and the beam smears into a band from top to bottom. The
+// The broken law is spin's quantisation (../spin.ts): measured along the magnet's
+// field, an atom's spin can come out anywhere from fully up to fully down, so each
+// atom is pushed by a different amount and the beam smears into a band from top to
+// bottom. The
 // detectors never fill, and the middle cell, in the smear, slowly overheats and
 // cracks (fail). The decoy, three values, adds a spot right on the middle cell,
 // which cracks it fast. Put spin right, two values only (up or down), and the
@@ -18,6 +20,7 @@ import { ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
+import { spinRule, type Spin } from "../spin";
 
 export const ROOM: RoomBounds = { xMin: -12.5, xMax: -0.5, halfZ: 4, height: 4.5 };
 /** The beam line runs west along z = AXIS_Z at height BEAM_Y. */
@@ -35,12 +38,7 @@ export const MIDDLE_HALF = 0.04;
 /** Height of the bench top: everything on the beam line must clear it. */
 export const BENCH_TOP = 0.9;
 
-export type Spin = "any" | "two" | "three";
-export const SPIN_MARKS: { value: Spin; label: string }[] = [
-  { value: "any", label: "Any direction" },
-  { value: "two", label: "Two values: up or down" },
-  { value: "three", label: "Three values" },
-];
+export { SPIN_MARKS, type Spin } from "../spin";
 
 /** How much of the beam lands on a cell of half-height `half` centred at height y. */
 export function beamOnCell(spin: Spin, y: number, half = CELL_HALF): number {
@@ -184,29 +182,6 @@ export class SternGerlachExhibit extends ExhibitBase {
   protected loadExtra(extra: SternGerlachExtra): void {
     this.s = extra;
   }
-}
-
-function spinRule(): Rule<Spin> {
-  return {
-    id: "spin",
-    label: "Spin of the silver atoms",
-    kind: "choice",
-    options: SPIN_MARKS,
-    current: "any",
-    nominal: "two",
-    editable: true,
-    observe: (current) =>
-      current === "any"
-        ? "Here an atom's spin can point any way at all, so the magnet pushes each atom by its own amount."
-        : current === "two"
-          ? "Here an atom's spin can only be up or down: the magnet pushes every atom one of two ways."
-          : "Here an atom's spin can take three values: up, down, or neither.",
-    explain: (current) =>
-      current === "two"
-        ? "A silver atom's spin is up or down, nothing between, as it should be."
-        : "A silver atom's spin should take exactly two values, up or down. Here it does not.",
-    apply() {},
-  };
 }
 
 function ovenRule(): Rule<string> {

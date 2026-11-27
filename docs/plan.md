@@ -675,7 +675,7 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
   flings near particles away; their phosphor tracks show which way to slide the source (a
   free control, nine positions); dead-on, three particles bounce straight back and open the
   door. Decoy: a negative nucleus swallows them. Real 2D Coulomb scattering.
-- **Gallery XI, Stern–Gerlach (done).** Broken law: spin can point any way, so the beam smears;
+- **Gallery XI, Stern–Gerlach (done).** Broken law: spin isn't quantised (measured along the field it can take any value), so the beam smears;
   the detectors starve and the glass cell between them slowly overheats (fail in ~13 s).
   Restored, two values: two clean spots. Decoy: three values crack the cell in ~3 s.
 - **Gallery XII, the Quantum Tunnel (done).** Broken law: Planck's constant is enormous, so a

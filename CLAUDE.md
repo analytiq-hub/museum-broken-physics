@@ -95,8 +95,10 @@ non-solutions and asserts they are not.
   broken; closed-form fringes in `double-slit/fringes.ts`; marks searched for no near misses).
   Gallery X: Rutherford's Gold Foil (the atom's charge: spread vs nucleus; 2D Coulomb
   scattering with velocity Verlet in `rutherford/scatter.ts`; phosphor tracks drawn on a canvas).
-  Gallery XI: Stern–Gerlach (spin: any direction smears, two values split cleanly, three
-  values crack the middle cell). Gallery XII: the Quantum Tunnel (Planck's constant; a
+  Gallery XI: Stern–Gerlach (spin's quantisation, shared with Gallery XV in `exhibits/spin.ts`:
+  any value along the field smears, two values split cleanly, three values crack the middle
+  cell; word it as a value *along the magnet's field*, never "any direction", which reads as
+  the axis being arbitrary). Gallery XII: the Quantum Tunnel (Planck's constant; a
   three-compartment probability leak in `tunnel/leak.ts`; restoring the law measures the marble).
   Gallery XIII: Slow Light (light at 4 m/s; a coincidence lock wants one flash to light a near
   cell and a far, shuttered cell together; flashes in flight are sim state; the lamp is a
