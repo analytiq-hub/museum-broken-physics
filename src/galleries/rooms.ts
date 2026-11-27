@@ -209,6 +209,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./galileoGallery")).createGalileoGallery,
   },
   {
+    id: "vault",
+    title: "The Silver Vault",
+    floor: 3,
+    kind: "gallery",
+    laws: ["spin", "planck"],
+    cameras: ["vault", "vault-case"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./vaultGallery")).createVaultGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 3,

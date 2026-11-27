@@ -18,6 +18,7 @@ import { SternGerlachExhibit } from "../../src/exhibits/stern-gerlach/sim";
 import { TunnelExhibit } from "../../src/exhibits/tunnel/sim";
 import { SlowLightExhibit } from "../../src/exhibits/slow-light/sim";
 import { GalileoExhibit } from "../../src/exhibits/galileo/sim";
+import { VaultExhibit } from "../../src/exhibits/vault/sim";
 
 let R: typeof RAPIER;
 beforeAll(async () => {
@@ -40,6 +41,7 @@ const exhibits: [string, () => WithDoor][] = [
   ["Gallery XII", () => new TunnelExhibit(R)],
   ["Gallery XIII", () => new SlowLightExhibit(R)],
   ["Gallery XIV", () => new GalileoExhibit(R)],
+  ["Gallery XV", () => new VaultExhibit(R)],
 ];
 
 describe("restoreSolved", () => {

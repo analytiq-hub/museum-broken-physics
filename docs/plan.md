@@ -6,7 +6,7 @@ See [concept.md](concept.md) for the game vision.
 ## Where things stand (27 Nov 2026)
 
 - **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
-- **Fourteen galleries on three floors, visited in a fixed order:**
+- **Fifteen galleries on three floors, visited in a fixed order:**
   - **Floor 1, mechanics:** I the Sideways Gallery (gravity), II the Restless Pendulum
     (damping), III the Bouncing Hall (restitution), IV the Leaning Pendulum (gravity and
     damping, the finale).
@@ -17,9 +17,9 @@ See [concept.md](concept.md) for the game vision.
   - **The Upper Stair** climbs to Floor 3.
   - **Floor 3, modern physics** (in progress): X Rutherford's Gold Foil (the atom's charge),
     XI Stern–Gerlach (spin), XII the Quantum Tunnel (Planck's constant), XIII Slow Light (the
-    speed of light), XIV Galileo's Ledge (equal fall).
+    speed of light), XIV Galileo's Ledge (equal fall), XV the Silver Vault (spin and Planck's constant).
   - The closing placard is a small room (`the-end`) after the last gallery.
-- **Done:** Milestones 0–12, Floor 3's first three rooms (Milestone 13, in progress), plus work
+- **Done:** Milestones 0–13 (all three floors), plus work
   added after the plan:
   - touch controls;
   - pause on Esc;
@@ -27,8 +27,7 @@ See [concept.md](concept.md) for the game vision.
   - an instrument that doesn't reveal a law until the player has discovered it;
   - galleries streamed three at a time;
   - the museum laid out as floors (see "Museum layout").
-- **Next:** the rest of Floor 3 (Milestone 13), a real playtest (see "Immediate next steps"),
-  then two more Floor 1 rooms, the Spring and the Sling (Milestone 14): Floor 1 covers
+- **Next:** a real playtest (see "Immediate next steps"), then two more Floor 1 rooms, the Spring and the Sling (Milestone 14): Floor 1 covers
   gravity, damping and collisions but none of Newton's laws, springs or circular motion.
 
 ## Museum layout (decided Nov 2026)
@@ -54,7 +53,7 @@ a level: clearly separate, and harder than the one below.
   | ----- | ----- | --------------------------- | -------------------- |
   | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale), all built; the Spring and the Sling (planned, Milestone 14) go before the finale | One law per room, visible effects, generous budgets |
   | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale); all built | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
-  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light, XIV Galileo's Ledge (built); XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
+  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light, XIV Galileo's Ledge, XV the Silver Vault (all built) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
 
 - **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
   `src/galleries/rooms.ts` places them in the museum. Every corridor is a standard 8 m stub
@@ -667,7 +666,7 @@ It combines two of the floor's laws, the way the Leaning Pendulum ends Floor 1.
 - **Harness:** headless tests (the solution, each law alone, the observer), brute force over
   both laws' marks, screenshots of the pattern before and after.
 
-### Milestone 13: Floor 3, modern physics (in progress)
+### Milestone 13: Floor 3, modern physics (done, Nov 2026)
 Floor 3 opens with the Upper Stair. Its rooms move from things that are odd to things that defy
 intuition even when working: the atom, spin, tunnelling, then light and time.
 
@@ -696,8 +695,13 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
   into the far pan of a balance. Then the balance can't hang level until the law is restored.
   Restore first (or pick the decoy, cork pulled harder) and the cork lands short, on the floor.
   The elevator version reduced to "restore, then drop"; this one makes the order matter.
-- **Gallery XV, Floor 3's finale (planned).** Combines two of the floor's laws, for example
-  spin and Planck's constant: a beam split by spin, one half tunnelling.
+- **Gallery XV, the Silver Vault (done), Floor 3's finale.** Spin and Planck's constant, both
+  broken, two changes to spend. An oven burns one pellet of silver; with spin smeared, little
+  reaches the glass wall in front of the vault. Restore spin first, light the oven: the upper
+  half silvers the glass and (Planck's constant still huge) tunnels through into the vault and
+  on out of its back grate (the Tunnel's leak model). Restore Planck's constant while the
+  vault holds the most (a gauge with a red line shows it): measured there, the door opens. A
+  9 s window; the decoy constant spends the change that would measure it.
 
 ### Milestone 14: Floor 1, the rest of mechanics (planned; 6–8 days)
 Floor 1 teaches gravity's direction, damping and restitution, but none of the textbook core:
@@ -823,7 +827,8 @@ More candidates from famous experiments are in [room-ideas.md](room-ideas.md).
 1. **Playtest all three floors** with someone new. The instrument hides undiscovered laws, so
    the rooms must teach themselves; record with Shift+D, and a stuck session becomes a replay
    test.
-2. **Milestone 13:** Floor 3's finale.
-3. **Milestone 14:** the Spring and the Sling on Floor 1.
-4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
+2. **Milestone 14:** the Spring and the Sling on Floor 1. Further rooms: candidates in
+   [room-ideas.md](room-ideas.md); an elevator room (acceleration indistinguishable from
+   gravity) is still open.
+3. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.

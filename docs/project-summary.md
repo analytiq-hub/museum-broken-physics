@@ -34,6 +34,7 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Pl
 | XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely in the cup. |
 | XIII | 3 | Slow Light | Light travels at 4 m/s | A coincidence lock wants one flash at two cells at once; slow light reaches them 1.75 s apart. Restore it and fire while the shutter is open. |
 | XIV | 3 | Galileo's Ledge | Gravity pulls cork half as hard as brass | Kick both balls off a ledge under the broken law so cork flies into the far pan; then restore it so the balance hangs level. |
+| XV | 3 | The Silver Vault | Spin and Planck's constant | Floor 3's finale: restore spin so silver lands on the glass, let it tunnel into the vault, then restore Planck's constant while the vault holds the most. |
 
 The galleries are joined by corridors. Each opens the next when solved, and the walk ends in
 an alcove with a closing placard.
@@ -73,7 +74,7 @@ and pushed, deployed through CI, and checked before moving on.
 | 5. Second gallery | Restless Pendulum; multiple worlds and handover; game state. |
 | 6. Combined rules | Leaning Pendulum, the gravity + damping trade-off. |
 | 7. Optics | Hidden Door: a 2D beam tracer with Snell's law and total internal reflection. |
-| After the plan | Touch controls, pause, saved progress with a visitor's ticket, an instrument that hides undiscovered laws, streaming, the museum in floors, and Galleries VII–XIV. |
+| After the plan | Touch controls, pause, saved progress with a visitor's ticket, an instrument that hides undiscovered laws, streaming, the museum in floors, and Galleries VII–XV. |
 
 ### The development harness
 

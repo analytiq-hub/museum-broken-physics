@@ -68,7 +68,7 @@ non-solutions and asserts they are not.
 - **The route is fixed and runs in floors** (`src/galleries/rooms.ts`, in order). Floor 1,
   mechanics: Galleries I–IV. The Grand Stair (a passage, `kind: "passage"`, no puzzle).
   Floor 2, waves, light and heat, 4.8 m up: Galleries V–IX. The Upper Stair. Floor 3, modern
-  physics, 9.6 m up: Galleries X–XIV so far. Then `the-end`, a small passage room with the
+  physics, 9.6 m up: Galleries X–XV. Then `the-end`, a small passage room with the
   closing placard: new galleries go before it. Each floor is a level; harder going up. Rooms keep the coordinates they were built in, and `OFFSETS` places each one in the
   museum. The player runs in the active room's own coordinates and is shifted at each handover;
   the camera, light culling, handover and `getPlayer().feet` use museum coordinates.
@@ -104,6 +104,9 @@ non-solutions and asserts they are not.
   `setGravityScale` on the cork ball; one kick sends both balls off a frictionless ledge, and
   only under the broken law does cork fly into the far pan; restore the law afterwards so the
   balance reads level. Order matters: restored first, cork lands short).
+  Gallery XV: the Silver Vault, Floor 3's finale (spin and Planck's constant, both broken; a
+  one-pellet oven; the upper spin half lands on a glass wall and tunnels into the vault via
+  `tunnel/leak.ts`; restoring Planck's constant measures it; two changes, so a decoy is a dead end).
 - **New rooms:** `roomShell()`/`doorBox()`/`doorY()` in `layout.ts` build a standard room with
   its corridor stubs and sinking west door; `PassageExhibit` is a room with nothing to solve.
   Pure-maths models (no Rapier) go in their own module beside `sim.ts`, like `trace.ts`.

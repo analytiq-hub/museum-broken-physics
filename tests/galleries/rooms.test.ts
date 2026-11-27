@@ -36,6 +36,8 @@ import { SlowLightExhibit, ENTRANCE as SLOW_ENTRANCE, STATIC_BOXES as SLOW_BOXES
 import { CAMERA_POSES as SLOW_CAMERAS } from "../../src/exhibits/slow-light/view";
 import { GalileoExhibit, ENTRANCE as GALILEO_ENTRANCE, STATIC_BOXES as GALILEO_BOXES } from "../../src/exhibits/galileo/sim";
 import { CAMERA_POSES as GALILEO_CAMERAS } from "../../src/exhibits/galileo/view";
+import { VaultExhibit, ENTRANCE as VAULT_ENTRANCE, STATIC_BOXES as VAULT_BOXES } from "../../src/exhibits/vault/sim";
+import { CAMERA_POSES as VAULT_CAMERAS } from "../../src/exhibits/vault/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -62,6 +64,7 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new TunnelExhibit(R), TUNNEL_CAMERAS, TUNNEL_ENTRANCE, TUNNEL_BOXES],
   [() => new SlowLightExhibit(R), SLOW_CAMERAS, SLOW_ENTRANCE, SLOW_BOXES],
   [() => new GalileoExhibit(R), GALILEO_CAMERAS, GALILEO_ENTRANCE, GALILEO_BOXES],
+  [() => new VaultExhibit(R), VAULT_CAMERAS, VAULT_ENTRANCE, VAULT_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 
