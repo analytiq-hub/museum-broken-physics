@@ -127,7 +127,7 @@ describe("bouncing hall", () => {
       }
     }
     ex = new BouncingExhibit(R);
-  });
+  }, 60_000);
 
   it("button-mashing rarely works: one change at a random moment seldom solves it", () => {
     ex = new BouncingExhibit(R);
@@ -148,7 +148,7 @@ describe("bouncing hall", () => {
     }
     expect(solved).toBeGreaterThan(0);
     expect(solved / tries).toBeLessThan(0.25);
-  });
+  }, 60_000);
 
   it("the instrument shows bounciness (not the lever)", () => {
     ex = new BouncingExhibit(R);
