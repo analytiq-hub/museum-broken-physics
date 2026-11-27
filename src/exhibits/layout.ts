@@ -54,3 +54,53 @@ export function addStaticBoxes(R: typeof RAPIER, world: RAPIER.World, body: RAPI
     );
   }
 }
+
+/** Interior of a room built in its own coordinates: x xMin..xMax, z −halfZ..halfZ, y 0..height. */
+export interface RoomBounds {
+  xMin: number;
+  xMax: number;
+  halfZ: number;
+  height: number;
+}
+
+/**
+ * Floor, ceiling and walls of a plain room, with the standard doorway (z 1..3, 3 m high) in
+ * its east wall and, if `westDoor`, its west wall, plus its corridor stubs. A west doorway is
+ * left open: rooms that lock it add `doorBox()` as a kinematic door.
+ */
+export function roomShell(r: RoomBounds, options: { eastDoor?: boolean; westDoor?: boolean } = {}): Box[] {
+  const { eastDoor = true, westDoor = true } = options;
+  const cx = (r.xMin + r.xMax) / 2;
+  const hx = (r.xMax - r.xMin) / 2;
+  const { z0, z1, height: doorHeight } = CORRIDOR;
+  const endWall = (side: "east" | "west", x: number, door: boolean): Box[] =>
+    door
+      ? [
+          { name: `${side}-north`, kind: "wall", center: [x, r.height / 2, (-r.halfZ - 2 * W + z0) / 2], half: [W, r.height / 2, (z0 + r.halfZ + 2 * W) / 2] },
+          { name: `${side}-south`, kind: "wall", center: [x, r.height / 2, (z1 + r.halfZ + 2 * W) / 2], half: [W, r.height / 2, (r.halfZ + 2 * W - z1) / 2] },
+          { name: `${side}-lintel`, kind: "wall", center: [x, (doorHeight + r.height) / 2, (z0 + z1) / 2], half: [W, (r.height - doorHeight) / 2, (z1 - z0) / 2] },
+        ]
+      : [{ name: side, kind: "wall", center: [x, r.height / 2, 0], half: [W, r.height / 2, r.halfZ + 2 * W] }];
+  return [
+    { name: "floor", kind: "floor", center: [cx, -W, 0], half: [hx + 2 * W, W, r.halfZ + 2 * W] },
+    { name: "ceiling", kind: "ceiling", center: [cx, r.height + W, 0], half: [hx + 2 * W, W, r.halfZ + 2 * W] },
+    { name: "north", kind: "wall", center: [cx, r.height / 2, -r.halfZ - W], half: [hx + 2 * W, r.height / 2, W] },
+    { name: "south", kind: "wall", center: [cx, r.height / 2, r.halfZ + W], half: [hx + 2 * W, r.height / 2, W] },
+    ...endWall("east", r.xMax + W, eastDoor),
+    ...endWall("west", r.xMin - W, westDoor),
+    ...(eastDoor ? corridor("east", r.xMax + 2 * W) : []),
+    ...(westDoor ? corridor("west", r.xMin - 2 * W) : []),
+  ];
+}
+
+/** The door filling a room's west doorway (a kinematic body that sinks when the room is solved). */
+export function doorBox(r: RoomBounds): Box {
+  const { z0, z1, height } = CORRIDOR;
+  return { name: "door", kind: "wall", center: [r.xMin - W, height / 2, (z0 + z1) / 2], half: [W, height / 2, (z1 - z0) / 2] };
+}
+
+/** Moves a sinking door: `progress` 0 (closed) to 1 (sunk), eased. Returns the door's y. */
+export function doorY(door: Box, progress: number, drop = CORRIDOR.height + 0.1): number {
+  const eased = progress < 0.5 ? 2 * progress * progress : 1 - (-2 * progress + 2) ** 2 / 2;
+  return door.center[1] - drop * eased;
+}

@@ -57,7 +57,7 @@ export function createSingingGallery(
     id: "singing-glass",
     title: "The Singing Glass",
     group,
-    xRange: [-106.5, -92.5],
+    xRange: [-111.5, -92.5],
     exhibit,
     sync,
     recorder,

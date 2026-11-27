@@ -212,10 +212,24 @@ try {
   await page.mouse.click(600, 400);
   expect("clicking it again stops it", await eventually(page, () => window.__game!.getState().rules.pipe === "none", 30_000));
 
+  // Gallery VII: press a key on the Chladni oscillator, then release it.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("chladni", { x: -5.5, z: 1.5 }, 0, -0.5);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("2");
+  });
+  expect("the player is handed to Gallery VII", await eventually(page, () => window.__game!.getPlayer().gallery === "chladni"));
+  expect("the crosshair finds the third key", await eventually(page, () => window.__game!.getPlayer().hovered === "2"));
+  await page.mouse.click(600, 400);
+  expect("pressing a key sounds its note, for free", await eventually(page, () => window.__game!.getState().rules.note === "2" && window.__game!.getState().changesUsed === 0, 30_000));
+  await page.mouse.click(600, 400);
+  expect("pressing it again releases it", await eventually(page, () => window.__game!.getState().rules.note === "none", 30_000));
+  await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
+
   // Streaming: only the room the player is in and its neighbours are built.
   expect(
-    "in Gallery VI, only Galleries V and VI are built",
-    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["optics", "singing-glass"]),
+    "in Gallery VI, only it and its neighbours are built",
+    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["optics", "singing-glass", "chladni"]),
     (await q(page, () => window.__game!.getLoaded())).join(", "),
   );
   // Solve Gallery I, leave it far behind (it is freed), come back: it is still solved.

@@ -22,6 +22,8 @@ interface Shot {
   extraSteps?: number;
   /** First person: hold up the physics instrument. */
   instrument?: boolean;
+  /** Real seconds to let the view animate before the shot (the Chladni sand settles in real time). */
+  viewSeconds?: number;
   /** After `moves`: wait a number of steps, or set a rule. */
   actions?: ({ wait: number } | { rule: string; value: unknown })[];
 }
@@ -89,6 +91,11 @@ const SHOTS: Shot[] = [
   { name: "73-bouncing-solved", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }, { rule: "bounce", value: 0.6 }, { wait: 4 * S }] },
   { name: "74-fp-bouncing-entrance", player: { x: -72.6, z: 1.8, yaw: Math.PI / 2 - 0.35, pitch: 0.12, room: "bouncing" }, moves: [] },
   { name: "75-fp-bouncing-lever", player: { x: -78.9, z: 0.1, yaw: 0.85, pitch: -0.1, room: "bouncing" }, moves: [] },
+  { name: "93-chladni-start", camera: "chladni", moves: [] },
+  { name: "94-chladni-broken-key3", camera: "chladni-plate", moves: [], actions: [{ rule: "note", value: "2" }], viewSeconds: 5 },
+  { name: "95-chladni-lock-figure", camera: "chladni-plate", moves: [], actions: [{ rule: "brass-speed", value: 3500 }, { rule: "note", value: "2" }], extraSteps: 150, viewSeconds: 5 },
+  { name: "96-chladni-solved", camera: "chladni", moves: [], actions: [{ rule: "brass-speed", value: 3500 }, { rule: "note", value: "2" }, { wait: 300 }] },
+  { name: "97-fp-chladni-console", player: { x: -5.5, z: 1.4, yaw: 0, pitch: -0.55, room: "chladni" }, moves: [] },
   { name: "90-stairwell", camera: "stairwell", moves: [] },
   { name: "91-fp-stair-foot", player: { x: -1.0, z: 2, yaw: Math.PI / 2, pitch: 0.18, room: "stairwell" }, moves: [] },
   { name: "92-fp-stair-landing", player: { x: -10.9, y: 4.8, z: 1.3, yaw: Math.PI, pitch: 0.02, room: "stairwell" }, moves: [] },
@@ -142,6 +149,7 @@ try {
         else game.setRule(a.rule, a.value);
       }
       game.step(s.extraSteps ?? 60);
+      if (s.viewSeconds) await new Promise((resolve) => setTimeout(resolve, s.viewSeconds! * 1000));
       await game.nextFrame();
       return game.getState();
     }, shot);

@@ -19,6 +19,10 @@ import { CAMERA_POSES as BOUNCING_CAMERAS } from "../../src/exhibits/bouncing/vi
 import { CAMERA_POSES as SINGING_CAMERAS } from "../../src/exhibits/singing-glass/view";
 import { CAMERA_POSES as STAIR_CAMERAS } from "../../src/exhibits/stairwell/view";
 import type { Box } from "../../src/exhibits/layout";
+import { PassageExhibit } from "../../src/exhibits/passage";
+import { ChladniExhibit, ENTRANCE as CHLADNI_ENTRANCE, STATIC_BOXES as CHLADNI_BOXES } from "../../src/exhibits/chladni/sim";
+import { CAMERA_POSES as CHLADNI_CAMERAS } from "../../src/exhibits/chladni/view";
+import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
 let R: typeof RAPIER;
@@ -35,6 +39,8 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new StairwellExhibit(R), STAIR_CAMERAS, STAIR_ENTRANCE, STAIR_BOXES],
   [() => new OpticsExhibit(R), OPTICS_CAMERAS, OPTICS_ENTRANCE, OPTICS_BOXES],
   [() => new SingingGlassExhibit(R), SINGING_CAMERAS, SINGING_ENTRANCE, SINGING_BOXES],
+  [() => new ChladniExhibit(R), CHLADNI_CAMERAS, CHLADNI_ENTRANCE, CHLADNI_BOXES],
+  [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 
 const round = (v: number | undefined) => (v === undefined ? undefined : Math.round(v * 1000) / 1000);

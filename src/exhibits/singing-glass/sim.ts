@@ -87,19 +87,13 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "west-lintel", kind: "wall", center: [ROOM.xMin - W, (3 + ROOM.height) / 2, 2], half: [W, (ROOM.height - 3) / 2, 1] },
   // The organ's case (the player walks around it).
   { name: "organ", kind: "pedestal", center: [ORGAN.x0 + 2 * ORGAN.spacing, ORGAN.baseY / 2, ORGAN.z], half: [0.95, ORGAN.baseY / 2, 0.35] },
-  // The closing alcove behind the pane.
-  { name: "alcove-floor", kind: "floor", center: [ROOM.xMin - 1.75, -W, 2], half: [1.25, W, 1.5] },
-  { name: "alcove-ceiling", kind: "ceiling", center: [ROOM.xMin - 1.75, 3 + W, 2], half: [1.25, W, 1.5] },
-  { name: "alcove-north", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 1 - W], half: [1.25, 1.5, W] },
-  { name: "alcove-south", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 3 + W], half: [1.25, 1.5, W] },
-  { name: "alcove-end", kind: "wall", center: [ROOM.xMin - 3 - W, 1.5, 2], half: [W, 1.5, 1.5] },
   ...corridor("east", ROOM.xMax + 2 * W),
+  // Beyond the pane: the corridor on.
+  ...corridor("west", ROOM.xMin - 2 * W),
 ];
 
 /** The glass pane filling the west doorway: it blocks the way until it shatters. */
 export const PANE: Box = { name: "pane", kind: "glass", center: [ROOM.xMin - W, 1.5, 2], half: [0.03, 1.5, 1] };
-/** The alcove at the end of the museum, behind the pane. */
-export const ALCOVE = { xMin: ROOM.xMin - 3, xMax: ROOM.xMin - 0.5 } as const;
 /** No door closes on reset here, but the pane comes back: a player beyond it is brought inside. */
 export const DOORWAY_X = ROOM.xMin + 0.4;
 export const RESET_SPOT = { x: ROOM.xMin + 1.4, y: 0, z: 2 } as const;

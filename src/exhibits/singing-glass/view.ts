@@ -1,7 +1,6 @@
 // View of the Singing Glass: a narrow hall with a small brass organ against the
 // north wall, a tall glass pane in the west doorway, an antique glass harmonica
-// in a case on the south wall, two decoy glasses on shelves, and beyond the pane
-// the alcove with the museum's last placard. Glasses wobble as they ring, show a
+// in a case on the south wall, two decoy glasses on shelves, and the corridor on. Glasses wobble as they ring, show a
 // crack at half strength, and leave shards when they break.
 import * as THREE from "three";
 import type { BodySync } from "../../engine/bodySync";
@@ -10,7 +9,7 @@ import { worldBoxGeometry } from "../../render/materials";
 import { placard } from "../../render/placard";
 import type { Box } from "../layout";
 import { CRACK_AT } from "./resonance";
-import { ALCOVE, DECOYS, HARMONICA, ORGAN, PANE, PIPE_LENGTHS, ROOM, STATIC_BOXES, type SingingGlassExhibit } from "./sim";
+import { DECOYS, HARMONICA, ORGAN, PANE, PIPE_LENGTHS, ROOM, STATIC_BOXES, type SingingGlassExhibit } from "./sim";
 
 type V3 = [number, number, number];
 
@@ -136,7 +135,7 @@ export function buildSingingGlassView(scene: THREE.Object3D, ex: SingingGlassExh
     return { id, glass };
   });
 
-  // --- Placards: at the entrance, and the museum's last one in the alcove.
+  // --- The entrance placard.
   scene.add(
     placard(
       {
@@ -154,25 +153,6 @@ export function buildSingingGlassView(scene: THREE.Object3D, ex: SingingGlassExh
       m,
     ),
   );
-  const alcoveZ = 2;
-  scene.add(
-    placard(
-      {
-        kicker: "THE END, FOR NOW",
-        title: "More Galleries Ahead",
-        lines: [
-          "You have put right gravity, damping, light,",
-          "the bounce of a ball and the speed of sound.",
-          "The museum's other wings are still being",
-          "restored. Thank you for visiting.",
-        ],
-      },
-      new THREE.Vector3(ALCOVE.xMin + 0.04, 1.4, alcoveZ),
-      Math.PI / 2,
-      m,
-    ),
-  );
-
   // --- Lighting: one shadowed key, washes on the organ and the harmonica, the alcove.
   const key = new THREE.SpotLight(0xfff0dc, 55, 18, Math.PI / 3, 0.8, 1.5);
   key.position.set(ROOM.xMax - 0.5, ROOM.height - 0.3, ROOM.halfZ - 0.5);
@@ -188,9 +168,10 @@ export function buildSingingGlassView(scene: THREE.Object3D, ex: SingingGlassExh
   const caseLight = new THREE.PointLight(0xffe2c0, 3, 5, 1.8);
   caseLight.position.set(HARMONICA.x, 2.4, 1.4);
   scene.add(caseLight);
-  const alcoveLight = new THREE.PointLight(0xffe2c0, 3, 4, 2);
-  alcoveLight.position.set((ALCOVE.xMin + ALCOVE.xMax) / 2, 2.1, alcoveZ);
-  scene.add(alcoveLight);
+  // A low light halfway along the corridor on (this gallery draws it: it is its east end).
+  const corridorLight = new THREE.PointLight(0xffe2c0, 2.5, 5, 2);
+  corridorLight.position.set(ROOM.xMin - 0.5 - 4, 2.4, 2);
+  scene.add(corridorLight);
 
   let time = 0;
   return {
