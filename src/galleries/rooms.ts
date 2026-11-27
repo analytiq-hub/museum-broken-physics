@@ -199,6 +199,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./slowLightGallery")).createSlowLightGallery,
   },
   {
+    id: "galileo",
+    title: "Galileo's Ledge",
+    floor: 3,
+    kind: "gallery",
+    laws: ["fall"],
+    cameras: ["galileo", "galileo-flight"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./galileoGallery")).createGalileoGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 3,

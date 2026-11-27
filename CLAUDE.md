@@ -68,7 +68,7 @@ non-solutions and asserts they are not.
 - **The route is fixed and runs in floors** (`src/galleries/rooms.ts`, in order). Floor 1,
   mechanics: Galleries I–IV. The Grand Stair (a passage, `kind: "passage"`, no puzzle).
   Floor 2, waves, light and heat, 4.8 m up: Galleries V–IX. The Upper Stair. Floor 3, modern
-  physics, 9.6 m up: Galleries X–XIII so far. Then `the-end`, a small passage room with the
+  physics, 9.6 m up: Galleries X–XIV so far. Then `the-end`, a small passage room with the
   closing placard: new galleries go before it. Each floor is a level; harder going up. Rooms keep the coordinates they were built in, and `OFFSETS` places each one in the
   museum. The player runs in the active room's own coordinates and is shifted at each handover;
   the camera, light culling, handover and `getPlayer().feet` use museum coordinates.
@@ -100,6 +100,10 @@ non-solutions and asserts they are not.
   Gallery XIII: Slow Light (light at 4 m/s; a coincidence lock wants one flash to light a near
   cell and a far, shuttered cell together; flashes in flight are sim state; the lamp is a
   `cycle` control whose every click fires it, ignored while it recharges).
+  Gallery XIV: Galileo's Ledge (cork's gravitational mass is half its inertial mass: Rapier
+  `setGravityScale` on the cork ball; one kick sends both balls off a frictionless ledge, and
+  only under the broken law does cork fly into the far pan; restore the law afterwards so the
+  balance reads level. Order matters: restored first, cork lands short).
 - **New rooms:** `roomShell()`/`doorBox()`/`doorY()` in `layout.ts` build a standard room with
   its corridor stubs and sinking west door; `PassageExhibit` is a room with nothing to solve.
   Pure-maths models (no Rapier) go in their own module beside `sim.ts`, like `trace.ts`.

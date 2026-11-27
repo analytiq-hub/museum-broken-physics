@@ -6,7 +6,7 @@ See [concept.md](concept.md) for the game vision.
 ## Where things stand (27 Nov 2026)
 
 - **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
-- **Thirteen galleries on three floors, visited in a fixed order:**
+- **Fourteen galleries on three floors, visited in a fixed order:**
   - **Floor 1, mechanics:** I the Sideways Gallery (gravity), II the Restless Pendulum
     (damping), III the Bouncing Hall (restitution), IV the Leaning Pendulum (gravity and
     damping, the finale).
@@ -17,7 +17,7 @@ See [concept.md](concept.md) for the game vision.
   - **The Upper Stair** climbs to Floor 3.
   - **Floor 3, modern physics** (in progress): X Rutherford's Gold Foil (the atom's charge),
     XI Stern–Gerlach (spin), XII the Quantum Tunnel (Planck's constant), XIII Slow Light (the
-    speed of light).
+    speed of light), XIV Galileo's Ledge (equal fall).
   - The closing placard is a small room (`the-end`) after the last gallery.
 - **Done:** Milestones 0–12, Floor 3's first three rooms (Milestone 13, in progress), plus work
   added after the plan:
@@ -54,7 +54,7 @@ a level: clearly separate, and harder than the one below.
   | ----- | ----- | --------------------------- | -------------------- |
   | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale), all built; the Spring and the Sling (planned, Milestone 14) go before the finale | One law per room, visible effects, generous budgets |
   | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale); all built | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
-  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light (built); XIV Einstein's Elevator, XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
+  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light, XIV Galileo's Ledge (built); XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
 
 - **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
   `src/galleries/rooms.ts` places them in the museum. Every corridor is a standard 8 m stub
@@ -689,9 +689,13 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
   display says so); a flash that reaches the shutter while it is shut scorches it, and the
   second scorch jams it (fail). Restored, a flash is everywhere at once: fire it while the dial
   shows the shutter open. Decoy: 2 m/s. Pure maths (pulse fronts advanced each step).
-- **Gallery XIV, Einstein's Elevator (planned).** Broken law: inertial and gravitational mass
-  differ, so a heavy ball and a light one fall differently in a lift; the player must make two
-  balls land on two plates at once. Rapier, with per-body gravity scales.
+- **Gallery XIV, Galileo's Ledge (done; planned as Einstein's Elevator).** Broken law: inertial
+  and gravitational mass differ: gravity pulls cork half as hard as brass, though both resist a
+  push alike (Rapier gravity scale on the cork ball). One kick sends a brass and a cork ball of
+  equal mass off a polished ledge; only under the broken law does the slower-falling cork fly
+  into the far pan of a balance. Then the balance can't hang level until the law is restored.
+  Restore first (or pick the decoy, cork pulled harder) and the cork lands short, on the floor.
+  The elevator version reduced to "restore, then drop"; this one makes the order matter.
 - **Gallery XV, Floor 3's finale (planned).** Combines two of the floor's laws, for example
   spin and Planck's constant: a beam split by spin, one half tunnelling.
 
@@ -754,10 +758,8 @@ effects, as Floor 1's rooms should be.
 ### Mechanics ideas for later
 Background for further Floor 1 rooms, or a mechanics wing. Not scheduled.
 
-- **Galileo's falling bodies** (acceleration, F = ma): Aristotle's law, heavier falls faster.
-  It overlaps Einstein's Elevator (Floor 3, two masses landing together). If both are built,
-  Galileo is the simple version and the Elevator keeps the twist that acceleration is
-  indistinguishable from gravity.
+- ~~**Galileo's falling bodies.**~~ *Built as Gallery XIV, Galileo's Ledge (Floor 3).* An
+  elevator room (acceleration indistinguishable from gravity) is still open as an idea.
 - **Newton's cradle / recoil** (momentum, Newton's third law): momentum isn't conserved, so
   two balls fly off, or a cannon doesn't recoil. A chain of cradles opens a lock.
 - **The lever** (torque): torque goes as r² or ignores distance. A balance beam with weights
@@ -821,7 +823,7 @@ More candidates from famous experiments are in [room-ideas.md](room-ideas.md).
 1. **Playtest all three floors** with someone new. The instrument hides undiscovered laws, so
    the rooms must teach themselves; record with Shift+D, and a stuck session becomes a replay
    test.
-2. **Milestone 13:** Einstein's Elevator and Floor 3's finale.
+2. **Milestone 13:** Floor 3's finale.
 3. **Milestone 14:** the Spring and the Sling on Floor 1.
 4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.

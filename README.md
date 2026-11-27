@@ -1,6 +1,6 @@
 # The Museum of Broken Physics
 
-A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Thirteen galleries on three floors, visited in order. Floor 1, mechanics: the Sideways Gallery (gravity), the Restless Pendulum (damping), the Bouncing Hall (bounce) and the Leaning Pendulum (gravity and damping, in the right order). Floor 2, waves, light and heat: the Hidden Door (light), the Singing Glass (sound), the Chladni Plates (sound in brass), the Backwards Furnace (heat) and Young's Double Slit. Floor 3, modern physics: Rutherford's Gold Foil (the nucleus), Stern–Gerlach (spin), the Quantum Tunnel (Planck's constant) and Slow Light (the speed of light).
+A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Fourteen galleries on three floors, visited in order. Floor 1, mechanics: the Sideways Gallery (gravity), the Restless Pendulum (damping), the Bouncing Hall (bounce) and the Leaning Pendulum (gravity and damping, in the right order). Floor 2, waves, light and heat: the Hidden Door (light), the Singing Glass (sound), the Chladni Plates (sound in brass), the Backwards Furnace (heat) and Young's Double Slit. Floor 3, modern physics: Rutherford's Gold Foil (the nucleus), Stern–Gerlach (spin), the Quantum Tunnel (Planck's constant), Slow Light (the speed of light) and Galileo's Ledge (all things fall alike).
 
 **Play the latest build:** https://analytiqhub.com/museum-broken-physics/ (deployed from `main` after CI passes)
 
