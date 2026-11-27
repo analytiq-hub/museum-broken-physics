@@ -169,6 +169,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./rutherfordGallery")).createRutherfordGallery,
   },
   {
+    id: "stern-gerlach",
+    title: "Stern–Gerlach",
+    floor: 3,
+    kind: "gallery",
+    laws: ["spin"],
+    cameras: ["stern-gerlach", "stern-gerlach-screen"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./sternGerlachGallery")).createSternGerlachGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 3,

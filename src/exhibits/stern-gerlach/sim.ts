@@ -1,0 +1,222 @@
+// Gallery XI: Stern–Gerlach. Sim only: no three.js, no DOM.
+//
+// An oven boils off silver atoms; slits narrow them into a beam that passes
+// between the poles of a magnet shaped to push each atom up or down by its spin,
+// then lands on a glass screen, where the silver builds up as a visible deposit.
+// Two brass detectors sit where the atoms should land; between them, a fragile
+// glass cell.
+//
+// The broken law is spin: here it can point any way, so each atom is pushed by a
+// different amount and the beam smears into a band from top to bottom. The
+// detectors never fill, and the middle cell, in the smear, slowly overheats and
+// cracks (fail). The decoy, three values, adds a spot right on the middle cell,
+// which cracks it fast. Put spin right, two values only (up or down), and the
+// beam splits into exactly two spots on the detectors: the door opens.
+// The oven is a free control: it starts cold.
+import type RAPIER from "@dimforge/rapier3d-compat";
+import { ROOM_GROUPS } from "../../engine/groups";
+import { gravityRule, type Rule } from "../../rules/Rule";
+import { ExhibitBase } from "../Exhibit";
+import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
+
+export const ROOM: RoomBounds = { xMin: -12.5, xMax: -0.5, halfZ: 4, height: 4.5 };
+/** The beam line runs west along z = AXIS_Z at height BEAM_Y. */
+export const AXIS_Z = -1.6;
+export const BEAM_Y = 1.3;
+export const OVEN_X = -2.2;
+export const MAGNET = { x0: -5.0, x1: -8.0 } as const;
+export const SCREEN_X = -10.6;
+/** The spots' height above and below the beam on the screen (m). */
+export const SPLIT = 0.45;
+/** Cells on the screen: the detectors at ±SPLIT, the fragile cell in the middle. */
+export const CELL_HALF = 0.07;
+
+export type Spin = "any" | "two" | "three";
+export const SPIN_MARKS: { value: Spin; label: string }[] = [
+  { value: "any", label: "Any direction" },
+  { value: "two", label: "Two values: up or down" },
+  { value: "three", label: "Three values" },
+];
+
+/** How much of the beam lands on a cell of half-height CELL_HALF centred at height y. */
+export function beamOnCell(spin: Spin, y: number): number {
+  if (spin === "any") {
+    // A smear spread evenly from −SPLIT to +SPLIT (a cell takes its share of the band).
+    return Math.abs(y) <= SPLIT ? (2 * CELL_HALF) / (2 * SPLIT) : 0;
+  }
+  const spots = spin === "two" ? [-SPLIT, SPLIT] : [-SPLIT, 0, SPLIT];
+  return spots.some((s) => Math.abs(s - y) < CELL_HALF) ? 1 / spots.length : 0;
+}
+
+/** A detector counts as filled when this share of the beam lands on it... */
+const FILLED = 0.3;
+/** ...and both stay filled, with the middle dark, for this many steps (2 s). */
+const LOCK_STEPS = 120;
+/** The middle cell heats with the beam on it and cools slowly; it cracks at 1. */
+const HEAT = { gain: 1.2, tau: 6 } as const;
+
+export const ENTRANCE = { x: ROOM.xMax - 0.6, y: 0, z: 2 } as const;
+export const DOOR = doorBox(ROOM);
+/** The oven's switch: a brass wheel on its side. */
+export const OVEN_SWITCH = { x: OVEN_X, z: AXIS_Z + 0.55 } as const;
+export const STATIC_BOXES: readonly Box[] = [
+  ...roomShell(ROOM),
+  { name: "bench", kind: "pedestal", center: [(OVEN_X + SCREEN_X) / 2, 0.45, AXIS_Z], half: [(OVEN_X - SCREEN_X) / 2 + 0.4, 0.45, 0.55] },
+];
+const DOOR_OPEN_SECONDS = 1.2;
+export const DOORWAY_X = ROOM.xMin + 0.4;
+export const RESET_SPOT = { x: ROOM.xMin + 1.4, y: 0, z: 2 } as const;
+
+interface SternGerlachExtra {
+  heat: number;
+  cracked: boolean;
+  lockSteps: number;
+  /** Silver deposited on the screen, for the view: seconds of beam per spin setting. */
+  exposure: Record<Spin, number>;
+  solved: boolean;
+  doorProgress: number;
+}
+
+export class SternGerlachExhibit extends ExhibitBase {
+  private readonly doorHandle: number;
+  private s: SternGerlachExtra = { heat: 0, cracked: false, lockSteps: 0, exposure: { any: 0, two: 0, three: 0 }, solved: false, doorProgress: 0 };
+
+  constructor(R: typeof RAPIER, options: { budget?: number } = {}) {
+    super("stern-gerlach", R, options.budget ?? 2);
+    const world = this.world;
+    addStaticBoxes(R, world, world.createRigidBody(R.RigidBodyDesc.fixed()), STATIC_BOXES);
+    const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
+    world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
+    this.doorHandle = door.handle;
+    this.rules = [spinRule(), gravityRule("down", ["down"], { down: "Floor" }, false), ovenRule()];
+    this.finishSetup();
+  }
+
+  get door(): RAPIER.RigidBody {
+    return this.world.getRigidBody(this.doorHandle);
+  }
+
+  get spin(): Spin {
+    return this.rule("spin").current as Spin;
+  }
+
+  get ovenOn(): boolean {
+    return this.rule("oven").current === "on";
+  }
+
+  /** Share of the beam on the upper detector, the lower one, and the middle cell. */
+  cells(): { up: number; down: number; middle: number } {
+    if (!this.ovenOn || this.s.cracked) return { up: 0, down: 0, middle: 0 };
+    return { up: beamOnCell(this.spin, SPLIT), down: beamOnCell(this.spin, -SPLIT), middle: beamOnCell(this.spin, 0) };
+  }
+
+  /** 0..1: how hot the middle cell is (it cracks at 1). */
+  get heat(): number {
+    return this.s.heat;
+  }
+
+  get cracked(): boolean {
+    return this.s.cracked;
+  }
+
+  get exposure(): Readonly<Record<Spin, number>> {
+    return this.s.exposure;
+  }
+
+  get lockProgress(): number {
+    return this.s.solved ? 1 : this.s.lockSteps / LOCK_STEPS;
+  }
+
+  isSolved(): boolean {
+    return this.s.solved;
+  }
+
+  isFailed(): boolean {
+    return !this.s.solved && this.s.cracked;
+  }
+
+  protected namedBodies(): Record<string, RAPIER.RigidBody> {
+    return { door: this.door };
+  }
+
+  protected settleBodies(): RAPIER.RigidBody[] {
+    return [];
+  }
+
+  protected beforeStep(): void {
+    if (this.s.solved && this.s.doorProgress < 1) {
+      this.s.doorProgress = Math.min(1, this.s.doorProgress + this.world.timestep / DOOR_OPEN_SECONDS);
+      this.door.setNextKinematicTranslation({ x: DOOR.center[0], y: doorY(DOOR, this.s.doorProgress), z: DOOR.center[2] });
+    }
+  }
+
+  protected afterStep(): void {
+    if (this.s.solved || this.s.cracked) return;
+    const dt = this.world.timestep;
+    const c = this.cells();
+    if (this.ovenOn) this.s.exposure[this.spin] += dt;
+    const decay = Math.exp(-dt / HEAT.tau);
+    this.s.heat = this.s.heat * decay + HEAT.gain * HEAT.tau * c.middle * (1 - decay);
+    if (this.s.heat >= 1) {
+      this.s.cracked = true;
+      return;
+    }
+    const locked = c.up >= FILLED && c.down >= FILLED && c.middle === 0;
+    this.s.lockSteps = locked ? this.s.lockSteps + 1 : 0;
+    if (this.s.lockSteps >= LOCK_STEPS) this.s.solved = true;
+  }
+
+  protected arrangeSolved(): void {
+    this.rule("oven").current = "on";
+    this.s.exposure = { any: 0, two: 4, three: 0 };
+    this.s.solved = true;
+  }
+
+  protected saveExtra(): SternGerlachExtra {
+    return this.s;
+  }
+
+  protected loadExtra(extra: SternGerlachExtra): void {
+    this.s = extra;
+  }
+}
+
+function spinRule(): Rule<Spin> {
+  return {
+    id: "spin",
+    label: "Spin of the silver atoms",
+    kind: "choice",
+    options: SPIN_MARKS,
+    current: "any",
+    nominal: "two",
+    editable: true,
+    observe: (current) =>
+      current === "any"
+        ? "Here an atom's spin can point any way at all, so the magnet pushes each atom by its own amount."
+        : current === "two"
+          ? "Here an atom's spin can only be up or down: the magnet pushes every atom one of two ways."
+          : "Here an atom's spin can take three values: up, down, or neither.",
+    explain: (current) =>
+      current === "two"
+        ? "A silver atom's spin is up or down, nothing between, as it should be."
+        : "A silver atom's spin should take exactly two values, up or down. Here it does not.",
+    apply() {},
+  };
+}
+
+function ovenRule(): Rule<string> {
+  return {
+    id: "oven",
+    label: "Oven",
+    kind: "choice",
+    options: [
+      { value: "off", label: "Cold" },
+      { value: "on", label: "Hot" },
+    ],
+    current: "off",
+    nominal: "off",
+    editable: true,
+    control: true,
+    apply() {},
+  };
+}

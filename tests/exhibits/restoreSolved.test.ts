@@ -14,6 +14,7 @@ import { ChladniExhibit } from "../../src/exhibits/chladni/sim";
 import { FurnaceExhibit } from "../../src/exhibits/furnace/sim";
 import { DoubleSlitExhibit } from "../../src/exhibits/double-slit/sim";
 import { RutherfordExhibit } from "../../src/exhibits/rutherford/sim";
+import { SternGerlachExhibit } from "../../src/exhibits/stern-gerlach/sim";
 
 let R: typeof RAPIER;
 beforeAll(async () => {
@@ -32,6 +33,7 @@ const exhibits: [string, () => WithDoor][] = [
   ["Gallery VIII", () => new FurnaceExhibit(R)],
   ["Gallery IX", () => new DoubleSlitExhibit(R)],
   ["Gallery X", () => new RutherfordExhibit(R)],
+  ["Gallery XI", () => new SternGerlachExhibit(R)],
 ];
 
 describe("restoreSolved", () => {

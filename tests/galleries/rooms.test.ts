@@ -28,6 +28,8 @@ import { DoubleSlitExhibit, ENTRANCE as SLIT_ENTRANCE, STATIC_BOXES as SLIT_BOXE
 import { CAMERA_POSES as SLIT_CAMERAS } from "../../src/exhibits/double-slit/view";
 import { RutherfordExhibit, ENTRANCE as RUTHERFORD_ENTRANCE, STATIC_BOXES as RUTHERFORD_BOXES } from "../../src/exhibits/rutherford/sim";
 import { CAMERA_POSES as RUTHERFORD_CAMERAS } from "../../src/exhibits/rutherford/view";
+import { SternGerlachExhibit, ENTRANCE as SG_ENTRANCE, STATIC_BOXES as SG_BOXES } from "../../src/exhibits/stern-gerlach/sim";
+import { CAMERA_POSES as SG_CAMERAS } from "../../src/exhibits/stern-gerlach/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -50,6 +52,7 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new DoubleSlitExhibit(R), SLIT_CAMERAS, SLIT_ENTRANCE, SLIT_BOXES],
   [() => new StairwellExhibit(R, "upper-stair"), { "upper-stair": STAIR_CAMERAS.stairwell }, STAIR_ENTRANCE, STAIR_BOXES],
   [() => new RutherfordExhibit(R), RUTHERFORD_CAMERAS, RUTHERFORD_ENTRANCE, RUTHERFORD_BOXES],
+  [() => new SternGerlachExhibit(R), SG_CAMERAS, SG_ENTRANCE, SG_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 

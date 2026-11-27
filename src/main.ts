@@ -465,7 +465,7 @@ const CONTROLS = TOUCH
       <b>Click</b> brass buttons to work the exhibits · hold <b>Q</b> for your physics instrument ·
       <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause`;
 /** The start card, or once the player has entered, the pause card. */
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"];
 /** The visitor's ticket: one stamp per gallery, inked once it's solved. */
 const FLOOR_NAMES: Record<number, string> = { 1: "Floor 1 · Mechanics", 2: "Floor 2 · Waves and Light", 3: "Floor 3 · Modern Physics" };
 /** The visitor's ticket: one stamp per gallery, inked once it's solved, a row per floor. */

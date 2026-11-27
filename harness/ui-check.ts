@@ -255,6 +255,17 @@ try {
   expect("the crosshair finds the source", await eventually(page, () => window.__game!.getPlayer().hovered === "source"));
   await page.mouse.click(600, 400);
   expect("clicking slides the source along, for free", await eventually(page, () => window.__game!.getState().rules.source === "1" && window.__game!.getState().changesUsed === 0, 30_000));
+  // Gallery XI: turn the oven's wheel to light it.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("stern-gerlach", { x: -2.2, z: 0.2 }, 0, -0.4);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("oven");
+  });
+  expect("the player is handed to Gallery XI", await eventually(page, () => window.__game!.getPlayer().gallery === "stern-gerlach"));
+  expect("the HUD numbers it Gallery XI", await eventually(page, () => document.querySelector(".hud .keys")!.textContent!.includes("Gallery XI ")));
+  expect("the crosshair finds the oven", await eventually(page, () => window.__game!.getPlayer().hovered === "oven"));
+  await page.mouse.click(600, 400);
+  expect("turning the wheel lights the oven, for free", await eventually(page, () => window.__game!.getState().rules.oven === "on" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.
