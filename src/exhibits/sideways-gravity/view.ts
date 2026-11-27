@@ -530,7 +530,7 @@ function placardTexture(): THREE.Texture {
     ctx.textAlign = "center";
     ctx.font = "600 22px Georgia, serif";
     ctx.letterSpacing = "4px";
-    ctx.fillText("GALLERY I", 280, 70);
+    ctx.fillText("FLOOR 1 · GALLERY I", 280, 70);
     ctx.letterSpacing = "0px";
     ctx.font = "700 38px Georgia, serif";
     ctx.fillText("The Sideways Gallery", 280, 120);

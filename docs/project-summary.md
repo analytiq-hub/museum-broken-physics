@@ -14,16 +14,17 @@ Often you have to *use* the broken law before you put it right.
 
 Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Plays on desktop and on phones and tablets.
 
-## The six galleries
+## The six galleries, on two floors
 
-| # | Gallery | Broken law | What the player does |
-| - | ------- | ---------- | -------------------- |
-| I | The Sideways Gallery | Gravity points at a wall | Use gravity changes to carry a marble along the walls onto a high ledge, then restore "down" to drop it onto a brass plate. Dropping it to the floor early is a dead end. Controlled from an in-world console or the instrument. |
-| II | The Restless Pendulum | Negative damping: every swing gains energy | Let the swing grow until both bells ring, then apply drag before the bob smashes a glass vase or the room shakes apart. Instrument only. |
-| III | The Leaning Pendulum | Gravity leans sideways *and* damping is negative | Ring a bell that is only reachable with broken gravity, calm the swing, then bring gravity home in stages (via 45°). Restoring gravity in one go tears the pendulum off its hook. This is the trade-off room. |
-| IV | The Hidden Door | A prism's refractive index is wrong (0.7) | The misbent beam reveals a hidden door. Restore the index and turn two mirrors so the beam hits the door's photocell. |
-| V | The Bouncing Hall | Bounces gain energy (restitution 1.07) | Drop the ball and let each bounce climb until a brass deflector throws it onto a high balcony, then restore the bounce before it hops back off and smashes the skylight. |
-| VI | The Singing Glass | The speed of sound is 229 m/s, so every organ pipe plays flat | Find the one pipe that, in air, sings the glass pane in the doorway to pieces, without shattering the antique glass harmonica. |
+| # | Floor | Gallery | Broken law | What the player does |
+| - | ----- | ------- | ---------- | -------------------- |
+| I | 1 | The Sideways Gallery | Gravity points at a wall | Use gravity changes to carry a marble along the walls onto a high ledge, then restore "down" to drop it onto a brass plate. Dropping it to the floor early is a dead end. Controlled from an in-world console or the instrument. |
+| II | 1 | The Restless Pendulum | Negative damping: every swing gains energy | Let the swing grow until both bells ring, then apply drag before the bob smashes a glass vase or the room shakes apart. Instrument only. |
+| III | 1 | The Bouncing Hall | Bounces gain energy (restitution 1.07) | Drop the ball and let each bounce climb until a brass deflector throws it onto a high balcony, then restore the bounce before it hops back off and smashes the skylight. |
+| IV | 1 | The Leaning Pendulum | Gravity leans sideways *and* damping is negative | Ring a bell that is only reachable with broken gravity, calm the swing, then bring gravity home in stages (via 45°). Restoring gravity in one go tears the pendulum off its hook. This is the trade-off room. |
+| | | **The Grand Stair** | | A passage up to Floor 2, with the Floor 1 farewell and Floor 2 welcome placards. |
+| V | 2 | The Hidden Door | A prism's refractive index is wrong (0.7) | The misbent beam reveals a hidden door. Restore the index and turn two mirrors so the beam hits the door's photocell. |
+| VI | 2 | The Singing Glass | The speed of sound is 229 m/s, so every organ pipe plays flat | Find the one pipe that, in air, sings the glass pane in the doorway to pieces, without shattering the antique glass harmonica. |
 
 The galleries are joined by corridors. Each opens the next when solved, and the walk ends in
 an alcove with a closing placard.

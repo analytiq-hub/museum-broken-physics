@@ -19,7 +19,7 @@ import { PLAYER, Player, type PlayerInput } from "./engine/player";
 import { HANDOVER_MARGIN } from "./exhibits/layout";
 import { PLAYER_SPAWN } from "./exhibits/sideways-gravity/sim";
 import type { Gallery, Interactable } from "./galleries/gallery";
-import { ROOMS, liveAround, roomAt, roomIndex, roomOwns } from "./galleries/rooms";
+import { GALLERIES, OFFSETS, ROOMS, liveAround, roomAt, roomIndex, roomOwns } from "./galleries/rooms";
 import { disposeGroup } from "./render/dispose";
 import { loadEnvironment, loadMaterials } from "./render/materials";
 import { createPost } from "./render/post";
@@ -131,6 +131,8 @@ function buildRoom(index: number): Promise<LiveRoom> {
     pending = (async () => {
       const factory = await ROOMS[index].load();
       const gallery = factory(R, scene, materials, sound, () => player);
+      // Built in its own coordinates; placed in the museum (rooms.ts OFFSETS).
+      gallery.group.position.set(OFFSETS[index].x, OFFSETS[index].y, 0);
       // A room rebuilt fresh is like a reset one; if it was solved, show it solved.
       if (gameState.isSolved(gallery.id)) restoreRoom(gallery);
       const lights: THREE.Light[] = [];
@@ -188,7 +190,7 @@ let failedFor = 0;
 /** Distance walked since the last footstep (m). */
 let stride = 0;
 /** Position of the gallery's main body (ball, bob), recorded at the end of attempts. */
-const primaryPosition = (g: Gallery) => Object.values(g.exhibit.describe().bodies)[0].pos;
+const primaryPosition = (g: Gallery): [number, number, number] => Object.values(g.exhibit.describe().bodies)[0]?.pos ?? [0, 0, 0];
 
 const keys = new Set<string>();
 /** 1 if any of the key codes is held, else 0. */
@@ -203,12 +205,22 @@ function playerInput(): PlayerInput {
   };
 }
 
-/** Moves the player into another (built) gallery's physics world. Only the active world steps. */
-function switchTo(index: number): void {
+/**
+ * Moves the player into another (built) gallery's physics world. Only the active
+ * world steps. Each room has its own coordinates, so the player is shifted into the
+ * new room's, or placed at `local` (a jump).
+ */
+function switchTo(index: number, local?: { x: number; y: number; z: number }): void {
   const next = live.get(index)?.gallery;
-  if (!next || next === active) return;
+  if (!next) return;
+  if (next === active) {
+    if (local) player.placeAt(local);
+    return;
+  }
   active.silence();
   player.detach();
+  if (local) player.placeAt(local);
+  else player.shift(OFFSETS[activeIndex].x - OFFSETS[index].x, OFFSETS[activeIndex].y - OFFSETS[index].y);
   active = next;
   activeIndex = index;
   focus = index;
@@ -260,10 +272,17 @@ function chooseVisit(fresh: boolean): void {
 const LIGHT_REACH = 10;
 /** Galleries further than this (m) can't be seen at all (two rooms away), so aren't drawn. */
 const DRAW_REACH = 22;
+/** The player's floor position in the museum (the physics runs in the active room's own coordinates). */
+function museumFeet(): { x: number; y: number; z: number } {
+  const f = player.feet;
+  return { x: f.x + OFFSETS[activeIndex].x, y: f.y + OFFSETS[activeIndex].y, z: f.z };
+}
+
 function updateGalleryLights(): void {
-  const x = player.feet.x;
-  for (const { gallery: g, lights } of live.values()) {
-    const within = (reach: number) => x > g.xRange[0] - reach && x < g.xRange[1] + reach;
+  const x = museumFeet().x;
+  for (const { index, gallery: g, lights } of live.values()) {
+    const ox = OFFSETS[index].x;
+    const within = (reach: number) => x > g.xRange[0] + ox - reach && x < g.xRange[1] + ox + reach;
     const lit = g === active || within(LIGHT_REACH);
     for (const light of lights) light.visible = lit;
     g.group.visible = g === active || within(DRAW_REACH) || mode === "orbit";
@@ -276,7 +295,7 @@ function updateGalleryLights(): void {
  * corridor beyond the midpoint only exists in the next room's world.
  */
 function checkHandover(margin = HANDOVER_MARGIN): void {
-  const x = player.feet.x;
+  const x = museumFeet().x;
   if (roomOwns(activeIndex, x, margin)) return;
   const next = ROOMS.findIndex((_, i) => i !== activeIndex && roomOwns(i, x, -margin));
   if (next < 0) return;
@@ -373,9 +392,10 @@ async function goToRoom(index: number, at?: { feet: { x: number; y: number; z: n
   focus = index;
   await ensureAround(index);
   const g = live.get(index)!.gallery;
-  player.placeAt(at?.feet ?? g.entrance);
+  const o = OFFSETS[index];
+  // `at` is in museum coordinates; the room wants its own.
+  switchTo(index, at ? { x: at.feet.x - o.x, y: at.feet.y - o.y, z: at.feet.z } : g.entrance);
   camera.rotation.set(at?.pitch ?? -0.05, at?.yaw ?? g.entranceYaw, 0);
-  checkHandover(0);
   trimRooms();
 }
 
@@ -447,15 +467,24 @@ const CONTROLS = TOUCH
 /** The start card, or once the player has entered, the pause card. */
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 /** The visitor's ticket: one stamp per gallery, inked once it's solved. */
+const FLOOR_NAMES: Record<number, string> = { 1: "Floor 1 · Mechanics", 2: "Floor 2 · Waves and Light" };
+/** The visitor's ticket: one stamp per gallery, inked once it's solved, a row per floor. */
 function ticketHtml(solved: (id: string) => boolean): string {
-  const done = ROOMS.filter((g) => solved(g.id)).length;
-  const stamps = ROOMS
-    .map((g, i) => {
-      const name = g.title.replace(/^The /, "").replace(/ Gallery$/, "");
-      return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
+  const done = GALLERIES.filter((g) => solved(g.id)).length;
+  const floors = [...new Set(GALLERIES.map((g) => g.floor))];
+  const rows = floors
+    .map((floor) => {
+      const stamps = GALLERIES.map((g, i) => ({ g, i }))
+        .filter(({ g }) => g.floor === floor)
+        .map(({ g, i }) => {
+          const name = g.title.replace(/^The /, "").replace(/ Gallery$/, "");
+          return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
+        })
+        .join("");
+      return `<div class="ticket-floor">${FLOOR_NAMES[floor] ?? `Floor ${floor}`}</div><div class="stamps">${stamps}</div>`;
     })
     .join("");
-  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${ROOMS.length} galleries restored</div><div class="stamps">${stamps}</div></div>`;
+  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${GALLERIES.length} galleries restored</div>${rows}</div>`;
 }
 
 function showOverlay(pausedCard: boolean): void {
@@ -473,7 +502,7 @@ function showOverlay(pausedCard: boolean): void {
       </div>`
       : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
-        <p>Six galleries whose laws have broken. Put them right, or put them to use.</p>
+        <p>Two floors of galleries whose laws have broken. Put them right, or put them to use.</p>
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
       </div>`;
@@ -583,12 +612,14 @@ function renderHud(): void {
   const changesAllowed = ex.changesLeft > 0 && !ex.isSolved() && !ex.isFailed();
   const pips = "●".repeat(ex.changesLeft) + "○".repeat(ex.changesUsed);
   const hint = mode !== "first-person" ? "" : TOUCH ? "Tap <b>Laws</b> to read the room's laws." : "Hold <b>Q</b> to read the room's laws with your instrument.";
-  const restored = ROOMS.filter((room) => gameState.isSolved(room.id)).length;
+  const restored = GALLERIES.filter((room) => gameState.isSolved(room.id)).length;
+  const room = ROOMS[activeIndex];
+  const where = room.kind === "gallery" ? `Gallery ${ROMAN[GALLERIES.indexOf(room)]} · ` : "";
   const html = `
     <div class="title">${active.title}</div>
-    <div>${active.summary()} · Changes left <span class="pips">${pips}</span></div>
+    <div>${active.summary()}${room.kind === "gallery" ? ` · Changes left <span class="pips">${pips}</span>` : ""}</div>
     <div class="status">${TOUCH ? touchWording(active.status(player)) : active.status(player)}</div>
-    <div class="keys">Galleries restored: ${restored} of ${ROOMS.length}${hint ? ` · ${hint}` : ""}</div>`;
+    <div class="keys">${FLOOR_NAMES[room.floor] ?? `Floor ${room.floor}`} · ${where}Galleries restored: ${restored} of ${GALLERIES.length}${hint && room.kind === "gallery" ? ` · ${hint}` : ""}</div>`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
   // The instrument: pinned open in the window view, raised with Q in first person.
@@ -639,9 +670,10 @@ async function setOrbitPose(name: string): Promise<void> {
   if (index < 0) throw new Error(`unknown camera "${name}"`);
   if (index !== activeIndex) await goToRoom(index);
   const pose = active.cameraPoses[name];
+  const o = OFFSETS[activeIndex];
   setMode("orbit");
-  camera.position.set(...pose.position);
-  orbit.target.set(...pose.target);
+  camera.position.set(pose.position[0] + o.x, pose.position[1] + o.y, pose.position[2]);
+  orbit.target.set(pose.target[0] + o.x, pose.target[1] + o.y, pose.target[2]);
   orbit.update();
 }
 
@@ -758,8 +790,15 @@ installDebugApi({
     return { x: ((p.x + 1) / 2) * window.innerWidth, y: ((1 - p.y) / 2) * window.innerHeight, distance };
   },
   getRenderInfo: () => ({ ...renderer.info.render, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }),
+  async setPlayerIn(roomId, feet, yaw, pitch = 0) {
+    const index = roomIndex(roomId);
+    if (index < 0) throw new Error(`no room "${roomId}"`);
+    const o = OFFSETS[index];
+    await goToRoom(index, { feet: { x: feet.x + o.x, y: (feet.y ?? 0) + o.y, z: feet.z }, yaw, pitch });
+    setMode("first-person");
+  },
   getPlayer: () => ({
-    feet: player.feet,
+    feet: museumFeet(),
     yaw: camera.rotation.y,
     pitch: camera.rotation.x,
     hovered: hovered === undefined ? undefined : String(hovered.value),
@@ -799,7 +838,8 @@ renderer.setAnimationLoop((time) => {
     const p = player.previous;
     const q = player.position;
     const feetOffset = PLAYER.eyeHeight - (PLAYER.halfHeight + PLAYER.radius);
-    eye.set(p.x + (q.x - p.x) * alpha, p.y + (q.y - p.y) * alpha + feetOffset, p.z + (q.z - p.z) * alpha);
+    const o = OFFSETS[activeIndex];
+    eye.set(p.x + (q.x - p.x) * alpha + o.x, p.y + (q.y - p.y) * alpha + feetOffset + o.y, p.z + (q.z - p.z) * alpha);
     const shake = frozen ? 0 : active.shake();
     if (shake > 0) eye.add(new THREE.Vector3((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake));
     camera.position.copy(eye);

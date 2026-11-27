@@ -36,15 +36,15 @@ const PIPE_SCALE = 2.2;
 // The pane's body never needs syncing (it only vanishes, which update() shows), so `_sync` goes unused.
 export function buildSingingGlassView(scene: THREE.Object3D, ex: SingingGlassExhibit, _sync: BodySync, m: Materials): SingingGlassView {
   const byKind: Record<Box["kind"], THREE.Material> = {
-    floor: m.floor,
+    floor: m.wood, // Floor 2 is floored in wood: a different level, a different look
     ceiling: m.ceiling,
     wall: m.wall,
     glass: m.glass,
     ledge: m.ledge,
     pedestal: m.wood,
   };
-  // Gallery V draws the corridor (it is the east end of it).
-  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor56-"))) {
+  // The gallery to the east draws the corridor in (it is the east end of it).
+  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-east-"))) {
     const mesh = new THREE.Mesh(worldBoxGeometry(box.half, box.center, TILE[box.kind]), byKind[box.kind]);
     mesh.position.set(...box.center);
     mesh.receiveShadow = true;
@@ -140,7 +140,7 @@ export function buildSingingGlassView(scene: THREE.Object3D, ex: SingingGlassExh
   scene.add(
     placard(
       {
-        kicker: "GALLERY VI",
+        kicker: "FLOOR 2 · GALLERY VI",
         title: "The Singing Glass",
         lines: [
           "The organ in this hall plays out of tune,",

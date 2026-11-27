@@ -21,7 +21,7 @@
 // Axes: +x east, +y up, +z south (the viewing window is the south wall).
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { BALL_GROUPS, ROOM_GROUPS, TELLTALE_GROUPS } from "../../engine/groups";
-import { addStaticBoxes, CORRIDOR_1_2, type Box } from "../layout";
+import { addStaticBoxes, corridor, type Box } from "../layout";
 import { gravityRule, type GravityDirection } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 
@@ -82,7 +82,7 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "hall-west", kind: "wall", center: [-6 - W, 3, 6.5], half: [W, 3, 2] },
   { name: "hall-south", kind: "wall", center: [0, 3, 8.5 + W], half: [6.5, 3, W] },
   // The corridor to Gallery II behind the west door (shared with that gallery's world).
-  ...CORRIDOR_1_2,
+  ...corridor("west", -6.5),
 ];
 
 export const BALL_RADIUS = 0.4;

@@ -29,7 +29,10 @@ export interface GameDebugApi {
   /** A pose from `cameras` (orbit view), or "player" for first person. */
   setCamera(name: string): Promise<void>;
   /** Puts the player at a floor position, looking along yaw/pitch (radians), in first person. */
+  /** `feet` in museum coordinates (getPlayer().feet); rooms past the first two are placed away from their own coordinates. */
   setPlayer(feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): Promise<void>;
+  /** Like setPlayer, but `feet` in a room's own coordinates (the ones its sim and view use). */
+  setPlayerIn(roomId: string, feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): Promise<void>;
   /** Ids of the galleries built right now, east to west (at most three, plus one during a jump). */
   getLoaded(): string[];
   /** Renderer stats for the last frame (draw calls, triangles) and GPU memory counts. */

@@ -49,8 +49,8 @@ export function buildBouncingView(scene: THREE.Object3D, ex: BouncingExhibit, sy
     ledge: m.ledge,
     pedestal: m.wood,
   };
-  // Gallery IV draws the corridor (it is the east end of it).
-  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor45-"))) {
+  // The gallery to the east draws the corridor in (it is the east end of it).
+  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-east-"))) {
     const brass = box.name === "anvil" || box.name === "balcony-railing";
     const mesh = new THREE.Mesh(worldBoxGeometry(box.half, box.center, TILE[box.kind]), brass ? m.brass : byKind[box.kind]);
     mesh.position.set(...box.center);
@@ -171,7 +171,7 @@ export function buildBouncingView(scene: THREE.Object3D, ex: BouncingExhibit, sy
   scene.add(
     placard(
       {
-        kicker: "GALLERY V",
+        kicker: "FLOOR 1 · GALLERY III",
         title: "The Bouncing Hall",
         lines: [
           "In this hall a falling ball comes back",

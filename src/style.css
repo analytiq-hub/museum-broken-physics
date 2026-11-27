@@ -194,6 +194,14 @@ body {
   margin-bottom: 8px;
 }
 
+.ticket-floor {
+  margin: 8px 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a99f8c;
+}
+
 .stamps {
   display: flex;
   flex-wrap: wrap;

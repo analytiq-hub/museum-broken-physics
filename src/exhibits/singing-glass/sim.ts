@@ -19,7 +19,7 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_5_6, type Box } from "../layout";
+import { addStaticBoxes, corridor, type Box } from "../layout";
 import { pipeFrequency, ringGlass, type GlassSpec, type GlassState } from "./resonance";
 
 /** Interior: x −103..−93, y 0..5, z −3.5..3.5. */
@@ -93,7 +93,7 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "alcove-north", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 1 - W], half: [1.25, 1.5, W] },
   { name: "alcove-south", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 3 + W], half: [1.25, 1.5, W] },
   { name: "alcove-end", kind: "wall", center: [ROOM.xMin - 3 - W, 1.5, 2], half: [W, 1.5, 1.5] },
-  ...CORRIDOR_5_6,
+  ...corridor("east", ROOM.xMax + 2 * W),
 ];
 
 /** The glass pane filling the west doorway: it blocks the way until it shatters. */

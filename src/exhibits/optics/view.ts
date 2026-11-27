@@ -44,14 +44,14 @@ const BEAM_COLOR = 0xfff1c8;
 
 export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: BodySync, m: Materials): OpticsView {
   const byKind: Record<Box["kind"], THREE.Material> = {
-    floor: m.floor,
+    floor: m.wood, // Floor 2 is floored in wood: a different level, a different look
     ceiling: m.ceiling,
     wall: m.wall,
     glass: m.glass,
     ledge: m.ledge,
     pedestal: m.wood,
   };
-  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor34-"))) {
+  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-east-"))) {
     const mesh = new THREE.Mesh(worldBoxGeometry(box.half, box.center, TILE[box.kind]), byKind[box.kind]);
     mesh.position.set(...box.center);
     mesh.receiveShadow = true;
@@ -148,7 +148,7 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
   scene.add(
     placard(
       {
-        kicker: "GALLERY IV",
+        kicker: "FLOOR 2 · GALLERY V",
         title: "The Hidden Door",
         lines: [
           "Light has forgotten how to bend in this room.",

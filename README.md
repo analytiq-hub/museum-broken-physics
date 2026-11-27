@@ -1,6 +1,6 @@
 # The Museum of Broken Physics
 
-A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Six galleries so far: the Sideways Gallery (gravity), the Restless Pendulum (damping), the Leaning Pendulum (both, in the right order), the Hidden Door (light), the Bouncing Hall (bounce) and the Singing Glass (sound).
+A Three.js puzzle adventure where the laws of physics are malfunctioning, and you repair them. Two floors so far, visited in order. Floor 1, mechanics: the Sideways Gallery (gravity), the Restless Pendulum (damping), the Bouncing Hall (bounce) and the Leaning Pendulum (gravity and damping, in the right order). Then the Grand Stair up to Floor 2, waves and light: the Hidden Door (light) and the Singing Glass (sound).
 
 **Play the latest build:** https://analytiqhub.com/museum-broken-physics/ (deployed from `main` after CI passes)
 

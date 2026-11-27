@@ -59,21 +59,29 @@ non-solutions and asserts they are not.
   gallery's chunk may import its module statically, or it lands in the first load.
 - `npm run build` ends with `harness/budget.ts`: first-load JS+CSS, each room's chunk, and
   `public/assets` have size budgets; CI fails over budget.
-- Galleries are joined by corridors that exist in **both** worlds (`src/exhibits/layout.ts`);
+- Galleries are joined by corridors that exist in **both** worlds (each room builds its own
+  stubs with `corridor("east" | "west", outerX, y)` in `src/exhibits/layout.ts`; views skip
+  `corridor-east-*`, which the room to the east draws);
   the player is handed over at the corridor midpoint (`HANDOVER_X`, with hysteresis), and the
   arrival is recorded so replays can follow (`Recorder.playerArrived`).
 - R resets only the gallery the player is in. `src/state/gameState.ts` records solved galleries.
+- **The route is fixed and runs in floors** (`src/galleries/rooms.ts`, in order). Floor 1,
+  mechanics: Galleries I, II, III, IV. Then the Grand Stair (a passage, `kind: "passage"`, no
+  puzzle). Floor 2, waves and light, 4.8 m up: Galleries V, VI. Each floor is a level; harder
+  going up. Rooms keep the coordinates they were built in, and `OFFSETS` places each one in the
+  museum. The player runs in the active room's own coordinates and is shifted at each handover;
+  the camera, light culling, handover and `getPlayer().feet` use museum coordinates.
+  `__game.setPlayerIn(roomId, localFeet, …)` takes a room's own coordinates.
 - Gallery I: the Sideways Gallery (gravity direction, console + instrument).
   Gallery II: the Restless Pendulum (negative damping, instrument only; damping is a "range"
   rule whose named `marks` are what the instrument offers and the solver samples).
-  Gallery III: the Leaning Pendulum (both laws broken; the pendulum tears loose if it swings
-  more than 65° from gravity's hanging direction, so gravity must come home in stages).
-  Gallery IV: the Hidden Door (optics: a beam traced in 2D by `src/exhibits/optics/trace.ts`;
-  the broken law is the prism's refractive index; mirrors are **control** rules).
-  Gallery V: the Bouncing Hall (bounciness above 1: Rapier bounces elastically and an
+  Gallery III: the Bouncing Hall (bounciness above 1: Rapier bounces elastically and an
   explicit capped boost scales each upward rebound; a 45° deflector throws the ball onto a
   felt balcony that soaks up sideways speed; the lever is a control with a fixed value).
-  Gallery IV's hidden door leads to it via `CORRIDOR_4_5`.
+  Gallery IV: the Leaning Pendulum (both laws broken; the pendulum tears loose if it swings
+  more than 65° from gravity's hanging direction, so gravity must come home in stages).
+  Gallery V: the Hidden Door (optics: a beam traced in 2D by `src/exhibits/optics/trace.ts`;
+  the broken law is the prism's refractive index; mirrors are **control** rules).
   Gallery VI: the Singing Glass (the speed of sound; pipes play v / 2L; each glass's ring is an
   envelope integrated exactly in `src/exhibits/singing-glass/resonance.ts`, no Rapier; organ
   pipes are toggle controls via `offValue`; the pane is the exit and the harmonica the fail).

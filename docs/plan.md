@@ -6,18 +6,56 @@ See [concept.md](concept.md) for the game vision.
 ## Where things stand (27 Nov 2026)
 
 - **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
-- **Six galleries, in one line west from the entrance:** I the Sideways Gallery (gravity),
-  II the Restless Pendulum (damping), III the Leaning Pendulum (both, in stages), IV the Hidden
-  Door (refractive index), V the Bouncing Hall (restitution), VI the Singing Glass (speed of
-  sound). The closing placard sits in an alcove behind Gallery VI's pane.
+- **Six galleries on two floors, visited in a fixed order:**
+  - **Floor 1, mechanics:** I the Sideways Gallery (gravity), II the Restless Pendulum
+    (damping), III the Bouncing Hall (restitution), IV the Leaning Pendulum (gravity and
+    damping, in stages).
+  - **The Grand Stair** climbs 4.8 m to Floor 2.
+  - **Floor 2, waves and light:** V the Hidden Door (refractive index), VI the Singing Glass
+    (speed of sound).
+  - The closing placard sits in an alcove behind Gallery VI's pane.
 - **Done:** Milestones 0–9 below, plus work added after the plan:
   - touch controls;
   - pause on Esc;
   - saved progress with a visitor's ticket;
   - an instrument that doesn't reveal a law until the player has discovered it;
-  - galleries streamed three at a time.
+  - galleries streamed three at a time;
+  - the museum laid out as floors (see "Museum layout").
 - **Next:** Milestone 10, Gallery VII (the Backwards Furnace), and a real playtest of
   Galleries V and VI with the new instrument (see "Immediate next steps").
+
+## Museum layout (decided Nov 2026)
+
+**One route, in floors.** Players get no choices. They go through a fixed sequence, and every
+door opens only when its room is solved. The sequence is split into floors, and each floor is
+a level: clearly separate, and harder than the one below.
+
+- **What separates the levels:**
+  - a stairwell between floors, so the change of level is physical;
+  - a farewell placard at the foot ("Floor 1 complete") and a welcome placard at the top that
+    names the next floor and what's new;
+  - a different look per floor (Floor 1 marble floors, Floor 2 wood);
+  - the HUD shows the floor ("Floor 2 · Waves and Light · Gallery V");
+  - the visitor's ticket has a row of stamps per floor.
+- **The shape of a floor:** the first room teaches the floor's new idea with one obvious law,
+  the middle rooms vary it, and the last room combines them (Floor 1 ends with the Leaning
+  Pendulum, gravity plus damping). That last room is the gate up.
+- **Floors and their rooms:**
+
+  | Floor | Theme | Rooms (built, then planned) | What makes it harder |
+  | ----- | ----- | --------------------------- | -------------------- |
+  | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale); later perhaps the Little Solar System before the finale | One law per room, visible effects, generous budgets |
+  | 2 | Waves, light and heat | Hidden Door, Singing Glass; next the Backwards Furnace (Milestone 10), then double slit or Chladni plates, ending with a room combining two of them | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
+  | 3 | Modern physics | Einstein's elevator, slow light, Rutherford, Stern–Gerlach, a quantum finale (room-ideas.md) | Laws that defy intuition, fewer changes, sometimes two laws per room |
+
+- **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
+  `src/galleries/rooms.ts` places them in the museum. Every corridor is a standard 8 m stub
+  that each room builds itself (`corridor()` in `layout.ts`). Floor 2 continues west, 4.8 m
+  up, rather than sitting directly above Floor 1. Players never see the outside, so the climb
+  and the change of look are what separate the floors.
+- **Adding a room:** add its gallery module, list it in `ROOMS` at its place in the route with
+  its door positions, and the offsets of every room after it follow. The room-list test checks
+  that every pair of neighbouring corridors meets exactly.
 
 ## Guiding principle
 
@@ -517,6 +555,8 @@ always exist.
   - nothing visibly appears from nowhere in first person.
 
 ### Milestone 10: Gallery VII, the Backwards Furnace (thermodynamics + optics; 4–5 days)
+*Placement:* Floor 2, after the Singing Glass. Its corridor replaces the closing alcove behind
+the Singing Glass's pane, and the closing placard moves to the end of Floor 2.
 This room teaches heat flowing backwards and combines it with optics from Gallery IV. It also
 delivers Milestone 6's unfinished trade-off: the broken law is the tool, and restoring it
 too early or too late both lose.
@@ -607,17 +647,15 @@ too early or too late both lose.
    *Revisited (Nov 2026): touch is supported* (joystick, drag to look, tap to use, Laws/Reset
    buttons), after a player couldn't play on a phone.
 4. Is there a narrative layer (who broke the museum?), and how much text?
-5. How does the museum grow past one corridor of rooms: floors by level (classical,
-   modern, quantum), wings by subject, or a hub? Streaming (Milestone 9) works with any of
-   them, because rooms are loaded by neighbourhood, not by position in a list.
+5. ~~How does the museum grow past one corridor of rooms?~~ *Decided (Nov 2026): one fixed
+   route in floors, each floor a harder level, joined by stairwells.* See "Museum layout".
 
 ## Immediate next steps
 
-1. **Playtest Galleries V and VI** with someone new, now that the instrument hides the laws.
-   Record with Shift+D; a stuck session becomes a replay test.
-2. **Milestone 10: Gallery VII, the Backwards Furnace.** The first room built after
-   streaming: its own chunk from day one.
-3. **Decide open question 5** (floors, wings or a hub) before Gallery VIII, since it decides
-   where corridors go.
+1. **Playtest Floor 1 and Floor 2** with someone new, now that the instrument hides the laws
+   and the floors are separate. Record with Shift+D; a stuck session becomes a replay test.
+2. **Milestone 10: Gallery VII, the Backwards Furnace,** on Floor 2 after the Singing Glass.
+3. **Floor 2's finale:** a room combining light, sound or heat, so Floor 2 ends the way Floor 1
+   does, before the stairs to Floor 3.
 4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.

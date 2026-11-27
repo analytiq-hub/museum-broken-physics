@@ -2,7 +2,7 @@
 //
 // Every gallery has its own physics world. The corridor between two galleries
 // exists in both worlds, and the player is handed from one world to the other
-// at the corridor's midpoint (see HANDOVER_X).
+// at the corridor's midpoint (src/galleries/rooms.ts places the rooms).
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../engine/groups";
 
@@ -15,71 +15,33 @@ export interface Box {
 
 const W = 0.25; // half wall thickness
 
-/**
- * Corridor from Gallery I's west door (x = −6.5) to Gallery II's east doorway
- * (x = −15): z 1..3, 3 m high.
- */
-export const CORRIDOR_1_2: readonly Box[] = [
-  { name: "corridor-floor", kind: "floor", center: [-10.75, -W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor-ceiling", kind: "ceiling", center: [-10.75, 3 + W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor-north", kind: "wall", center: [-10.75, 1.5, 1 - W], half: [4.25, 1.5, W] },
-  { name: "corridor-south", kind: "wall", center: [-10.75, 1.5, 3 + W], half: [4.25, 1.5, W] },
-];
+/** Every corridor: 8 m long between two walls' outer faces, z 1..3, 3 m high. */
+export const CORRIDOR = { length: 8, z0: 1, z1: 3, height: 3 } as const;
 
 /**
- * Corridor from Gallery II's west door (x = −25.5) to Gallery III's east doorway
- * (x = −34): z 1..3, 3 m high.
+ * A room's corridor stub, in the room's own coordinates: on its east side running
+ * east from the east wall's outer face, or on its west side running west from the
+ * west wall's outer face, with its floor at `y`. Neighbouring rooms are placed
+ * (src/galleries/rooms.ts) so that one's west corridor and the next one's east
+ * corridor are the same corridor: it exists in both physics worlds, and the
+ * player is handed over at its midpoint. Only the eastern room draws it, so views
+ * skip boxes named "corridor-east-". Stopping at outer faces keeps the corridor's
+ * end caps out of the plane of any visible wall (they would z-fight).
  */
-export const CORRIDOR_2_3: readonly Box[] = [
-  { name: "corridor23-floor", kind: "floor", center: [-29.75, -W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor23-ceiling", kind: "ceiling", center: [-29.75, 3 + W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor23-north", kind: "wall", center: [-29.75, 1.5, 1 - W], half: [4.25, 1.5, W] },
-  { name: "corridor23-south", kind: "wall", center: [-29.75, 1.5, 3 + W], half: [4.25, 1.5, W] },
-];
+export function corridor(side: "east" | "west", outerX: number, y = 0): Box[] {
+  const { length, z0, z1, height } = CORRIDOR;
+  const cx = side === "east" ? outerX + length / 2 : outerX - length / 2;
+  const cz = (z0 + z1) / 2;
+  const hz = (z1 - z0) / 2;
+  const name = `corridor-${side}`;
+  return [
+    { name: `${name}-floor`, kind: "floor", center: [cx, y - W, cz], half: [length / 2, W, hz + 0.5] },
+    { name: `${name}-ceiling`, kind: "ceiling", center: [cx, y + height + W, cz], half: [length / 2, W, hz + 0.5] },
+    { name: `${name}-north`, kind: "wall", center: [cx, y + height / 2, z0 - W], half: [length / 2, height / 2, W] },
+    { name: `${name}-south`, kind: "wall", center: [cx, y + height / 2, z1 + W], half: [length / 2, height / 2, W] },
+  ];
+}
 
-/** Corridor from Gallery III's west door (x = −44.5) to Gallery IV (x = −53). */
-export const CORRIDOR_3_4: readonly Box[] = [
-  { name: "corridor34-floor", kind: "floor", center: [-48.75, -W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor34-ceiling", kind: "ceiling", center: [-48.75, 3 + W, 2], half: [4.25, W, 1.5] },
-  { name: "corridor34-north", kind: "wall", center: [-48.75, 1.5, 1 - W], half: [4.25, 1.5, W] },
-  { name: "corridor34-south", kind: "wall", center: [-48.75, 1.5, 3 + W], half: [4.25, 1.5, W] },
-];
-
-/**
- * Corridor from the outside of Gallery IV's west wall (x = −63.5, the hidden door)
- * to the outside of Gallery V's east wall (x = −71.5): z 1..2.6, 2.4 m high, the
- * size of the hidden door. It stops at the walls' outer faces, like every corridor:
- * running on to their inner faces would put its end caps in the same plane as the
- * visible wall around each doorway, and they z-fight (flicker).
- */
-export const CORRIDOR_4_5: readonly Box[] = [
-  { name: "corridor45-floor", kind: "floor", center: [-67.5, -W, 1.8], half: [4, W, 0.8] },
-  { name: "corridor45-ceiling", kind: "ceiling", center: [-67.5, 2.4 + W, 1.8], half: [4, W, 0.8] },
-  { name: "corridor45-north", kind: "wall", center: [-67.5, 1.2, 1 - W], half: [4, 1.2, W] },
-  { name: "corridor45-south", kind: "wall", center: [-67.5, 1.2, 2.6 + W], half: [4, 1.2, W] },
-];
-
-/**
- * Corridor from the outside of Gallery V's west wall (x = −84.5, its exit door)
- * to the outside of Gallery VI's east wall (x = −92.5): z 1..3, 3 m high.
- */
-export const CORRIDOR_5_6: readonly Box[] = [
-  { name: "corridor56-floor", kind: "floor", center: [-88.5, -W, 2], half: [4, W, 1.5] },
-  { name: "corridor56-ceiling", kind: "ceiling", center: [-88.5, 3 + W, 2], half: [4, W, 1.5] },
-  { name: "corridor56-north", kind: "wall", center: [-88.5, 1.5, 1 - W], half: [4, 1.5, W] },
-  { name: "corridor56-south", kind: "wall", center: [-88.5, 1.5, 3 + W], half: [4, 1.5, W] },
-];
-
-/** West of this x the player belongs to Gallery II's world, east of it to Gallery I's. */
-export const HANDOVER_X = -10.75;
-/** West of this x the player belongs to Gallery III's world. */
-export const HANDOVER_X_23 = -29.75;
-/** West of this x the player belongs to Gallery IV's world. */
-export const HANDOVER_X_34 = -48.75;
-/** West of this x the player belongs to Gallery V's world. */
-export const HANDOVER_X_45 = -67.5;
-/** West of this x the player belongs to Gallery VI's world. */
-export const HANDOVER_X_56 = -88.5;
 /** Hysteresis, so standing on the line doesn't flip worlds every step. */
 export const HANDOVER_MARGIN = 0.3;
 

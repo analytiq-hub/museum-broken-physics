@@ -17,13 +17,12 @@
 // elastically (restitution 1), and an explicit, capped boost scales the
 // rebound of each upward bounce.
 //
-// The hall sits west of Gallery IV, reached through the hidden door's corridor;
-// its exit door leads on to Gallery VI.
+// Floor 1, Gallery III: between the Restless Pendulum and the Leaning Pendulum.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { groups, GROUP, ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_4_5, CORRIDOR_5_6, type Box } from "../layout";
+import { addStaticBoxes, corridor, type Box } from "../layout";
 
 /** Interior: x −84..−72, y 0..6, z −5..5. */
 export const ROOM = { xMin: -84, xMax: -72, halfZ: 5, height: 6 } as const;
@@ -73,7 +72,7 @@ const DEAD_STEPS = 60;
 /** On the hall floor or the anvil (centre height). */
 const LOW = ANVIL_TOP + BALL_RADIUS + 0.05;
 
-export const ENTRANCE = { x: ROOM.xMax - 0.6, y: 0, z: 1.8 } as const;
+export const ENTRANCE = { x: ROOM.xMax - 0.6, y: 0, z: 2 } as const;
 
 const bx = ROOM.xMin + BALCONY.depth / 2; // balcony centre x
 const bz = (BALCONY.z0 + BALCONY.z1) / 2;
@@ -84,10 +83,10 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "ceiling", kind: "ceiling", center: [CX, ROOM.height + W, 0], half: [HX + 0.5, W, ROOM.halfZ + 0.5] },
   { name: "north", kind: "wall", center: [CX, ROOM.height / 2, -ROOM.halfZ - W], half: [HX + 0.5, ROOM.height / 2, W] },
   { name: "south", kind: "wall", center: [CX, ROOM.height / 2, ROOM.halfZ + W], half: [HX + 0.5, ROOM.height / 2, W] },
-  // East wall, with the doorway from the hidden door's corridor at z 1..2.6, y 0..2.4.
-  { name: "east-north", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, -2], half: [W, ROOM.height / 2, 3.5] },
-  { name: "east-south", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, 4.05], half: [W, ROOM.height / 2, 1.45] },
-  { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 4.2, 1.8], half: [W, 1.8, 0.8] },
+  // East wall, with the doorway from the corridor at z 1..3, y 0..3.
+  { name: "east-north", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, -2.25], half: [W, ROOM.height / 2, 3.25] },
+  { name: "east-south", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, 4.25], half: [W, ROOM.height / 2, 1.25] },
+  { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 4.5, 2], half: [W, 1.5, 1] },
   // West wall, with the exit door (z 1..3, y 0..3).
   { name: "west-north", kind: "wall", center: [ROOM.xMin - W, ROOM.height / 2, -2], half: [W, ROOM.height / 2, 3.5] },
   { name: "west-south", kind: "wall", center: [ROOM.xMin - W, ROOM.height / 2, 4.25], half: [W, ROOM.height / 2, 1.25] },
@@ -96,9 +95,9 @@ export const STATIC_BOXES: readonly Box[] = [
   BALCONY_BOX,
   { name: "balcony-railing", kind: "ledge", center: [BALCONY_EDGE - 0.03, BALCONY.y0 + BALCONY.railing / 2, bz], half: [0.03, BALCONY.railing / 2, bh] },
   ANVIL,
-  ...CORRIDOR_4_5,
+  ...corridor("east", ROOM.xMax + 2 * W),
   // Beyond the exit door: the corridor to Gallery VI.
-  ...CORRIDOR_5_6,
+  ...corridor("west", ROOM.xMin - 2 * W),
 ];
 
 /** The exit door, which sinks into the floor once the room is solved. */

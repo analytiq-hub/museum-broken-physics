@@ -28,12 +28,12 @@ export function buildLeaningPendulumView(
     rodLength: ROD_LENGTH,
     bobRadius: BOB_RADIUS,
     boxes: STATIC_BOXES,
-    skip: ["corridor23-"], // drawn by Gallery II
+    skip: ["corridor-east-"], // drawn by the gallery to the east
     mount: "west-arm",
     bells: [BELL],
     door: { box: DOOR, body: () => ex.door },
     placard: {
-      kicker: "GALLERY III",
+      kicker: "FLOOR 1 · GALLERY IV",
       title: "The Leaning Pendulum",
       lines: [
         "Gravity leans toward the right wall here,",

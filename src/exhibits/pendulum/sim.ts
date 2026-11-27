@@ -19,7 +19,7 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { groups, GROUP, ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_1_2, CORRIDOR_2_3, type Box } from "../layout";
+import { addStaticBoxes, corridor, type Box } from "../layout";
 
 /** Interior: x −25..−15, y 0..8, z −6..6. */
 export const ROOM = { xMin: -25, xMax: -15, halfZ: 6, height: 8 } as const;
@@ -77,8 +77,8 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "east-north", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, -2.75], half: [W, ROOM.height / 2, 3.75] },
   { name: "east-south", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, 4.75], half: [W, ROOM.height / 2, 1.75] },
   { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 5.5, 2], half: [W, 2.5, 1] },
-  ...CORRIDOR_1_2,
-  ...CORRIDOR_2_3,
+  ...corridor("east", ROOM.xMax + 2 * W),
+  ...corridor("west", ROOM.xMin - 2 * W),
 ];
 
 /** The west door, which sinks into the floor once the room is solved. */

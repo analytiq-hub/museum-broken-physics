@@ -19,7 +19,7 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
 import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_3_4, CORRIDOR_4_5, type Box } from "../layout";
+import { addStaticBoxes, corridor, type Box } from "../layout";
 import { mirrorSegment, prism, traceBeam, type BeamResult, type OpticsScene, type Segment, type Vec2 } from "./trace";
 
 /** Interior: x −63..−53, y 0..4.5, z −5..5. Optics coordinates are world (x, z). */
@@ -79,9 +79,9 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 3.75, 2], half: [W, 0.75, 1] },
   // Pedestals under the prism and mirrors, and the lamp's stand (the player walks around them).
   { name: "prism-pedestal", kind: "pedestal", center: [PRISM.center.x, (BEAM_Y - 0.35) / 2, PRISM.center.z], half: [0.7, (BEAM_Y - 0.35) / 2, 0.7] },
-  ...CORRIDOR_3_4,
+  ...corridor("east", ROOM.xMax + 2 * W),
   // Beyond the hidden door: the corridor to Gallery V.
-  ...CORRIDOR_4_5,
+  ...corridor("west", ROOM.xMin - 2 * W),
 ];
 
 /** The optical walls: the room's four walls (the west one split around the door). */

@@ -115,52 +115,20 @@ try {
   expect("walking east hands the player back to Gallery I", back);
   expect("Gallery I kept its state (gravity still toward the back wall)", (await q(page, () => window.__game!.getState().rules.gravity)) === "north");
 
-  // The second corridor: from beyond Gallery II's west door into Gallery III.
+  // The second corridor: from beyond Gallery II's west door into Gallery III, the Bouncing Hall.
   await page.evaluate(() => window.__game!.setPlayer({ x: -27.5, z: 2 }, Math.PI / 2, 0));
   expect("the second corridor belongs to Gallery II's world", (await q(page, () => window.__game!.getPlayer().gallery)) === "pendulum");
   await page.keyboard.down("w");
-  const third = await eventually(page, () => window.__game!.getPlayer().gallery === "leaning-pendulum", WALK);
+  const third = await eventually(page, () => window.__game!.getPlayer().gallery === "bouncing", WALK);
   await page.keyboard.up("w");
-  expect("walking west hands the player to Gallery III", third);
-  expect(
-    "Gallery III's instrument lists both broken laws",
-    await eventually(page, () => {
-      const s = window.__game!.getState();
-      return s.exhibit === "leaning-pendulum" && s.rules.gravity === "north" && (s.rules.damping as number) < 0;
-    }),
-  );
+  expect("walking west hands the player to Gallery III, the Bouncing Hall", third);
 
-  // Gallery IV: walk in through the third corridor, aim at a mirror, click it.
-  await page.evaluate(() => window.__game!.setPlayer({ x: -46.5, z: 2 }, Math.PI / 2, 0));
-  await page.keyboard.down("w");
-  const fourth = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", WALK);
-  await page.keyboard.up("w");
-  expect("walking west hands the player to Gallery IV", fourth);
+  // Gallery III: aim at the lever, pull it.
   await page.evaluate(async () => {
-    await window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
-    await window.__game!.nextFrame(); // the camera follows the player on the next frame
-    window.__game!.lookAtButton("mirror-b");
-  });
-  expect("the crosshair finds the floor mirror", await eventually(page, () => window.__game!.getPlayer().hovered === "mirror-b"));
-  await page.mouse.click(600, 400);
-  expect(
-    "clicking turns the mirror a notch, for free",
-    await eventually(page, () => {
-      const s = window.__game!.getState();
-      return s.rules["mirror-b"] === 15 && s.changesUsed === 0;
-    }),
-  );
-  expect(
-    "the instrument shows only the index law (no mirror rows)",
-    await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
-  );
-  // Gallery V: step through to the Bouncing Hall, aim at the lever, pull it.
-  await page.evaluate(async () => {
-    await window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0);
+    await window.__game!.setPlayerIn("bouncing", { x: -79.6, z: -0.2 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("pulled");
   });
-  expect("the player is handed to Gallery V", await eventually(page, () => window.__game!.getPlayer().gallery === "bouncing"));
   expect("the crosshair finds the lever", await eventually(page, () => window.__game!.getPlayer().hovered === "pulled"));
   // Let the ball in the claw fall asleep first: a sleeping ball once ignored the lever.
   expect("the ball rests in the claw", await eventually(page, () => window.__game!.getState().settled, 30_000));
@@ -182,10 +150,57 @@ try {
     await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "The lever is pulled", 30_000),
   );
 
+  // The third corridor, into Gallery IV, the Leaning Pendulum: Floor 1's last room.
+  await page.evaluate(() => window.__game!.setPlayer({ x: -48.5, z: 2 }, Math.PI / 2, 0)); // 2 m into the corridor
+  await page.keyboard.down("w");
+  const fourth = await eventually(page, () => window.__game!.getPlayer().gallery === "leaning-pendulum", WALK);
+  await page.keyboard.up("w");
+  expect("walking west hands the player to Gallery IV", fourth);
+  expect(
+    "Gallery IV's instrument lists both broken laws",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.exhibit === "leaning-pendulum" && s.rules.gravity === "north" && (s.rules.damping as number) < 0;
+    }),
+  );
+
+  // The Grand Stair: climb from the foot of the stairs to Floor 2.
+  await page.evaluate(() => window.__game!.setPlayerIn("stairwell", { x: -1.2, z: 2 }, Math.PI / 2, 0));
+  expect(
+    "the stairs are a passage, not a gallery",
+    await eventually(page, () => document.querySelector(".hud .keys")!.textContent!.startsWith("Floor 1 · Mechanics · Galleries restored")),
+    await q(page, () => document.querySelector(".hud")!.textContent!.replace(/\s+/g, " ")),
+  );
+  await page.keyboard.down("w");
+  const upstairs = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", WALK);
+  await page.keyboard.up("w");
+  expect("climbing the stairs and walking on reaches Floor 2's first gallery", upstairs, `at ${JSON.stringify(await q(page, () => window.__game!.getPlayer().feet))}`);
+  expect("Floor 2 is 4.8 m up", Math.abs((await q(page, () => window.__game!.getPlayer().feet.y)) - 4.8) < 0.2);
+  expect("the HUD says Floor 2", await eventually(page, () => document.querySelector(".hud .keys")!.textContent!.startsWith("Floor 2")));
+
+  // Gallery V: aim at a mirror, click it.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("optics", { x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.nextFrame(); // the camera follows the player on the next frame
+    window.__game!.lookAtButton("mirror-b");
+  });
+  expect("the crosshair finds the floor mirror", await eventually(page, () => window.__game!.getPlayer().hovered === "mirror-b"));
+  await page.mouse.click(600, 400);
+  expect(
+    "clicking turns the mirror a notch, for free",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.rules["mirror-b"] === 15 && s.changesUsed === 0;
+    }),
+  );
+  expect(
+    "the instrument shows only the index law (no mirror rows)",
+    await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
+  );
 
   // Gallery VI: click an organ pipe to sound it, click again to stop it.
   await page.evaluate(async () => {
-    await window.__game!.setPlayer({ x: -96.8, z: -1.2 }, 0.25, 0);
+    await window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("2");
   });
@@ -200,7 +215,7 @@ try {
   // Streaming: only the room the player is in and its neighbours are built.
   expect(
     "in Gallery VI, only Galleries V and VI are built",
-    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["bouncing", "singing-glass"]),
+    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["optics", "singing-glass"]),
     (await q(page, () => window.__game!.getLoaded())).join(", "),
   );
   // Solve Gallery I, leave it far behind (it is freed), come back: it is still solved.
@@ -217,9 +232,9 @@ try {
     "around Gallery I, Galleries I and II are built",
     JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["sideways-gravity", "pendulum"]),
   );
-  await page.evaluate(() => window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0));
+  await page.evaluate(() => window.__game!.setPlayerIn("stairwell", { x: -1.2, z: 2 }, Math.PI / 2, 0));
   expect(
-    "jumping to Gallery V frees Galleries I and II",
+    "jumping to the Grand Stair frees Galleries I and II",
     await eventually(page, () => {
       const loaded = window.__game!.getLoaded();
       return loaded.length <= 3 && !loaded.includes("sideways-gravity") && !loaded.includes("pendulum");
@@ -256,7 +271,7 @@ try {
   await vp.screenshot({ path: "harness/out/screens/60-welcome-back.png" });
   await vp.click('[data-visit="continue"]');
   expect(
-    "Continue puts the visitor back in Gallery III with I and II solved",
+    "Continue puts the visitor back in Gallery IV with I and II solved",
     await eventually(vp, () => {
       const solved = Object.keys(window.__game!.getGameState());
       return window.__game!.getPlayer().gallery === "leaning-pendulum" && solved.length === 2 && !window.__game!.getState().solved;
@@ -267,7 +282,7 @@ try {
     "…and the game holds the pointer",
     await eventually(vp, () => document.pointerLockElement !== null && document.querySelector(".overlay")!.classList.contains("hidden")),
   );
-  // Walk back east into Gallery II: its door stands open and the room is solved.
+  // Jump back to Gallery II: it is rebuilt solved, its laws put right.
   await vp.evaluate(() => window.__game!.setPlayer({ x: -26.5, z: 2 }, -Math.PI / 2, 0));
   expect(
     "Gallery II comes back solved, its laws put right",
@@ -367,7 +382,7 @@ try {
 
   // Gallery IV on the phone: a mirror on the left of the screen (the joystick side) still taps.
   const mirrorAt = await tp.evaluate(async () => {
-    await window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.setPlayerIn("optics", { x: -58.6, z: 3.6 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("mirror-b");
     const p = window.__game!.getPlayer();
@@ -383,7 +398,7 @@ try {
   );
   // Too far away: nothing turns, and the player is told to walk closer.
   const farAt = await tp.evaluate(async () => {
-    await window.__game!.setPlayer({ x: -54.5, z: 3.6 }, 0, 0);
+    await window.__game!.setPlayerIn("optics", { x: -54.5, z: 3.6 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("mirror-b");
     await window.__game!.nextFrame();

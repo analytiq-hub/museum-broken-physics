@@ -12,8 +12,11 @@ interface Shot {
   name: string;
   /** An orbit pose name, or omit and give `player` for first person. */
   camera?: string;
-  /** First person: floor position and look direction (radians; yaw 0 = north, +π/2 = west). */
-  player?: { x: number; z: number; yaw: number; pitch: number };
+  /**
+   * First person: floor position in `room`'s own coordinates (default: the first two rooms,
+   * which sit at their own coordinates) and look direction (radians; yaw 0 = north, +π/2 = west).
+   */
+  player?: { x: number; y?: number; z: number; yaw: number; pitch: number; room?: string };
   moves: string[];
   /** Extra steps after the last move settles (e.g. for the door to open). */
   extraSteps?: number;
@@ -71,31 +74,34 @@ const SHOTS: Shot[] = [
     ],
   },
   { name: "34-leaning-torn-loose", camera: "leaning-low", moves: [], actions: [{ rule: "gravity", value: "down" }, { wait: 1.2 * S }] },
-  { name: "35-fp-leaning-entrance", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [] },
-  { name: "36-fp-leaning-instrument", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45 }, moves: [], instrument: true },
+  { name: "35-fp-leaning-entrance", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45, room: "leaning-pendulum" }, moves: [] },
+  { name: "36-fp-leaning-instrument", player: { x: -35, z: 2, yaw: Math.PI / 2 - 0.35, pitch: 0.45, room: "leaning-pendulum" }, moves: [], instrument: true },
   // Gallery IV: the Hidden Door.
   { name: "40-optics-start", camera: "optics", moves: [] },
   { name: "41-optics-door-revealed", camera: "optics-door", moves: [] },
   { name: "42-optics-index-fixed", camera: "optics", moves: [], actions: [{ rule: "index", value: 1.5 }] },
   { name: "43-optics-solved", camera: "optics", moves: [], actions: [{ rule: "index", value: 1.5 }, { rule: "mirror-b", value: 120 }, { wait: 3 * S }] },
-  { name: "44-fp-optics-entrance", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [] },
-  { name: "45-fp-optics-instrument", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [], instrument: true },
+  { name: "44-fp-optics-entrance", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12, room: "optics" }, moves: [] },
+  { name: "45-fp-optics-instrument", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12, room: "optics" }, moves: [], instrument: true },
   { name: "70-bouncing-start", camera: "bouncing", moves: [] },
   { name: "71-bouncing-climbing", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 9 * S }] },
   { name: "72-bouncing-balcony", camera: "bouncing-balcony", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }] },
   { name: "73-bouncing-solved", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }, { rule: "bounce", value: 0.6 }, { wait: 4 * S }] },
-  { name: "74-fp-bouncing-entrance", player: { x: -72.6, z: 1.8, yaw: Math.PI / 2 - 0.35, pitch: 0.12 }, moves: [] },
-  { name: "75-fp-bouncing-lever", player: { x: -78.9, z: 0.1, yaw: 0.85, pitch: -0.1 }, moves: [] },
+  { name: "74-fp-bouncing-entrance", player: { x: -72.6, z: 1.8, yaw: Math.PI / 2 - 0.35, pitch: 0.12, room: "bouncing" }, moves: [] },
+  { name: "75-fp-bouncing-lever", player: { x: -78.9, z: 0.1, yaw: 0.85, pitch: -0.1, room: "bouncing" }, moves: [] },
+  { name: "90-stairwell", camera: "stairwell", moves: [] },
+  { name: "91-fp-stair-foot", player: { x: -1.0, z: 2, yaw: Math.PI / 2, pitch: 0.18, room: "stairwell" }, moves: [] },
+  { name: "92-fp-stair-landing", player: { x: -10.9, y: 4.8, z: 1.3, yaw: Math.PI, pitch: 0.02, room: "stairwell" }, moves: [] },
   { name: "80-singing-start", camera: "singing", moves: [] },
   { name: "81-singing-harmonica-cracked", camera: "singing-harmonica", moves: [], actions: [{ rule: "pipe", value: "3" }, { wait: 1.3 * S }] },
   { name: "82-singing-harmonica-broken", camera: "singing", moves: [], actions: [{ rule: "pipe", value: "3" }, { wait: 3 * S }] },
   { name: "83-singing-pane-cracked", camera: "singing-pane", moves: [], actions: [{ rule: "speed", value: 343 }, { rule: "pipe", value: "2" }, { wait: 4 * S }] },
   { name: "84-singing-solved", camera: "singing", moves: [], actions: [{ rule: "speed", value: 343 }, { rule: "pipe", value: "2" }, { wait: 8 * S }] },
-  { name: "85-fp-singing-entrance", player: { x: -93.6, z: 2, yaw: Math.PI / 2 - 0.3, pitch: -0.05 }, moves: [] },
-  { name: "86-fp-singing-organ", player: { x: -96.8, z: -1.2, yaw: 0.25, pitch: -0.15 }, moves: [] },
+  { name: "85-fp-singing-entrance", player: { x: -93.6, z: 2, yaw: Math.PI / 2 - 0.3, pitch: -0.05, room: "singing-glass" }, moves: [] },
+  { name: "86-fp-singing-organ", player: { x: -96.8, z: -1.2, yaw: 0.25, pitch: -0.15, room: "singing-glass" }, moves: [] },
   {
     name: "46-fp-alcove",
-    player: { x: -61.5, z: 1.8, yaw: Math.PI / 2, pitch: 0 },
+    player: { x: -61.5, z: 1.8, yaw: Math.PI / 2, pitch: 0, room: "optics" },
     moves: [],
     actions: [{ rule: "index", value: 1.5 }, { rule: "mirror-b", value: 120 }, { wait: 3 * S }],
   },
@@ -124,7 +130,7 @@ try {
     await page.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 30_000 });
     const state = await page.evaluate(async (s: Shot) => {
       const game = window.__game as GameDebugApi;
-      if (s.player) await game.setPlayer({ x: s.player.x, z: s.player.z }, s.player.yaw, s.player.pitch);
+      if (s.player) await game.setPlayerIn(s.player.room ?? (s.player.x > -14.5 ? "sideways-gravity" : "pendulum"), { x: s.player.x, y: s.player.y, z: s.player.z }, s.player.yaw, s.player.pitch);
       else await game.setCamera(s.camera ?? "window");
       if (s.instrument) game.setInstrument(true);
       for (const move of s.moves) {
@@ -143,8 +149,9 @@ try {
     await page.screenshot({ path: file });
     const outcome = `${state.exhibit}: ${state.solved ? "solved" : state.failed ? "failed" : "in progress"}`;
     const hovered = await page.evaluate(() => window.__game!.getPlayer().hovered);
+    const body = Object.entries(state.bodies)[0]; // passages (the stairs) have none
     console.log(
-      `${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}, ${Object.keys(state.bodies)[0]} at ${Object.values(state.bodies)[0].pos.join(", ")}${hovered ? `, looking at "${hovered}"` : ""}`,
+      `${file}  [${shot.moves.join(" → ") || "no moves"}] ${outcome}${body ? `, ${body[0]} at ${body[1].pos.join(", ")}` : ""}${hovered ? `, looking at "${hovered}"` : ""}`,
     );
   }
 } finally {

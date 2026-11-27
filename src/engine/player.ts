@@ -126,6 +126,13 @@ export class Player {
     this.body?.setTranslation(this.position, true);
   }
 
+  /** Moves the player (and the last step, so the view doesn't jump) into another room's coordinates. */
+  shift(dx: number, dy: number): void {
+    this.position = { x: this.position.x + dx, y: this.position.y + dy, z: this.position.z };
+    this.previous = { x: this.previous.x + dx, y: this.previous.y + dy, z: this.previous.z };
+    this.body?.setTranslation(this.position, true);
+  }
+
   /** Takes back the last step (held at a corridor's midpoint until the next room is built). */
   undoStep(): void {
     this.position = { ...this.previous };

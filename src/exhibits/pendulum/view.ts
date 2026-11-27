@@ -57,13 +57,13 @@ export function buildPendulumView(scene: THREE.Object3D, ex: PendulumExhibit, sy
     rodLength: ROD_LENGTH,
     bobRadius: BOB_RADIUS,
     boxes: STATIC_BOXES,
-    skip: ["corridor-"], // the Gallery I–II corridor is drawn by Gallery I
+    skip: ["corridor-east-"], // the corridor from Gallery I is drawn by Gallery I
     mount: "ceiling",
     bells: BELLS,
     vase: VASE,
     door: { box: DOOR, body: () => ex.door },
     placard: {
-      kicker: "GALLERY II",
+      kicker: "FLOOR 1 · GALLERY II",
       title: "The Restless Pendulum",
       lines: [
         "Here, every swing gains energy instead of losing it.",
