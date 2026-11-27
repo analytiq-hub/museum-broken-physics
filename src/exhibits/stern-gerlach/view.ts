@@ -8,7 +8,7 @@ import type { Materials } from "../../render/materials";
 import { worldBoxGeometry } from "../../render/materials";
 import { placard } from "../../render/placard";
 import type { Box } from "../layout";
-import { AXIS_Z, BEAM_Y, CELL_HALF, DOOR, MAGNET, OVEN_SWITCH, OVEN_X, ROOM, SCREEN_X, SPLIT, STATIC_BOXES, type Spin, type SternGerlachExhibit } from "./sim";
+import { AXIS_Z, BEAM_Y, BENCH_TOP, CELL_HALF, DOOR, MAGNET, MIDDLE_HALF, OVEN_SWITCH, OVEN_X, ROOM, SCREEN_X, SPLIT, STATIC_BOXES, type Spin, type SternGerlachExhibit } from "./sim";
 
 type V3 = [number, number, number];
 
@@ -28,7 +28,7 @@ export interface SternGerlachView {
 const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, glass: 1, ledge: 2, pedestal: 1.2 };
 const ATOMS = 70;
 /** Screen panel size (m): width along z, height along y. */
-const SCREEN = { w: 0.9, h: 1.3 } as const;
+const SCREEN = { w: 0.9, h: 0.9 } as const;
 
 /** The colour of `amount` of silver on the screen. */
 const silver = (amount: number) => `rgba(220,226,232,${Math.min(0.95, amount)})`;
@@ -109,7 +109,7 @@ export function buildSternGerlachView(scene: THREE.Object3D, ex: SternGerlachExh
   // --- The screen: glass, with silver building up where the atoms land.
   const depositCanvas = document.createElement("canvas");
   depositCanvas.width = 128;
-  depositCanvas.height = 192;
+  depositCanvas.height = 128;
   const deposit = depositCanvas.getContext("2d")!;
   const depositTexture = new THREE.CanvasTexture(depositCanvas);
   depositTexture.colorSpace = THREE.SRGBColorSpace;
@@ -120,8 +120,9 @@ export function buildSternGerlachView(scene: THREE.Object3D, ex: SternGerlachExh
   const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(0.04, SCREEN.h + 0.08, SCREEN.w + 0.08), m.brass);
   screenFrame.position.set(SCREEN_X - 0.02, BEAM_Y, AXIS_Z);
   scene.add(screenFrame);
-  const screenStand = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, BEAM_Y - SCREEN.h / 2, 10), m.brass);
-  screenStand.position.set(SCREEN_X - 0.02, (BEAM_Y - SCREEN.h / 2) / 2, AXIS_Z);
+  const standHeight = BEAM_Y - SCREEN.h / 2 - 0.04 - BENCH_TOP;
+  const screenStand = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, standHeight, 10), m.brass);
+  screenStand.position.set(SCREEN_X - 0.02, BENCH_TOP + standHeight / 2, AXIS_Z);
   scene.add(screenStand);
   let drawnExposure = "";
   const drawDeposit = () => {
@@ -167,7 +168,7 @@ export function buildSternGerlachView(scene: THREE.Object3D, ex: SternGerlachExh
   const upLamp = lampFor(SPLIT);
   const downLamp = lampFor(-SPLIT);
   const middleMaterial = new THREE.MeshStandardMaterial({ color: 0x9fb8c8, transparent: true, opacity: 0.6, emissive: 0x000000 });
-  const middle = new THREE.Mesh(new THREE.BoxGeometry(0.03, CELL_HALF * 2, CELL_HALF * 2), middleMaterial);
+  const middle = new THREE.Mesh(new THREE.BoxGeometry(0.03, MIDDLE_HALF * 2, MIDDLE_HALF * 2), middleMaterial);
   middle.position.set(SCREEN_X + 0.03, BEAM_Y, AXIS_Z);
   scene.add(middle);
 

@@ -22,14 +22,18 @@ import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } 
 export const ROOM: RoomBounds = { xMin: -12.5, xMax: -0.5, halfZ: 4, height: 4.5 };
 /** The beam line runs west along z = AXIS_Z at height BEAM_Y. */
 export const AXIS_Z = -1.6;
-export const BEAM_Y = 1.3;
+export const BEAM_Y = 1.45;
 export const OVEN_X = -2.2;
 export const MAGNET = { x0: -5.0, x1: -8.0 } as const;
 export const SCREEN_X = -10.6;
 /** The spots' height above and below the beam on the screen (m). */
-export const SPLIT = 0.45;
-/** Cells on the screen: the detectors at ±SPLIT, the fragile cell in the middle. */
+export const SPLIT = 0.3;
+/** Half-height of the detectors at ±SPLIT. */
 export const CELL_HALF = 0.07;
+/** Half-height of the fragile glass cell in the middle (smaller: the smear only grazes it). */
+export const MIDDLE_HALF = 0.04;
+/** Height of the bench top: everything on the beam line must clear it. */
+export const BENCH_TOP = 0.9;
 
 export type Spin = "any" | "two" | "three";
 export const SPIN_MARKS: { value: Spin; label: string }[] = [
@@ -38,22 +42,23 @@ export const SPIN_MARKS: { value: Spin; label: string }[] = [
   { value: "three", label: "Three values" },
 ];
 
-/** How much of the beam lands on a cell of half-height CELL_HALF centred at height y. */
-export function beamOnCell(spin: Spin, y: number): number {
+/** How much of the beam lands on a cell of half-height `half` centred at height y. */
+export function beamOnCell(spin: Spin, y: number, half = CELL_HALF): number {
   if (spin === "any") {
     // A smear spread evenly from −SPLIT to +SPLIT (a cell takes its share of the band).
-    return Math.abs(y) <= SPLIT ? (2 * CELL_HALF) / (2 * SPLIT) : 0;
+    return Math.abs(y) <= SPLIT ? (2 * half) / (2 * SPLIT) : 0;
   }
   const spots = spin === "two" ? [-SPLIT, SPLIT] : [-SPLIT, 0, SPLIT];
-  return spots.some((s) => Math.abs(s - y) < CELL_HALF) ? 1 / spots.length : 0;
+  return spots.some((s) => Math.abs(s - y) < half) ? 1 / spots.length : 0;
 }
 
 /** A detector counts as filled when this share of the beam lands on it... */
 const FILLED = 0.3;
 /** ...and both stay filled, with the middle dark, for this many steps (2 s). */
 const LOCK_STEPS = 120;
-/** The middle cell heats with the beam on it and cools slowly; it cracks at 1. */
-const HEAT = { gain: 1.2, tau: 6 } as const;
+/** The middle cell heats with the beam on it and cools slowly; it cracks at 1.
+ *  A third of the beam (three values) cracks it in ~10 s; the smear's sliver in ~37 s. */
+const HEAT = { gain: 0.353, tau: 30 } as const;
 
 export const ENTRANCE = { x: ROOM.xMax - 0.6, y: 0, z: 2 } as const;
 export const DOOR = doorBox(ROOM);
@@ -61,7 +66,7 @@ export const DOOR = doorBox(ROOM);
 export const OVEN_SWITCH = { x: OVEN_X, z: AXIS_Z + 0.55 } as const;
 export const STATIC_BOXES: readonly Box[] = [
   ...roomShell(ROOM),
-  { name: "bench", kind: "pedestal", center: [(OVEN_X + SCREEN_X) / 2, 0.45, AXIS_Z], half: [(OVEN_X - SCREEN_X) / 2 + 0.4, 0.45, 0.55] },
+  { name: "bench", kind: "pedestal", center: [(OVEN_X + SCREEN_X) / 2, BENCH_TOP / 2, AXIS_Z], half: [(OVEN_X - SCREEN_X) / 2 + 0.4, BENCH_TOP / 2, 0.55] },
 ];
 const DOOR_OPEN_SECONDS = 1.2;
 export const DOORWAY_X = ROOM.xMin + 0.4;
@@ -107,7 +112,7 @@ export class SternGerlachExhibit extends ExhibitBase {
   /** Share of the beam on the upper detector, the lower one, and the middle cell. */
   cells(): { up: number; down: number; middle: number } {
     if (!this.ovenOn || this.s.cracked) return { up: 0, down: 0, middle: 0 };
-    return { up: beamOnCell(this.spin, SPLIT), down: beamOnCell(this.spin, -SPLIT), middle: beamOnCell(this.spin, 0) };
+    return { up: beamOnCell(this.spin, SPLIT), down: beamOnCell(this.spin, -SPLIT), middle: beamOnCell(this.spin, 0, MIDDLE_HALF) };
   }
 
   /** 0..1: how hot the middle cell is (it cracks at 1). */

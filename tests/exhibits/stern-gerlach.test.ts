@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { initPhysics } from "../../src/engine/physics";
-import { SPIN_MARKS, SternGerlachExhibit } from "../../src/exhibits/stern-gerlach/sim";
+import { BEAM_Y, BENCH_TOP, CELL_HALF, SPIN_MARKS, SPLIT, SternGerlachExhibit } from "../../src/exhibits/stern-gerlach/sim";
 import { instrumentModel } from "../../src/ui/instrumentModel";
 
 let R: typeof RAPIER;
@@ -28,9 +28,9 @@ describe("stern–gerlach", () => {
     const c = ex.cells();
     expect(c.up).toBeLessThan(0.3);
     expect(c.middle).toBeGreaterThan(0);
-    seconds(5);
+    seconds(20);
     expect(ex.isFailed()).toBe(false); // slow: time to react
-    seconds(30);
+    seconds(25);
     expect(ex.isFailed()).toBe(true);
   });
 
@@ -55,13 +55,30 @@ describe("stern–gerlach", () => {
     expect(ex.isSolved()).toBe(true);
   });
 
-  it("three values put a spot on the middle cell: it cracks fast, and the door stays shut", () => {
+  it("three values put a spot on the middle cell: it cracks, faster than the smear, and the door stays shut", () => {
     ex = new SternGerlachExhibit(R);
     ex.setRule("spin", "three");
     ex.setRule("oven", "on");
-    seconds(10);
+    seconds(6);
+    expect(ex.isFailed()).toBe(false); // time to see the third spot and react
+    seconds(8);
     expect(ex.isFailed()).toBe(true);
     expect(ex.isSolved()).toBe(false);
+  });
+
+  it("trying three values and switching to two a few seconds in still works", () => {
+    ex = new SternGerlachExhibit(R);
+    ex.setRule("spin", "three");
+    ex.setRule("oven", "on");
+    seconds(5);
+    ex.setRule("spin", "two");
+    seconds(6);
+    expect(ex.isSolved()).toBe(true);
+  });
+
+  it("the lower detector sits above the bench, where the beam can reach it", () => {
+    ex = new SternGerlachExhibit(R);
+    expect(BEAM_Y - SPLIT - CELL_HALF).toBeGreaterThan(BENCH_TOP + 0.05);
   });
 
   it("brute force: only two values open the door", () => {
