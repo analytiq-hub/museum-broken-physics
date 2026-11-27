@@ -446,6 +446,66 @@ too early or too late both lose.
   - every solver threshold passes;
   - the instrument needs no heat-specific UI.
 
+### Milestone 10: Stream galleries instead of building them all (3–4 days)
+The museum should be able to grow to about 50 rooms without a longer load or more memory.
+Do this before the gallery after VI. The later it waits, the more galleries assume they
+always exist.
+
+- **Where the cost is today (Nov 2026, four galleries).**
+  - The download is about 4.85 MB of JS, almost all of it Rapier's inlined WASM, plus about
+    6 MB of shared textures and HDRI. All gallery and exhibit code is about 129 KB raw, roughly
+    32 KB per room. Fifty rooms of code would be about 1.6 MB raw, around 400 KB gzipped, so
+    the download is not what breaks.
+  - Drawing is already limited: `updateGalleryLights` lights only galleries within 10 m and
+    draws only those within 22 m.
+  - What does grow with room count: `main.ts` builds **every** gallery at startup, so every
+    gallery has a Rapier world, meshes, compiled shaders and sounds in memory, and all of that
+    is built before the first frame. `sync.render` also runs for every gallery each frame.
+- **Room list.** Replace the hard-coded `galleries` array with a list of rooms: id, x-range,
+  west and east neighbours, and a loader `() => import("./galleries/<name>")`. Vite then gives
+  each gallery its own chunk. The corridor layout in `layout.ts` stays the single source of
+  where rooms are.
+- **Keep three rooms live:** the active gallery and its two neighbours. When the player is
+  handed over at `HANDOVER_X`, start loading the room after next and unload the one two
+  rooms back. Loading starts as the player enters a corridor, so a room is ready well before
+  its door. If a room isn't ready, its door stays shut, so it never appears in front of the
+  player.
+- **Unloading.** Add `dispose()` to `Gallery`: `world.free()`, remove `group` from the
+  scene, dispose geometries and room-only materials and textures, and stop sounds.
+  Shared materials from `loadMaterials` stay loaded. Corridor geometry is drawn by the
+  eastern gallery (see the `skip` lists), so it must be on screen whenever either room on
+  its two sides is live.
+- **State.** A room that is unloaded and loaded again is rebuilt fresh. That is the same as
+  reset, which closes doors, so `RESET_SPOT` rules apply. Solved status stays in `GameState`.
+  A solved room shows its solved state again when it is rebuilt: open door, restored law.
+  The recorder starts a new attempt on arrival, as now.
+- **Assets per room.** A gallery that needs its own textures or models lists them and loads
+  them with its chunk. Use KTX2/Basis for new textures, which are smaller to download and
+  much smaller on the GPU than JPEG. Shared materials stay in the initial load.
+- **Rapier.** Consider switching from `@dimforge/rapier3d-compat` to the build that loads a
+  separate `.wasm`. Browsers then compile it while it downloads and cache it apart from game
+  code, so shipping a new room doesn't make players download the physics engine again.
+- **Debug API and harness.** `__game.setCamera`, the `cameras` list and the screenshot
+  harness assume every gallery exists. Jumping to a room's camera loads that room and its
+  neighbours first and awaits them. Headless tests, the solver and replays are sim-only and
+  build one exhibit at a time, so they are unaffected.
+- **Budgets, enforced in `npm run check`:**
+  - initial load (core, Rapier, shared assets, first two rooms): about 4 MB gzipped, about
+    what it is now;
+  - each room chunk: under 150 KB gzipped, not counting its own listed assets;
+  - live at once: three physics worlds, at most about 300 draw calls at any point on the
+    route.
+  A small script reads Vite's build manifest and fails over budget.
+- **Harness.**
+  - A ui-check or screenshot run walks Gallery I → IV and asserts that at most three
+    galleries are loaded at any time and that no door opens onto a room that isn't loaded.
+  - Leaving a room and coming back shows the same solved or unsolved state.
+  - Existing replay fixtures still pass unchanged.
+- **Done when:**
+  - adding a gallery doesn't change the first-load size or the time to the first frame;
+  - memory stays flat after walking through every gallery and back;
+  - nothing visibly appears from nowhere in first person.
+
 ## Later backlog
 
 - Exhibits after Gallery VI. Reversed heat flow could also freeze something on purpose, a
@@ -469,6 +529,7 @@ too early or too late both lose.
 | Unstable simulation from broken rules | Implement broken rules as explicit, capped forces rather than out-of-range engine parameters. |
 | Visual ambition slows progress | Strict gray-box-first rule; the visual pass happens per room, after it's fun. |
 | Performance with shadows and physics | Limit shadow-casting lights; sleep bodies; step only the active exhibit's world; profile early with stats.js. |
+| Load time and memory grow with every gallery added | Milestone 10: each gallery is its own chunk, only three galleries are live at once, and `npm run check` enforces size budgets. |
 
 ## Open questions
 
