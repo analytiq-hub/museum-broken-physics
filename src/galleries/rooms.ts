@@ -144,7 +144,7 @@ export const ROOMS: readonly Room[] = [
     floor: 2,
     kind: "gallery",
     laws: ["wavelength", "index"],
-    cameras: ["double-slit", "double-slit-screen"],
+    cameras: ["double-slit", "double-slit-wide", "double-slit-screen"],
     doors: { east: 0, west: -15 },
     load: async () => (await import("./doubleSlitGallery")).createDoubleSlitGallery,
   },

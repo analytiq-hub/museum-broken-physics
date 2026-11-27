@@ -16,6 +16,8 @@ type V3 = [number, number, number];
 export const CAMERA_POSES = {
   /** From the entrance corner: lamp, slits, tank and the screen. */
   "double-slit": { position: [-1.0, 3.1, 2.6] as V3, target: [-9.5, 1.0, -2.0] as V3 },
+  /** The whole room from high on the south wall: lamp, slits, tank, screen and door (video). */
+  "double-slit-wide": { position: [-2.0, 4.2, 3.8] as V3, target: [-7.35, 0.6, -2.15] as V3 },
   /** Facing the screen and its sensor. */
   "double-slit-screen": { position: [SCREEN_X + 3.4, 1.5, AXIS_Z + 0.6] as V3, target: [SCREEN_X, 1.3, AXIS_Z + 0.2] as V3 },
 } as const;

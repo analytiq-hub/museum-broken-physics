@@ -17,7 +17,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `node harness/record-pendulum-fixture.ts` | Same for Gallery II via the debug API (rewrites `tests/replays/pendulum-fixture.json`). |
 | `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
 | `node harness/preview-image.ts` | Renders 1200×630 link-preview candidates (HUD hidden, title overlaid) to `harness/out/preview/`; copy the chosen one to `public/og-image.jpg`. |
-| `node harness/record-video.ts` | Records a 10 s clip of Young's Double Slit being solved (real instrument clicks, drawn cursor, fixed steps per frame) to `harness/out/video/double-slit.mp4` via ffmpeg. Software rendering: ~11 min. |
+| `node harness/record-video.ts` | Records a 13 s, 1600×900 clip of Young's Double Slit being solved, the whole room in view (camera `double-slit-wide`; the instrument fades in for each real click, drawn cursor, fixed steps per frame) to `harness/out/video/double-slit.mp4` via ffmpeg. ~20 min (software rendering); `--still` saves one frame to check the framing. |
 | `npm run build` | Production build to `dist/`. |
 
 CI (`.github/workflows/ci.yml`) runs check + build on every push and PR, and deploys `main`
