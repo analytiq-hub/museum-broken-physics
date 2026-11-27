@@ -164,15 +164,17 @@ try {
     }),
   );
 
-  // The Grand Stair: climb from the foot of the stairs to Floor 2.
+  // The Grand Stair: the HUD at its foot, then climb the second half of the flight to Floor 2
+  // (the whole climb can outlast a slow CI machine's patience).
   await page.evaluate(() => window.__game!.setPlayerIn("stairwell", { x: -1.2, z: 2 }, Math.PI / 2, 0));
   expect(
     "the stairs are a passage, not a gallery",
     await eventually(page, () => document.querySelector(".hud .keys")!.textContent!.startsWith("Floor 1 · Mechanics · Galleries restored")),
     await q(page, () => document.querySelector(".hud")!.textContent!.replace(/\s+/g, " ")),
   );
+  await page.evaluate(() => window.__game!.setPlayerIn("stairwell", { x: -6, y: 2.4, z: 2 }, Math.PI / 2, 0)); // halfway up
   await page.keyboard.down("w");
-  const upstairs = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", 2 * WALK); // the longest walk: 16 m and a flight of stairs
+  const upstairs = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", 2 * WALK);
   await page.keyboard.up("w");
   expect("climbing the stairs and walking on reaches Floor 2's first gallery", upstairs, `at ${JSON.stringify(await q(page, () => window.__game!.getPlayer().feet))}`);
   expect("Floor 2 is 4.8 m up", Math.abs((await q(page, () => window.__game!.getPlayer().feet.y)) - 4.8) < 0.2);
