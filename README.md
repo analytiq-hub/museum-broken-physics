@@ -13,6 +13,9 @@ under it), drag with your right thumb to look, tap brass buttons and mirrors to 
 **Laws** opens the physics instrument, **Reset** restarts the room, **❚❚** pauses. Landscape
 works best.
 
+**Progress is saved** in your browser: come back later and the start card shows your visitor's
+ticket, with a stamp for each gallery restored, and offers to continue or start a new visit.
+
 ## How it was built
 
 The game is TypeScript and Vite, with **three.js** for rendering and **Rapier** (WASM) for

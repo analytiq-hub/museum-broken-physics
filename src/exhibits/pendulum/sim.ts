@@ -275,6 +275,11 @@ export class PendulumExhibit extends ExhibitBase {
     if (this.s.restSteps >= REST_STEPS && !this.isFailed()) this.s.solved = true;
   }
 
+  protected arrangeSolved(): void {
+    // The swing dies away under the restored drag while the door sinks.
+    this.s.solved = true;
+  }
+
   protected saveExtra(): PendulumExtra {
     return this.s;
   }

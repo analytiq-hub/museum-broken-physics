@@ -95,6 +95,17 @@ export class Recorder {
     if (this.current.outcome === "in-progress") this.close("reset", step, ball);
   }
 
+  /**
+   * The room was put straight into its solved state from saved progress. Nothing
+   * until the next reset can be replayed from the room's start, so it isn't
+   * recorded: the current attempt is dropped, and the stand-in isn't kept.
+   */
+  skipUntilReset(): void {
+    const i = this.recording.attempts.indexOf(this.current);
+    if (i >= 0) this.recording.attempts.splice(i, 1);
+    this.current = this.newAttempt();
+  }
+
   /** Starts a new attempt, capturing the player's state now. */
   beginAttempt(): void {
     this.current = this.newAttempt();

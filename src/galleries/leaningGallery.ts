@@ -84,6 +84,8 @@ export function createLeaningGallery(
       if (player.feet.x < DOORWAY_X) player.placeAt(RESET_SPOT); // the door is about to close
     },
     afterReset() {
+      wasSolved = exhibit.isSolved(); // a room restored from saved progress is already solved: no chime
+      wasFailed = exhibit.isFailed();
       heardBell = false;
       sound.setWhoosh(0);
       sound.setRumble(0);

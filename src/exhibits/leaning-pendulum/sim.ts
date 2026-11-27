@@ -283,6 +283,12 @@ export class LeaningPendulumExhibit extends ExhibitBase {
     return changed;
   }
 
+  protected arrangeSolved(): void {
+    // Solved first, so swinging back under restored gravity can't tear it loose.
+    this.s.solved = true;
+    this.s.rung = true;
+  }
+
   protected saveExtra(): LeaningExtra {
     return this.s;
   }

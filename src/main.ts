@@ -23,6 +23,7 @@ import { loadEnvironment, loadMaterials } from "./render/materials";
 import { createPost } from "./render/post";
 import type { GravityDirection } from "./rules/Rule";
 import { GameState } from "./state/gameState";
+import { clearProgress, loadProgress, saveProgress, type SavedProgress } from "./state/progress";
 import { GRAVITY_KEYS, createInstrument } from "./ui/instrument";
 import { instrumentModel } from "./ui/instrumentModel";
 import { createTouchControls } from "./ui/touchControls";
@@ -147,6 +148,43 @@ function switchTo(next: Gallery): void {
   player.attach(active.exhibit.world);
   active.recorder.playerArrived(active.exhibit.stepCount);
   failedFor = 0;
+  autosave();
+}
+
+// --- Saved progress ---------------------------------------------------------------
+/** Progress from an earlier visit in this browser; the start card offers to continue it. */
+let savedVisit: SavedProgress | undefined = AUTOMATION ? undefined : loadProgress();
+if (savedVisit && !galleries.some((g) => savedVisit!.solved[g.id])) savedVisit = undefined; // nothing solved yet
+/** Don't overwrite a saved visit until the player has chosen to continue it or start over. */
+let progressChosen = !savedVisit;
+
+function autosave(): void {
+  if (!AUTOMATION && progressChosen) saveProgress({ solved: gameState.toJSON(), gallery: active.id });
+}
+
+/** Puts every gallery solved last time back as it was left, and the player where they were. */
+function continueVisit(saved: SavedProgress): void {
+  gameState.load(saved.solved);
+  player.detach();
+  for (const g of galleries) {
+    if (!gameState.isSolved(g.id)) continue;
+    g.exhibit.restoreSolved();
+    g.sync.rebind(g.exhibit.world);
+    g.recorder.skipUntilReset();
+    g.afterReset();
+  }
+  player.attach(active.exhibit.world);
+  const target = galleries.find((g) => g.id === saved.gallery) ?? galleries[0];
+  if (target !== active) goToGallery(target);
+  stepper.clear();
+}
+
+function chooseVisit(fresh: boolean): void {
+  if (progressChosen) return;
+  progressChosen = true;
+  if (fresh) clearProgress();
+  else if (savedVisit) continueVisit(savedVisit);
+  savedVisit = undefined;
 }
 
 /**
@@ -195,7 +233,10 @@ function stepOnce(): void {
   g.afterStep();
   if (ex.isSolved()) {
     g.recorder.finish("solved", ex.stepCount, primaryPosition(g));
-    gameState.markSolved(g.id, ex.describe().rules);
+    if (!gameState.isSolved(g.id)) {
+      gameState.markSolved(g.id, ex.describe().rules);
+      autosave();
+    }
   } else if (ex.isFailed()) {
     g.recorder.finish("failed", ex.stepCount, primaryPosition(g));
   }
@@ -325,11 +366,33 @@ const CONTROLS = TOUCH
       <b>Click</b> brass buttons to work the exhibits · hold <b>Q</b> for your physics instrument ·
       <b>R</b> reset the room · <b>M</b> mute · <b>Esc</b> pause`;
 /** The start card, or once the player has entered, the pause card. */
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+/** The visitor's ticket: one stamp per gallery, inked once it's solved. */
+function ticketHtml(solved: (id: string) => boolean): string {
+  const done = galleries.filter((g) => solved(g.id)).length;
+  const stamps = galleries
+    .map((g, i) => {
+      const name = g.title.replace(/^The /, "").replace(/ Gallery$/, "");
+      return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
+    })
+    .join("");
+  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${galleries.length} galleries restored</div><div class="stamps">${stamps}</div></div>`;
+}
+
 function showOverlay(pausedCard: boolean): void {
   const action = TOUCH ? "Tap" : "Click";
+  const saved = savedVisit;
   overlay.innerHTML = pausedCard
-    ? `<div class="card"><h1>Paused</h1><p><b>${action}</b> to continue.</p><p class="controls">${CONTROLS}</p></div>`
-    : `<div class="card">
+    ? `<div class="card"><h1>Paused</h1>${ticketHtml((id) => gameState.isSolved(id))}<p><b>${action}</b> to continue.</p><p class="controls">${CONTROLS}</p></div>`
+    : saved
+      ? `<div class="card">
+        <h1>Welcome back</h1>
+        ${ticketHtml((id) => !!saved.solved[id])}
+        <p class="visit-buttons"><button type="button" data-visit="continue">Continue your visit</button><button type="button" data-visit="new">Start a new visit</button></p>
+        <p class="controls">${CONTROLS}</p>
+        ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
+      </div>`
+      : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
         <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
@@ -368,7 +431,9 @@ function resumeGame(): void {
   if (TOUCH) touch.setVisible(true);
 }
 
-overlay.addEventListener("click", () => {
+overlay.addEventListener("click", (e) => {
+  // A returning visitor's card: "Start a new visit" starts over; anywhere else continues.
+  chooseVisit((e.target as HTMLElement).closest("[data-visit]")?.getAttribute("data-visit") === "new");
   sound.unlock();
   if (!TOUCH) {
     look.lock(); // resumes on the "lock" event
@@ -430,7 +495,7 @@ function renderHud(): void {
     <div class="title">${active.title}</div>
     <div>${active.summary()} · Changes left <span class="pips">${pips}</span></div>
     <div class="status">${TOUCH ? touchWording(active.status(player)) : active.status(player)}</div>
-    <div class="keys">Galleries solved: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
+    <div class="keys">Galleries restored: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
   // The instrument: pinned open in the window view, raised with Q in first person.

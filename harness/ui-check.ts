@@ -148,8 +148,69 @@ try {
     await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
   );
 
+  await page.close(); // the desktop page's rendering would slow the next pages' input handling
+
+  // --- Saved progress: a returning visitor with Galleries I and II solved, last seen in III.
+  const visit = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+  await visit.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return; // seed once; later loads see what the game saved
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem(
+      "museum-broken-physics/progress",
+      JSON.stringify({ version: 1, solved: { "sideways-gravity": { rules: {} }, pendulum: { rules: {} } }, gallery: "leaning-pendulum" }),
+    );
+  });
+  const vp = await visit.newPage();
+  vp.on("pageerror", (e) => expect("no page errors (saved visit)", false, e.message));
+  await vp.goto(url);
+  await vp.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 60_000 });
+  expect("a returning visitor is welcomed back", await q(vp, () => document.querySelector(".overlay h1")?.textContent === "Welcome back"));
+  expect("the visitor's ticket shows two galleries stamped", await q(vp, () => document.querySelectorAll(".overlay .stamp.done").length === 2));
+  await vp.screenshot({ path: "harness/out/screens/60-welcome-back.png" });
+  await vp.click('[data-visit="continue"]');
+  expect(
+    "Continue puts the visitor back in Gallery III with I and II solved",
+    await eventually(vp, () => {
+      const solved = Object.keys(window.__game!.getGameState());
+      return window.__game!.getPlayer().gallery === "leaning-pendulum" && solved.length === 2 && !window.__game!.getState().solved;
+    }),
+  );
+  // Wait for the game's own "lock" handler (the card hides), not just the browser granting the lock.
+  expect(
+    "…and the game holds the pointer",
+    await eventually(vp, () => document.pointerLockElement !== null && document.querySelector(".overlay")!.classList.contains("hidden")),
+  );
+  // Walk back east into Gallery II: its door stands open and the room is solved.
+  await vp.evaluate(() => window.__game!.setPlayer({ x: -26.5, z: 2 }, -Math.PI / 2, 0));
+  expect(
+    "Gallery II comes back solved, its laws put right",
+    await eventually(vp, () => {
+      const s = window.__game!.getState();
+      return window.__game!.getPlayer().gallery === "pendulum" && s.solved && s.rules.damping === 0.15 && s.changesUsed === 0;
+    }),
+  );
+  expect(
+    "moving between galleries saves where the visitor is",
+    await q(vp, () => JSON.parse(localStorage.getItem("museum-broken-physics/progress")!).gallery === "pendulum"),
+  );
+  await vp.evaluate(() => document.exitPointerLock()); // what Esc does; headless Chrome ignores the key
+  expect(
+    "the pause card carries the ticket",
+    await eventually(vp, () => document.querySelectorAll(".overlay .stamp.done").length === 2),
+  );
+  // Reload and start over: the save is cleared and the museum is new.
+  await vp.reload();
+  await vp.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 60_000 });
+  expect("reloading offers to continue again", await q(vp, () => document.querySelector(".overlay h1")?.textContent === "Welcome back"));
+  await vp.click('[data-visit="new"]');
+  expect(
+    "Start a new visit begins at Gallery I with nothing solved",
+    await eventually(vp, () => window.__game!.getPlayer().gallery === "sideways-gravity" && Object.keys(window.__game!.getGameState()).length === 0),
+  );
+  expect("…and forgets the saved visit", await q(vp, () => localStorage.getItem("museum-broken-physics/progress") === null));
+  await visit.close();
+
   // --- Touch: an emulated phone (landscape), real touch events via the DevTools protocol.
-  await page.close(); // the desktop page's rendering would slow the phone's input handling
   const phone = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   const tp = await phone.newPage();
   tp.on("pageerror", (e) => expect("no page errors (touch)", false, e.message));

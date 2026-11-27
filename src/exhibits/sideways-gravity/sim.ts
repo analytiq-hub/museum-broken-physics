@@ -287,6 +287,13 @@ export class SidewaysGravityExhibit extends ExhibitBase {
     if (this.stepsInTarget >= SOLVE_STEPS) this.solved = true;
   }
 
+  protected arrangeSolved(): void {
+    // The marble on the brass plate; the plumb bob and debris fall to the floor by themselves.
+    this.ball.setTranslation({ x: TARGET.center[0], y: TARGET.center[1], z: TARGET.center[2] }, true);
+    this.ball.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    this.solved = true;
+  }
+
   /** Only the ball decides whether the room has settled; tell-tales may still sway. */
   protected settleBodies(): RAPIER.RigidBody[] {
     return [this.ball];

@@ -199,6 +199,17 @@ export class OpticsExhibit extends ExhibitBase {
     if (this.s.litSteps >= LIT_STEPS) this.s.solved = true;
   }
 
+  protected arrangeSolved(): void {
+    // The mirrors as the solution leaves them (index 1.5 is set as the law).
+    for (const [id, angle] of [["mirror-a", 135], ["mirror-b", 120]] as const) {
+      const rule = this.rule(id);
+      rule.current = angle;
+      rule.apply(this.ctx);
+    }
+    this.s.solved = true;
+    this.s.revealed = true;
+  }
+
   protected saveExtra(): OpticsExtra {
     return this.s;
   }

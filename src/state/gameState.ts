@@ -1,6 +1,6 @@
 // Progress through the museum: which galleries are solved, and with which
-// laws left in place. Later galleries read it for trade-offs; save/load will
-// serialise it. Plain data, no DOM.
+// laws left in place. Later galleries read it for trade-offs; src/state/progress.ts
+// saves it. Plain data, no DOM.
 
 export interface GalleryOutcome {
   /** Rule values when the gallery was solved. */
@@ -16,6 +16,16 @@ export class GameState {
 
   isSolved(galleryId: string): boolean {
     return this.solved.has(galleryId);
+  }
+
+  /** Replaces everything with saved progress (toJSON() output). */
+  load(solved: Record<string, GalleryOutcome>): void {
+    this.solved.clear();
+    for (const [id, outcome] of Object.entries(solved)) this.solved.set(id, outcome);
+  }
+
+  clear(): void {
+    this.solved.clear();
   }
 
   toJSON(): Record<string, GalleryOutcome> {

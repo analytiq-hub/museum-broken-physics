@@ -80,7 +80,12 @@ export function createOpticsGallery(
     beforeReset(player) {
       if (player.feet.x < DOORWAY_X) player.placeAt(RESET_SPOT); // the hidden door is about to close
     },
-    afterReset() {},
+    afterReset() {
+      // A room restored from saved progress is already solved: no chime.
+      wasSolved = exhibit.isSolved();
+      wasLit = exhibit.lit;
+      wasRevealed = exhibit.revealed;
+    },
     silence() {},
   };
 }

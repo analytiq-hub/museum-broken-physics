@@ -83,6 +83,8 @@ export function createPendulumGallery(
       if (player.feet.x < DOORWAY_X) player.placeAt(RESET_SPOT); // the door is about to close
     },
     afterReset() {
+      wasSolved = exhibit.isSolved(); // a room restored from saved progress is already solved: no chime
+      wasFailed = exhibit.isFailed();
       heardRung = 0;
       sound.setWhoosh(0);
       sound.setRumble(0);

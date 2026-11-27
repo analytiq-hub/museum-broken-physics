@@ -31,6 +31,8 @@ export interface ExhibitSave {
 const CALM_SPEED = 0.05;
 /** Steps all bodies must stay calm to count as settled. */
 const CALM_STEPS = 20;
+/** restoreSolved() runs the room this long (5 s) so doors are open and things are still. */
+const RESTORE_STEPS = 300;
 
 export abstract class ExhibitBase {
   readonly id: string;
@@ -120,6 +122,27 @@ export abstract class ExhibitBase {
     if (!this.initial) throw new Error(`${this.id}: finishSetup() was never called`);
     this.load(this.initial);
   }
+
+  /**
+   * Puts the room in its finished state, as a returning visitor left it (saved
+   * progress): every law back at its correct value, the puzzle pieces where a
+   * solve leaves them, solved, and the door open. Steps the world a few seconds
+   * so the door has sunk and things have come to rest.
+   */
+  restoreSolved(): void {
+    this.reset();
+    for (const rule of this.rules) {
+      if (rule.control) continue;
+      rule.current = rule.nominal;
+      rule.apply(this.ctx);
+    }
+    this.arrangeSolved();
+    this.world.forEachRigidBody((body) => body.wakeUp()); // sleeping bodies ignore gravity changes
+    for (let i = 0; i < RESTORE_STEPS; i++) this.step();
+  }
+
+  /** For restoreSolved(): place the puzzle pieces, set controls and mark the room solved. */
+  protected abstract arrangeSolved(): void;
 
   /** Captures the complete state (world, rules, budget, exhibit logic). */
   save(): ExhibitSave {

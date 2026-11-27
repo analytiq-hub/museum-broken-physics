@@ -86,6 +86,14 @@ non-solutions and asserts they are not.
   (`?quality=high` overrides). `npm run ui-check` drives it on an emulated phone with real
   touch events.
 
+- **Saved progress** (`src/state/progress.ts`): solved galleries and the current gallery go to
+  `localStorage` on each solve and gallery change. A returning visitor gets a "Welcome back"
+  card with the visitor's ticket (also on the pause card); Continue calls each solved
+  exhibit's `restoreSolved()` (laws to nominal, `arrangeSolved()`, ~5 s of steps so the door is
+  open) and puts the player at the gallery they were in. Every exhibit must implement
+  `arrangeSolved()`; `tests/exhibits/restoreSolved.test.ts` covers them. Restored rooms aren't
+  recorded until reset (`Recorder.skipUntilReset`). `?automation` ignores saved progress.
+
 - **Pausing:** Esc (it releases the pointer lock), the ❚❚ touch button, or leaving the tab
   pauses the game (`menuPaused` in `main.ts`): no steps, sound suspended, a "Paused" card;
   clicking/tapping it resumes without simulating the time spent paused. Separate from the

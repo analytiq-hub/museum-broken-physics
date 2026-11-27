@@ -101,6 +101,8 @@ export function createSidewaysGallery(
       if (player.feet.x < DOORWAY_X) player.placeAt(RESET_SPOT); // the door is about to close
     },
     afterReset() {
+      wasSolved = exhibit.isSolved(); // a room restored from saved progress is already solved: no chime
+      wasFailed = exhibit.isFailed();
       lastVelocity = { x: 0, y: 0, z: 0 };
       pendingImpact = 0;
       sound.setRolling(0);
