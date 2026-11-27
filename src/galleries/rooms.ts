@@ -139,6 +139,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./furnaceGallery")).createFurnaceGallery,
   },
   {
+    id: "double-slit",
+    title: "Young's Double Slit",
+    floor: 2,
+    kind: "gallery",
+    laws: ["wavelength", "index"],
+    cameras: ["double-slit", "double-slit-screen"],
+    doors: { east: 0, west: -15 },
+    load: async () => (await import("./doubleSlitGallery")).createDoubleSlitGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 2,

@@ -24,6 +24,8 @@ import { ChladniExhibit, ENTRANCE as CHLADNI_ENTRANCE, STATIC_BOXES as CHLADNI_B
 import { CAMERA_POSES as CHLADNI_CAMERAS } from "../../src/exhibits/chladni/view";
 import { FurnaceExhibit, ENTRANCE as FURNACE_ENTRANCE, STATIC_BOXES as FURNACE_BOXES } from "../../src/exhibits/furnace/sim";
 import { CAMERA_POSES as FURNACE_CAMERAS } from "../../src/exhibits/furnace/view";
+import { DoubleSlitExhibit, ENTRANCE as SLIT_ENTRANCE, STATIC_BOXES as SLIT_BOXES } from "../../src/exhibits/double-slit/sim";
+import { CAMERA_POSES as SLIT_CAMERAS } from "../../src/exhibits/double-slit/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -43,6 +45,7 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new SingingGlassExhibit(R), SINGING_CAMERAS, SINGING_ENTRANCE, SINGING_BOXES],
   [() => new ChladniExhibit(R), CHLADNI_CAMERAS, CHLADNI_ENTRANCE, CHLADNI_BOXES],
   [() => new FurnaceExhibit(R), FURNACE_CAMERAS, FURNACE_ENTRANCE, FURNACE_BOXES],
+  [() => new DoubleSlitExhibit(R), SLIT_CAMERAS, SLIT_ENTRANCE, SLIT_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 

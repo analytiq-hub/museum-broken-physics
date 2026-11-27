@@ -234,6 +234,16 @@ try {
   expect("the crosshair finds the furnace mirror", await eventually(page, () => window.__game!.getPlayer().hovered === "mirror"));
   await page.mouse.click(600, 400);
   expect("clicking the mirror aims the beam at the ice, for free", await eventually(page, () => window.__game!.getState().rules.mirror === "ice" && window.__game!.getState().changesUsed === 0, 30_000));
+  // Gallery IX: switch the observer lamp on: the bands vanish.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("double-slit", { x: -2.5, z: -0.2 }, Math.PI / 2, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("observer");
+  });
+  expect("the player is handed to Gallery IX", await eventually(page, () => window.__game!.getPlayer().gallery === "double-slit"));
+  expect("the crosshair finds the observer lamp", await eventually(page, () => window.__game!.getPlayer().hovered === "observer"));
+  await page.mouse.click(600, 400);
+  expect("clicking it switches the observer on, for free", await eventually(page, () => window.__game!.getState().rules.observer === "on" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.
