@@ -244,6 +244,17 @@ try {
   expect("the crosshair finds the observer lamp", await eventually(page, () => window.__game!.getPlayer().hovered === "observer"));
   await page.mouse.click(600, 400);
   expect("clicking it switches the observer on, for free", await eventually(page, () => window.__game!.getState().rules.observer === "on" && window.__game!.getState().changesUsed === 0, 30_000));
+  // Gallery X, on Floor 3: click the radium source to slide it along.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("rutherford", { x: -1.6, z: -2.4 }, Math.PI * 0.75, -0.3);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("source");
+  });
+  expect("the player is handed to Gallery X, on Floor 3", await eventually(page, () => window.__game!.getPlayer().gallery === "rutherford"));
+  expect("the HUD says Floor 3", await eventually(page, () => document.querySelector(".hud .keys")!.textContent!.startsWith("Floor 3")));
+  expect("the crosshair finds the source", await eventually(page, () => window.__game!.getPlayer().hovered === "source"));
+  await page.mouse.click(600, 400);
+  expect("clicking slides the source along, for free", await eventually(page, () => window.__game!.getState().rules.source === "1" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.

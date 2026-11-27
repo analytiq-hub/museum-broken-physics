@@ -67,8 +67,8 @@ export const STATIC_BOXES: readonly Box[] = [
 
 /** The passage between floors: no laws to change, nothing to solve. */
 export class StairwellExhibit extends ExhibitBase {
-  constructor(R: typeof RAPIER) {
-    super("stairwell", R, 0);
+  constructor(R: typeof RAPIER, id = "stairwell") {
+    super(id, R, 0);
     const world = this.world;
     const statics = world.createRigidBody(R.RigidBodyDesc.fixed());
     addStaticBoxes(R, world, statics, STATIC_BOXES);

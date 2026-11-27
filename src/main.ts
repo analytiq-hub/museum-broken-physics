@@ -467,7 +467,7 @@ const CONTROLS = TOUCH
 /** The start card, or once the player has entered, the pause card. */
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 /** The visitor's ticket: one stamp per gallery, inked once it's solved. */
-const FLOOR_NAMES: Record<number, string> = { 1: "Floor 1 · Mechanics", 2: "Floor 2 · Waves and Light" };
+const FLOOR_NAMES: Record<number, string> = { 1: "Floor 1 · Mechanics", 2: "Floor 2 · Waves and Light", 3: "Floor 3 · Modern Physics" };
 /** The visitor's ticket: one stamp per gallery, inked once it's solved, a row per floor. */
 function ticketHtml(solved: (id: string) => boolean): string {
   const done = GALLERIES.filter((g) => solved(g.id)).length;

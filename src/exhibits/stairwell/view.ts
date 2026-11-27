@@ -18,7 +18,44 @@ export const CAMERA_POSES = {
 
 const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, glass: 1, ledge: 2, pedestal: 2 };
 
-export function buildStairwellView(scene: THREE.Object3D, m: Materials): { update(dt: number): void } {
+/** What the two placards say: the farewell at the foot, the welcome on the landing. */
+export interface StairPlacards {
+  foot: { kicker: string; title: string; lines: string[] };
+  landing: { kicker: string; title: string; lines: string[] };
+}
+
+export const FLOOR_1_TO_2: StairPlacards = {
+  foot: {
+    kicker: "FLOOR 1 COMPLETE",
+    title: "The Grand Stair",
+    lines: [
+      "You have put right gravity, damping",
+      "and the bounce of a ball: things you can see.",
+      "Upstairs, light, sound and heat have broken.",
+      "Some of what's wrong there can't be seen.",
+    ],
+  },
+  landing: {
+    kicker: "FLOOR 2",
+    title: "Waves and Light",
+    lines: ["Here the broken laws are harder to see:", "a beam that bends the wrong way,", "a note that's out of tune.", "Watch what they do, then work out why."],
+  },
+};
+
+export const FLOOR_2_TO_3: StairPlacards = {
+  foot: {
+    kicker: "FLOOR 2 COMPLETE",
+    title: "The Upper Stair",
+    lines: ["You have put right light and sound and heat,", "and watched a pattern vanish when observed.", "Above, the laws of the very small", "and the very fast have broken."],
+  },
+  landing: {
+    kicker: "FLOOR 3",
+    title: "Modern Physics",
+    lines: ["Here the laws defy intuition", "even when they are working.", "Trust what you see over what you expect,", "and spend your changes carefully."],
+  },
+};
+
+export function buildStairwellView(scene: THREE.Object3D, m: Materials, text: StairPlacards = FLOOR_1_TO_2): { update(dt: number): void } {
   const byKind: Record<Box["kind"], THREE.Material> = {
     floor: m.floor,
     ceiling: m.ceiling,
@@ -68,41 +105,9 @@ export function buildStairwellView(scene: THREE.Object3D, m: Materials): { updat
     rail(new THREE.Vector3(STAIR.x1, RISE + 0.95, z), new THREE.Vector3(ROOM.xMin + 0.1, RISE + 0.95, z));
   }
 
-  // --- Placards: Floor 1's farewell at the foot, Floor 2's welcome on the landing.
-  scene.add(
-    placard(
-      {
-        kicker: "FLOOR 1 COMPLETE",
-        title: "The Grand Stair",
-        lines: [
-          "You have put right gravity, damping",
-          "and the bounce of a ball: things you can see.",
-          "Upstairs, light, sound and heat have broken.",
-          "Some of what's wrong there can't be seen.",
-        ],
-      },
-      new THREE.Vector3(ROOM.xMax - 1.3, 1.55, ROOM.z1 - 0.04),
-      Math.PI,
-      m,
-    ),
-  );
-  scene.add(
-    placard(
-      {
-        kicker: "FLOOR 2",
-        title: "Waves and Light",
-        lines: [
-          "Here the broken laws are harder to see:",
-          "a beam that bends the wrong way,",
-          "a note that's out of tune.",
-          "Watch what they do, then work out why.",
-        ],
-      },
-      new THREE.Vector3(ROOM.xMin + 1.2, RISE + 1.55, ROOM.z1 - 0.04),
-      Math.PI,
-      m,
-    ),
-  );
+  // --- Placards: the floor below's farewell at the foot, the next floor's welcome on the landing.
+  scene.add(placard(text.foot, new THREE.Vector3(ROOM.xMax - 1.3, 1.55, ROOM.z1 - 0.04), Math.PI, m));
+  scene.add(placard(text.landing, new THREE.Vector3(ROOM.xMin + 1.2, RISE + 1.55, ROOM.z1 - 0.04), Math.PI, m));
 
   // --- Lighting: a key from high over the foot of the stairs, a hanging lantern, the landing.
   const key = new THREE.SpotLight(0xfff0dc, 60, 20, Math.PI / 3.5, 0.8, 1.5);

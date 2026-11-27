@@ -24,7 +24,7 @@ export type GalleryFactory = (
 export interface Room {
   id: string;
   title: string;
-  /** Floor 1 (mechanics) or Floor 2 (waves and light): each floor is a level, harder going up. */
+  /** Floor 1 (mechanics), 2 (waves and light) or 3 (modern physics): each floor is a level, harder going up. */
   floor: number;
   /** A gallery to restore, or a passage (the stairs between floors). */
   kind: "gallery" | "passage";
@@ -149,9 +149,29 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./doubleSlitGallery")).createDoubleSlitGallery,
   },
   {
+    id: "upper-stair",
+    title: "The Upper Stair",
+    floor: 2,
+    kind: "passage",
+    laws: [],
+    cameras: ["upper-stair"],
+    doors: { east: 0, west: -13, rise: 4.8 },
+    load: async () => (await import("./stairwellGallery")).createUpperStairGallery,
+  },
+  {
+    id: "rutherford",
+    title: "Rutherford's Gold Foil",
+    floor: 3,
+    kind: "gallery",
+    laws: ["charge"],
+    cameras: ["rutherford", "rutherford-table"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./rutherfordGallery")).createRutherfordGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
-    floor: 2,
+    floor: 3,
     kind: "passage",
     laws: [],
     cameras: [],

@@ -26,6 +26,8 @@ import { FurnaceExhibit, ENTRANCE as FURNACE_ENTRANCE, STATIC_BOXES as FURNACE_B
 import { CAMERA_POSES as FURNACE_CAMERAS } from "../../src/exhibits/furnace/view";
 import { DoubleSlitExhibit, ENTRANCE as SLIT_ENTRANCE, STATIC_BOXES as SLIT_BOXES } from "../../src/exhibits/double-slit/sim";
 import { CAMERA_POSES as SLIT_CAMERAS } from "../../src/exhibits/double-slit/view";
+import { RutherfordExhibit, ENTRANCE as RUTHERFORD_ENTRANCE, STATIC_BOXES as RUTHERFORD_BOXES } from "../../src/exhibits/rutherford/sim";
+import { CAMERA_POSES as RUTHERFORD_CAMERAS } from "../../src/exhibits/rutherford/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -46,6 +48,8 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new ChladniExhibit(R), CHLADNI_CAMERAS, CHLADNI_ENTRANCE, CHLADNI_BOXES],
   [() => new FurnaceExhibit(R), FURNACE_CAMERAS, FURNACE_ENTRANCE, FURNACE_BOXES],
   [() => new DoubleSlitExhibit(R), SLIT_CAMERAS, SLIT_ENTRANCE, SLIT_BOXES],
+  [() => new StairwellExhibit(R, "upper-stair"), { "upper-stair": STAIR_CAMERAS.stairwell }, STAIR_ENTRANCE, STAIR_BOXES],
+  [() => new RutherfordExhibit(R), RUTHERFORD_CAMERAS, RUTHERFORD_ENTRANCE, RUTHERFORD_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 
@@ -100,8 +104,9 @@ describe("room list", () => {
     expect(ROOMS.find((r) => r.id === "stairwell")!.doors.rise).toBe(RISE);
   });
 
-  it("Floor 2 is above Floor 1, reached only by the stairs", () => {
-    ROOMS.forEach((room, i) => expect(OFFSETS[i].y > 0).toBe(room.floor === 2));
+  it("each floor is a storey above the one below, reached only by the stairs", () => {
+    const heights = ROOMS.map((room, i) => ({ floor: room.floor, y: OFFSETS[i].y }));
+    for (const { floor, y } of heights) expect(y).toBeCloseTo((floor - 1) * RISE);
   });
 
   it("every floor x belongs to exactly one room, with hysteresis at the lines", () => {
