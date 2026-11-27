@@ -22,7 +22,12 @@ jobs:
       - name: First-person UI check (headless Chrome, real pointer lock)
         run: npm run ui-check
       - name: Star count for the GitHub link on the cards (0 if GitHub doesn't answer)
-        run: echo "REPO_STARS=$(curl -fsS -H 'Authorization: Bearer ${{ github.token }}' https://api.github.com/repos/${{ github.repository }} | jq -r '.stargazers_count // 0' || echo 0)" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          stars=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$GITHUB_REPOSITORY" | jq -r '.stargazers_count // 0' || echo 0)
+          echo "REPO_STARS=$stars" >> "$GITHUB_ENV"
+          echo "Stars: $stars"
       - run: npm run build
       - name: Upload site for Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

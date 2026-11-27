@@ -28,8 +28,7 @@
       "warn",
       {
         "allow": [
-          "__game",
-          "__REPO_STARS__"
+          "__game"
         ]
       }
     ]
