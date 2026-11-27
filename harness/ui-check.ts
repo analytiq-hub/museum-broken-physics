@@ -183,6 +183,20 @@ try {
   );
 
 
+  // Gallery VI: click an organ pipe to sound it, click again to stop it.
+  await page.evaluate(async () => {
+    window.__game!.setPlayer({ x: -96.8, z: -1.2 }, 0.25, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("2");
+  });
+  expect("the player is handed to Gallery VI", await eventually(page, () => window.__game!.getPlayer().gallery === "singing-glass"));
+  expect("the crosshair finds the third pipe", await eventually(page, () => window.__game!.getPlayer().hovered === "2"));
+  await page.mouse.click(600, 400);
+  expect("clicking a pipe sounds it, for free", await eventually(page, () => window.__game!.getState().rules.pipe === "2" && window.__game!.getState().changesUsed === 0, 30_000));
+  expect("the crosshair offers to stop it", await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "Click: stop the third pipe", 30_000));
+  await page.mouse.click(600, 400);
+  expect("clicking it again stops it", await eventually(page, () => window.__game!.getState().rules.pipe === "none", 30_000));
+
   await page.close(); // the desktop page's rendering would slow the next pages' input handling
 
   // --- Saved progress: a returning visitor with Galleries I and II solved, last seen in III.

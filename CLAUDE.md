@@ -64,8 +64,12 @@ non-solutions and asserts they are not.
   the broken law is the prism's refractive index; mirrors are **control** rules).
   Gallery V: the Bouncing Hall (bounciness above 1: Rapier bounces elastically and an
   explicit capped boost scales each upward rebound; a 45° deflector throws the ball onto a
-  felt balcony that soaks up sideways speed; the lever is a control with a fixed value). Its
-  west door leads to the closing alcove; Gallery IV's hidden door leads to it via `CORRIDOR_4_5`.
+  felt balcony that soaks up sideways speed; the lever is a control with a fixed value).
+  Gallery IV's hidden door leads to it via `CORRIDOR_4_5`.
+  Gallery VI: the Singing Glass (the speed of sound; pipes play v / 2L; each glass's ring is an
+  envelope integrated exactly in `src/exhibits/singing-glass/resonance.ts`, no Rapier; organ
+  pipes are toggle controls via `offValue`; the pane is the exit and the harmonica the fail).
+  The closing alcove is behind its pane.
 - **Control rules** (`control: true`, e.g. a mirror's angle) cost nothing from the budget and
   aren't listed on the instrument; they're operated in the world by click targets, either
   `cycle: true` (each click steps to the next option) or a fixed `value` (the lever; its

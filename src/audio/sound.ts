@@ -13,6 +13,10 @@ export class Sound {
   private whooshFilter: BiquadFilterNode | undefined;
   private rumbleGain: GainNode | undefined;
   private muted = false;
+  /** The organ pipe: a few harmonics through one gain, retuned live. */
+  private pipe: { oscs: OscillatorNode[]; gain: GainNode } | undefined;
+  /** Ringing glasses, by id: a sine at the glass's own pitch. */
+  private glasses = new Map<string, { osc: OscillatorNode; gain: GainNode }>();
 
   get isMuted(): boolean {
     return this.muted;
@@ -107,6 +111,53 @@ export class Sound {
     this.burst({ type: "highpass", freq: 3000, q: 0.5, gain: 0.45, attack: 0.002, decay: 0.5 });
     this.burst({ type: "bandpass", freq: 5200, q: 3, gain: 0.25, attack: 0.002, decay: 0.9 });
     for (let i = 0; i < 6; i++) this.tone({ freq: 2500 + Math.random() * 3500, gain: 0.04, attack: 0.001, decay: 0.15, delay: Math.random() * 0.4 });
+  }
+
+  /** The organ pipe sounding at `freq` Hz, or silent (null). Slides live when the pitch changes. */
+  setPipe(freq: number | null): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return;
+    if (!this.pipe) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(this.master);
+      // Fundamental plus the 2nd to 4th harmonics, softer each: a flue pipe's reedless tone.
+      const oscs = [1, 2, 3, 4].map((h, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        const g = ctx.createGain();
+        g.gain.value = [1, 0.35, 0.18, 0.08][i];
+        osc.connect(g).connect(gain);
+        osc.start();
+        osc.frequency.value = 440 * h;
+        return osc;
+      });
+      this.pipe = { oscs, gain };
+    }
+    const t = ctx.currentTime;
+    if (freq !== null) this.pipe.oscs.forEach((osc, i) => osc.frequency.setTargetAtTime(freq * (i + 1), t, 0.05));
+    this.pipe.gain.gain.setTargetAtTime(freq === null ? 0 : 0.09, t, freq === null ? 0.08 : 0.04);
+  }
+
+  /** A glass ringing at its own pitch; `level` 0..1 (its vibration). */
+  setGlass(id: string, freq: number, level: number): void {
+    const ctx = this.ctx;
+    if (!ctx || !this.master) return;
+    let glass = this.glasses.get(id);
+    if (!glass) {
+      if (level <= 0.01) return;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq * 2; // glasses sing an octave above: brighter
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      osc.connect(gain).connect(this.master);
+      osc.start();
+      glass = { osc, gain };
+      this.glasses.set(id, glass);
+    }
+    const l = Math.min(1, Math.max(0, level));
+    glass.gain.gain.setTargetAtTime(l * l * 0.12, ctx.currentTime, 0.05);
   }
 
   /** Freezes all sound (the game is paused). */

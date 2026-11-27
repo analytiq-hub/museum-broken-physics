@@ -18,6 +18,7 @@ import type { Gallery, Interactable } from "./galleries/gallery";
 import { createLeaningGallery } from "./galleries/leaningGallery";
 import { createBouncingGallery } from "./galleries/bouncingGallery";
 import { createOpticsGallery } from "./galleries/opticsGallery";
+import { createSingingGallery } from "./galleries/singingGallery";
 import { createPendulumGallery } from "./galleries/pendulumGallery";
 import { createSidewaysGallery } from "./galleries/sidewaysGallery";
 import { loadEnvironment, loadMaterials } from "./render/materials";
@@ -105,6 +106,7 @@ const galleries: Gallery[] = [
   createLeaningGallery(R, scene, materials, sound, () => player),
   createOpticsGallery(R, scene, materials, sound, () => player),
   createBouncingGallery(R, scene, materials, sound, () => player),
+  createSingingGallery(R, scene, materials, sound, () => player),
 ];
 let active = galleries[0];
 player.attach(active.exhibit.world);
@@ -275,6 +277,10 @@ function changeRule(id: string, value: unknown): boolean {
 
 /** Clicking an in-world control: set its value, or step a cycling control to its next option. */
 function pressInteractable(target: Interactable): void {
+  if (target.offValue !== undefined && active.exhibit.rule(target.rule).current === target.value) {
+    changeRule(target.rule, target.offValue);
+    return;
+  }
   if (!target.cycle) {
     changeRule(target.rule, target.value);
     return;
@@ -396,7 +402,7 @@ function showOverlay(pausedCard: boolean): void {
       </div>`
       : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
-        <p>Five galleries whose laws have broken. Put them right, or put them to use.</p>
+        <p>Six galleries whose laws have broken. Put them right, or put them to use.</p>
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
       </div>`;

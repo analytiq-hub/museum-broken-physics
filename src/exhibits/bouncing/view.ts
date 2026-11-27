@@ -1,7 +1,7 @@
 // View of the Bouncing Hall: a tall marble hall with a red rubber ball hanging
 // in a brass claw over an anvil, a slanted brass deflector high above it, a
 // felt-lined balcony on the west wall, a glass skylight, the lever that drops
-// the ball, and the alcove with the museum's last placard beyond the exit door.
+// the ball, and the corridor beyond the exit door to Gallery VI.
 import * as THREE from "three";
 import type { BodySync } from "../../engine/bodySync";
 import type { Materials } from "../../render/materials";
@@ -9,7 +9,6 @@ import { worldBoxGeometry } from "../../render/materials";
 import { placard } from "../../render/placard";
 import type { Box } from "../layout";
 import {
-  ALCOVE,
   BALCONY,
   BALCONY_EDGE,
   BALL_RADIUS,
@@ -168,7 +167,7 @@ export function buildBouncingView(scene: THREE.Object3D, ex: BouncingExhibit, sy
   leverPivot.add(knob);
   leverPivot.rotation.x = -0.5; // held: leaning back
 
-  // --- Placards: at the entrance, and the museum's last one in the alcove.
+  // --- The entrance placard.
   scene.add(
     placard(
       {
@@ -186,26 +185,7 @@ export function buildBouncingView(scene: THREE.Object3D, ex: BouncingExhibit, sy
       m,
     ),
   );
-  const alcoveZ = 2;
-  scene.add(
-    placard(
-      {
-        kicker: "THE END, FOR NOW",
-        title: "More Galleries Ahead",
-        lines: [
-          "You have put right gravity, damping,",
-          "light and the bounce of a ball.",
-          "The museum's other wings are still being",
-          "restored. Thank you for visiting.",
-        ],
-      },
-      new THREE.Vector3(ALCOVE.xMin + 0.04, 1.4, alcoveZ),
-      Math.PI / 2,
-      m,
-    ),
-  );
-
-  // --- Lighting: one shadowed key from the entrance corner, wall washes, and the alcove.
+  // --- Lighting: one shadowed key from the entrance corner, wall washes, and the corridor.
   const key = new THREE.SpotLight(0xfff0dc, 70, 22, Math.PI / 3.2, 0.8, 1.5);
   key.position.set(ROOM.xMax - 0.5, ROOM.height - 0.3, ROOM.halfZ - 0.5);
   key.target.position.set(DROP_X, 2, LANE_Z);
@@ -220,9 +200,10 @@ export function buildBouncingView(scene: THREE.Object3D, ex: BouncingExhibit, sy
   const fill = new THREE.PointLight(0xffe2c0, 4, 9, 1.8);
   fill.position.set(ROOM.xMax - 2, 2.6, 3.5);
   scene.add(fill);
-  const alcoveLight = new THREE.PointLight(0xffe2c0, 3, 4, 2);
-  alcoveLight.position.set((ALCOVE.xMin + ALCOVE.xMax) / 2, 2.1, alcoveZ);
-  scene.add(alcoveLight);
+  // A low light halfway along the corridor to Gallery VI (drawn here: this gallery is its east end).
+  const corridorLight = new THREE.PointLight(0xffe2c0, 2.5, 5, 2);
+  corridorLight.position.set(-88.5, 2.4, 2);
+  scene.add(corridorLight);
 
   let claw = 0;
   let lever = 0;

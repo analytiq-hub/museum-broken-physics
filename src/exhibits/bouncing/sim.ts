@@ -17,12 +17,13 @@
 // elastically (restitution 1), and an explicit, capped boost scales the
 // rebound of each upward bounce.
 //
-// The hall sits west of Gallery IV, reached through the hidden door's corridor.
+// The hall sits west of Gallery IV, reached through the hidden door's corridor;
+// its exit door leads on to Gallery VI.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { groups, GROUP, ROOM_GROUPS } from "../../engine/groups";
 import { gravityRule, type Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_4_5, type Box } from "../layout";
+import { addStaticBoxes, CORRIDOR_4_5, CORRIDOR_5_6, type Box } from "../layout";
 
 /** Interior: x −84..−72, y 0..6, z −5..5. */
 export const ROOM = { xMin: -84, xMax: -72, halfZ: 5, height: 6 } as const;
@@ -95,13 +96,9 @@ export const STATIC_BOXES: readonly Box[] = [
   BALCONY_BOX,
   { name: "balcony-railing", kind: "ledge", center: [BALCONY_EDGE - 0.03, BALCONY.y0 + BALCONY.railing / 2, bz], half: [0.03, BALCONY.railing / 2, bh] },
   ANVIL,
-  // The closing alcove beyond the exit door.
-  { name: "alcove-floor", kind: "floor", center: [ROOM.xMin - 1.75, -W, 2], half: [1.25, W, 1.5] },
-  { name: "alcove-ceiling", kind: "ceiling", center: [ROOM.xMin - 1.75, 3 + W, 2], half: [1.25, W, 1.5] },
-  { name: "alcove-north", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 1 - W], half: [1.25, 1.5, W] },
-  { name: "alcove-south", kind: "wall", center: [ROOM.xMin - 1.75, 1.5, 3 + W], half: [1.25, 1.5, W] },
-  { name: "alcove-end", kind: "wall", center: [ROOM.xMin - 3 - W, 1.5, 2], half: [W, 1.5, 1.5] },
   ...CORRIDOR_4_5,
+  // Beyond the exit door: the corridor to Gallery VI.
+  ...CORRIDOR_5_6,
 ];
 
 /** The exit door, which sinks into the floor once the room is solved. */
@@ -110,8 +107,6 @@ const DOOR_DROP = 3.1;
 const DOOR_OPEN_SECONDS = 1.2;
 export const DOORWAY_X = ROOM.xMin + 0.4;
 export const RESET_SPOT = { x: ROOM.xMin + 1.4, y: 0, z: 2 } as const;
-/** The alcove at the end of the museum, behind the exit door. */
-export const ALCOVE = { xMin: ROOM.xMin - 3, xMax: ROOM.xMin - 0.5 } as const;
 
 /** The lever, south of the anvil (a control: free, operated in the world). */
 export const LEVER = { x: DROP_X + 1.2, z: LANE_Z + 1.6 } as const;

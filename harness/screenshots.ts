@@ -86,6 +86,13 @@ const SHOTS: Shot[] = [
   { name: "73-bouncing-solved", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }, { rule: "bounce", value: 0.6 }, { wait: 4 * S }] },
   { name: "74-fp-bouncing-entrance", player: { x: -72.6, z: 1.8, yaw: Math.PI / 2 - 0.35, pitch: 0.12 }, moves: [] },
   { name: "75-fp-bouncing-lever", player: { x: -78.9, z: 0.1, yaw: 0.85, pitch: -0.1 }, moves: [] },
+  { name: "80-singing-start", camera: "singing", moves: [] },
+  { name: "81-singing-harmonica-cracked", camera: "singing-harmonica", moves: [], actions: [{ rule: "pipe", value: "3" }, { wait: 1.3 * S }] },
+  { name: "82-singing-harmonica-broken", camera: "singing", moves: [], actions: [{ rule: "pipe", value: "3" }, { wait: 3 * S }] },
+  { name: "83-singing-pane-cracked", camera: "singing-pane", moves: [], actions: [{ rule: "speed", value: 343 }, { rule: "pipe", value: "2" }, { wait: 4 * S }] },
+  { name: "84-singing-solved", camera: "singing", moves: [], actions: [{ rule: "speed", value: 343 }, { rule: "pipe", value: "2" }, { wait: 8 * S }] },
+  { name: "85-fp-singing-entrance", player: { x: -93.6, z: 2, yaw: Math.PI / 2 - 0.3, pitch: -0.05 }, moves: [] },
+  { name: "86-fp-singing-organ", player: { x: -96.8, z: -1.2, yaw: 0.25, pitch: -0.15 }, moves: [] },
   {
     name: "46-fp-alcove",
     player: { x: -61.5, z: 1.8, yaw: Math.PI / 2, pitch: 0 },

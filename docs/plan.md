@@ -360,6 +360,11 @@ window is several seconds after the ball lands at any drop height (tested). The 
 streaming (Milestone 9), then Gallery VII, the Backwards Furnace (Milestone 10).
 
 ### Milestone 8: Gallery VI, the Singing Glass (waves; 4–5 days)
+*Done (Nov 2026).* Built as below, with two changes: the pane is the west doorway rather
+than the left wall, so the museum stays one line of rooms; and the organ stands against the
+north wall. Headless tests replace the solver report: of every speed mark × pipe held for
+20 s, only air with the third pipe opens the way.
+
 The second subsystem that isn't rigid bodies. It teaches one new law, resonance, and
 the player can **hear** that law being wrong.
 

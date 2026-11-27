@@ -9,6 +9,7 @@ import { PendulumExhibit } from "../../src/exhibits/pendulum/sim";
 import { LeaningPendulumExhibit } from "../../src/exhibits/leaning-pendulum/sim";
 import { OpticsExhibit } from "../../src/exhibits/optics/sim";
 import { BouncingExhibit } from "../../src/exhibits/bouncing/sim";
+import { SingingGlassExhibit } from "../../src/exhibits/singing-glass/sim";
 
 let R: typeof RAPIER;
 beforeAll(async () => {
@@ -22,6 +23,7 @@ const exhibits: [string, () => WithDoor][] = [
   ["Gallery III", () => new LeaningPendulumExhibit(R)],
   ["Gallery IV", () => new OpticsExhibit(R)],
   ["Gallery V", () => new BouncingExhibit(R)],
+  ["Gallery VI", () => new SingingGlassExhibit(R)],
 ];
 
 describe("restoreSolved", () => {

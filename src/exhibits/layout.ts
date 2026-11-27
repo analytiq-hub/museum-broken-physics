@@ -59,6 +59,17 @@ export const CORRIDOR_4_5: readonly Box[] = [
   { name: "corridor45-south", kind: "wall", center: [-67.5, 1.2, 2.6 + W], half: [4, 1.2, W] },
 ];
 
+/**
+ * Corridor from the outside of Gallery V's west wall (x = −84.5, its exit door)
+ * to the outside of Gallery VI's east wall (x = −92.5): z 1..3, 3 m high.
+ */
+export const CORRIDOR_5_6: readonly Box[] = [
+  { name: "corridor56-floor", kind: "floor", center: [-88.5, -W, 2], half: [4, W, 1.5] },
+  { name: "corridor56-ceiling", kind: "ceiling", center: [-88.5, 3 + W, 2], half: [4, W, 1.5] },
+  { name: "corridor56-north", kind: "wall", center: [-88.5, 1.5, 1 - W], half: [4, 1.5, W] },
+  { name: "corridor56-south", kind: "wall", center: [-88.5, 1.5, 3 + W], half: [4, 1.5, W] },
+];
+
 /** West of this x the player belongs to Gallery II's world, east of it to Gallery I's. */
 export const HANDOVER_X = -10.75;
 /** West of this x the player belongs to Gallery III's world. */
@@ -67,6 +78,8 @@ export const HANDOVER_X_23 = -29.75;
 export const HANDOVER_X_34 = -48.75;
 /** West of this x the player belongs to Gallery V's world. */
 export const HANDOVER_X_45 = -67.5;
+/** West of this x the player belongs to Gallery VI's world. */
+export const HANDOVER_X_56 = -88.5;
 /** Hysteresis, so standing on the line doesn't flip worlds every step. */
 export const HANDOVER_MARGIN = 0.3;
 

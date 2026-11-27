@@ -19,6 +19,8 @@ export interface Interactable {
   cycle?: boolean;
   /** What the crosshair says once the rule already has this value (instead of "… (current)"). */
   doneLabel?: string;
+  /** A toggle: clicking again, once the rule has `value`, sets it to this (an organ pipe stops). */
+  offValue?: unknown;
 }
 
 export interface Gallery {

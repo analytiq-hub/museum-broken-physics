@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X_45 } from "../exhibits/layout";
+import { HANDOVER_X_45, HANDOVER_X_56 } from "../exhibits/layout";
 import { BOUNCE_MARKS, BouncingExhibit, DOORWAY_X, ENTRANCE, RESET_SPOT } from "../exhibits/bouncing/sim";
 import { CAMERA_POSES, buildBouncingView } from "../exhibits/bouncing/view";
 import { Recorder } from "../debug/recorder";
@@ -43,11 +43,11 @@ export function createBouncingGallery(
     id: "bouncing",
     title: "The Bouncing Hall",
     group,
-    xRange: [-87.5, -72],
+    xRange: [-92.5, -72],
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X_45 + margin,
+    owns: (x, margin) => x < HANDOVER_X_45 + margin && x > HANDOVER_X_56 - margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,
