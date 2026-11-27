@@ -27,9 +27,11 @@ export interface GameDebugApi {
   /** Names accepted by setCamera(). */
   cameras: string[];
   /** A pose from `cameras` (orbit view), or "player" for first person. */
-  setCamera(name: string): void;
+  setCamera(name: string): Promise<void>;
   /** Puts the player at a floor position, looking along yaw/pitch (radians), in first person. */
-  setPlayer(feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): void;
+  setPlayer(feet: { x: number; y?: number; z: number }, yaw: number, pitch?: number): Promise<void>;
+  /** Ids of the galleries built right now, east to west (at most three, plus one during a jump). */
+  getLoaded(): string[];
   /** Renderer stats for the last frame (draw calls, triangles) and GPU memory counts. */
   getRenderInfo(): { calls: number; triangles: number; points: number; lines: number; frame: number; geometries: number; textures: number };
   /** Turns the first-person view (like moving the mouse); recorded as player input. */

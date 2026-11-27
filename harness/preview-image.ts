@@ -8,11 +8,11 @@ import { createServer } from "vite";
 const OUT = "harness/out/preview";
 const S = 60;
 const SHOTS: { name: string; setup: string }[] = [
-  { name: "window", setup: `g.setCamera("window");` },
-  { name: "overview", setup: `g.setCamera("overview"); g.setRule("gravity","north"); g.settle();` },
-  { name: "optics", setup: `g.setCamera("optics"); g.setRule("index",1.5); g.setRule("mirror-b",120); g.step(${2 * S});` },
-  { name: "leaning", setup: `g.setCamera("leaning"); g.step(${10.6 * S});` },
-  { name: "pendulum", setup: `g.setCamera("pendulum"); g.step(${24 * S});` },
+  { name: "window", setup: `await g.setCamera("window");` },
+  { name: "overview", setup: `await g.setCamera("overview"); g.setRule("gravity","north"); g.settle();` },
+  { name: "optics", setup: `await g.setCamera("optics"); g.setRule("index",1.5); g.setRule("mirror-b",120); g.step(${2 * S});` },
+  { name: "leaning", setup: `await g.setCamera("leaning"); g.step(${10.6 * S});` },
+  { name: "pendulum", setup: `await g.setCamera("pendulum"); g.step(${24 * S});` },
 ];
 
 mkdirSync(OUT, { recursive: true });

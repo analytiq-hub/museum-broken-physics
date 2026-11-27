@@ -4,7 +4,6 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X } from "../exhibits/layout";
 import {
   DOORWAY_X,
   GRAVITY_LABELS,
@@ -55,7 +54,6 @@ export function createSidewaysGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x > HANDOVER_X - margin,
     entrance: PLAYER_SPAWN,
     entranceYaw: 0,
     cameraPoses: CAMERA_POSES,

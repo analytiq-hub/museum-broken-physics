@@ -51,6 +51,14 @@ non-solutions and asserts they are not.
 - Each gallery is an exhibit with **its own physics world** (`src/exhibits/<name>/sim.ts`) and
   a descriptor in `src/galleries/` (view, recorder, HUD lines, sounds, reset rules). `main.ts`
   steps only the active gallery's world.
+- **Galleries are streamed.** `src/galleries/rooms.ts` lists every room as data (id, title,
+  laws it teaches, camera names, `load()` importing its own chunk); `main.ts` builds only the
+  active room and its neighbours, frees the rest (`src/render/dispose.ts`; shared materials
+  stay), and rebuilds a solved room solved. Adding a gallery = add it to `ROOMS` (the room
+  list test checks laws, cameras and floor ownership) and to `HANDOVERS`. Nothing outside the
+  gallery's chunk may import its module statically, or it lands in the first load.
+- `npm run build` ends with `harness/budget.ts`: first-load JS+CSS, each room's chunk, and
+  `public/assets` have size budgets; CI fails over budget.
 - Galleries are joined by corridors that exist in **both** worlds (`src/exhibits/layout.ts`);
   the player is handed over at the corridor midpoint (`HANDOVER_X`, with hysteresis), and the
   arrival is recorded so replays can follow (`Recorder.playerArrived`).
@@ -162,6 +170,9 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
 - **Removing a joint is part of the world snapshot.** A torn-loose pendulum (joint removed)
   comes back on `reset()`/`load()` because the snapshot includes joints; keep any "torn" flag
   in `saveExtra()` so state and world agree.
+- **Wait for the game's lock handler, not the browser's.** `document.pointerLockElement` is set
+  before the game's `lock` event runs; a test that moves on at once can race it. Wait for the
+  overlay to hide too.
 - **A pendulum never "settles".** Solver runs for it use fixed waits and a terminal horizon,
   and the robustness check models a player reacting to an event (the bell), not a clock.
 - **The camera follows the player on the next frame.** After `__game.setPlayer`, await
@@ -179,6 +190,7 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   directly.
 - **Rapier `-compat` inlines its WASM**, so the bundle is ~5 MB (~1.8 MB gzipped). Expected.
 - **Debug API:** load with `?paused`, then `__game.setRule(...)`, `__game.settle()`,
-  `__game.setCamera("overview" | "ledge" | "window")`, `await __game.nextFrame()`. Camera
+  `await __game.setCamera("overview" | "ledge" | "window")`, `await __game.nextFrame()`.
+  `setCamera` and `setPlayer` are async (they load the destination room first): await them. Camera
   poses live in each exhibit's `view.ts` (`CAMERA_POSES`).
 - Vite `base` is `"./"` so the build works under the Pages subpath; keep asset URLs relative.

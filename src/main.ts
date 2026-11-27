@@ -1,6 +1,10 @@
 // Browser entry point: renderer, fixed-timestep loop, first-person player,
 // the galleries (each with its own physics world; the player is handed between
 // them in the corridor), interaction, HUD and debug controls.
+//
+// Galleries are streamed: only the room the player is in and its two neighbours
+// are built (src/galleries/rooms.ts lists them all). Walking into a room loads the
+// one beyond it and frees the one two rooms back.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
@@ -15,12 +19,8 @@ import { PLAYER, Player, type PlayerInput } from "./engine/player";
 import { HANDOVER_MARGIN } from "./exhibits/layout";
 import { PLAYER_SPAWN } from "./exhibits/sideways-gravity/sim";
 import type { Gallery, Interactable } from "./galleries/gallery";
-import { createLeaningGallery } from "./galleries/leaningGallery";
-import { createBouncingGallery } from "./galleries/bouncingGallery";
-import { createOpticsGallery } from "./galleries/opticsGallery";
-import { createSingingGallery } from "./galleries/singingGallery";
-import { createPendulumGallery } from "./galleries/pendulumGallery";
-import { createSidewaysGallery } from "./galleries/sidewaysGallery";
+import { ROOMS, liveAround, roomAt, roomIndex, roomOwns } from "./galleries/rooms";
+import { disposeGroup } from "./render/dispose";
 import { loadEnvironment, loadMaterials } from "./render/materials";
 import { createPost } from "./render/post";
 import type { GravityDirection } from "./rules/Rule";
@@ -100,23 +100,83 @@ const look = new PointerLockControls(camera, renderer.domElement);
 const sound = new Sound();
 const gameState = new GameState();
 const player = new Player(R, PLAYER_SPAWN);
-const galleries: Gallery[] = [
-  createSidewaysGallery(R, scene, materials, sound, () => player),
-  createPendulumGallery(R, scene, materials, sound, () => player),
-  createLeaningGallery(R, scene, materials, sound, () => player),
-  createOpticsGallery(R, scene, materials, sound, () => player),
-  createBouncingGallery(R, scene, materials, sound, () => player),
-  createSingingGallery(R, scene, materials, sound, () => player),
-];
-let active = galleries[0];
+
+/** A built gallery, and its lights (switched on and off by distance). */
+interface LiveRoom {
+  index: number;
+  gallery: Gallery;
+  lights: THREE.Light[];
+}
+/** Built rooms by index: never more than three, plus one briefly while a far jump settles. */
+const live = new Map<number, LiveRoom>();
+const building = new Map<number, Promise<LiveRoom>>();
+/** The room the player is in, or heading to (a jump): rooms around it are kept. */
+let focus = 0;
+let activeIndex = 0;
+
+/** Puts a room solved earlier back as it was left (saved progress, or rebuilt after unloading). */
+function restoreRoom(g: Gallery): void {
+  g.exhibit.restoreSolved();
+  g.sync.rebind(g.exhibit.world);
+  g.recorder.skipUntilReset();
+  g.afterReset();
+}
+
+/** Loads a room's chunk and builds it (once, however many callers ask). */
+function buildRoom(index: number): Promise<LiveRoom> {
+  const existing = live.get(index);
+  if (existing) return Promise.resolve(existing);
+  let pending = building.get(index);
+  if (!pending) {
+    pending = (async () => {
+      const factory = await ROOMS[index].load();
+      const gallery = factory(R, scene, materials, sound, () => player);
+      // A room rebuilt fresh is like a reset one; if it was solved, show it solved.
+      if (gameState.isSolved(gallery.id)) restoreRoom(gallery);
+      const lights: THREE.Light[] = [];
+      gallery.group.traverse((o) => {
+        if (o instanceof THREE.Light) lights.push(o);
+        if (LOW_QUALITY && o instanceof THREE.SpotLight && o.castShadow) o.shadow.mapSize.set(1024, 1024);
+      });
+      // Compile its shaders now, while it is out of sight, not on the frame its door opens.
+      await renderer.compileAsync(gallery.group, camera, scene).catch(() => undefined);
+      const room: LiveRoom = { index, gallery, lights };
+      live.set(index, room);
+      building.delete(index);
+      return room;
+    })();
+    building.set(index, pending);
+  }
+  return pending;
+}
+
+/** Frees a room: its physics world, its meshes and textures, its sounds. */
+function disposeRoom(room: LiveRoom): void {
+  room.gallery.silence();
+  room.gallery.exhibit.dispose();
+  disposeGroup(room.gallery.group, materials);
+  live.delete(room.index);
+}
+
+/** Frees every room that is neither around the focus nor the one the player is in. */
+function trimRooms(): void {
+  const keep = new Set([...liveAround(focus), activeIndex]);
+  for (const room of live.values()) if (!keep.has(room.index)) disposeRoom(room); // deleting while iterating a Map is safe
+}
+
+/** Builds the rooms around `index` and frees the rest. */
+async function ensureAround(index: number): Promise<void> {
+  await Promise.all(liveAround(index).map(buildRoom));
+  trimRooms();
+}
+
+const liveGalleries = () => [...live.values()].map((room) => room.gallery);
+
+let active = (await buildRoom(0)).gallery;
 player.attach(active.exhibit.world);
 camera.rotation.set(-0.08, 0, 0); // facing the window, eyes slightly lowered
+void ensureAround(0);
 
-if (LOW_QUALITY) {
-  scene.traverse((o) => {
-    if (o instanceof THREE.SpotLight && o.castShadow) o.shadow.mapSize.set(1024, 1024);
-  });
-}
 const post = createPost(renderer, scene, camera, !LOW_QUALITY);
 
 /** `?paused` starts with the simulation stopped (drive it via window.__game). */
@@ -143,22 +203,26 @@ function playerInput(): PlayerInput {
   };
 }
 
-/** Moves the player into another gallery's physics world. Only the active world steps. */
-function switchTo(next: Gallery): void {
-  if (next === active) return;
+/** Moves the player into another (built) gallery's physics world. Only the active world steps. */
+function switchTo(index: number): void {
+  const next = live.get(index)?.gallery;
+  if (!next || next === active) return;
   active.silence();
   player.detach();
   active = next;
+  activeIndex = index;
+  focus = index;
   player.attach(active.exhibit.world);
   active.recorder.playerArrived(active.exhibit.stepCount);
   failedFor = 0;
   autosave();
+  void ensureAround(index); // load the room beyond, free the one two rooms back
 }
 
 // --- Saved progress ---------------------------------------------------------------
 /** Progress from an earlier visit in this browser; the start card offers to continue it. */
 let savedVisit: SavedProgress | undefined = AUTOMATION ? undefined : loadProgress();
-if (savedVisit && !galleries.some((g) => savedVisit!.solved[g.id])) savedVisit = undefined; // nothing solved yet
+if (savedVisit && !ROOMS.some((room) => savedVisit!.solved[room.id])) savedVisit = undefined; // nothing solved yet
 /** Don't overwrite a saved visit until the player has chosen to continue it or start over. */
 let progressChosen = !savedVisit;
 
@@ -166,20 +230,17 @@ function autosave(): void {
   if (!AUTOMATION && progressChosen) saveProgress({ solved: gameState.toJSON(), gallery: active.id });
 }
 
-/** Puts every gallery solved last time back as it was left, and the player where they were. */
-function continueVisit(saved: SavedProgress): void {
+/**
+ * Puts every gallery solved last time back as it was left, and the player where
+ * they were. Rooms built from now on come back solved by themselves (buildRoom).
+ */
+async function continueVisit(saved: SavedProgress): Promise<void> {
   gameState.load(saved.solved);
   player.detach();
-  for (const g of galleries) {
-    if (!gameState.isSolved(g.id)) continue;
-    g.exhibit.restoreSolved();
-    g.sync.rebind(g.exhibit.world);
-    g.recorder.skipUntilReset();
-    g.afterReset();
-  }
+  for (const g of liveGalleries()) if (gameState.isSolved(g.id)) restoreRoom(g);
   player.attach(active.exhibit.world);
-  const target = galleries.find((g) => g.id === saved.gallery) ?? galleries[0];
-  if (target !== active) goToGallery(target);
+  const target = Math.max(0, roomIndex(saved.gallery));
+  if (target !== activeIndex) await goToRoom(target);
   stepper.clear();
 }
 
@@ -187,7 +248,7 @@ function chooseVisit(fresh: boolean): void {
   if (progressChosen) return;
   progressChosen = true;
   if (fresh) clearProgress();
-  else if (savedVisit) continueVisit(savedVisit);
+  else if (savedVisit) void continueVisit(savedVisit);
   savedVisit = undefined;
 }
 
@@ -199,29 +260,32 @@ function chooseVisit(fresh: boolean): void {
 const LIGHT_REACH = 10;
 /** Galleries further than this (m) can't be seen at all (two rooms away), so aren't drawn. */
 const DRAW_REACH = 22;
-const galleryLights = galleries.map((g) => {
-  const lights: THREE.Light[] = [];
-  g.group.traverse((o) => {
-    if (o instanceof THREE.Light) lights.push(o);
-  });
-  return lights;
-});
 function updateGalleryLights(): void {
   const x = player.feet.x;
-  galleries.forEach((g, i) => {
+  for (const { gallery: g, lights } of live.values()) {
     const within = (reach: number) => x > g.xRange[0] - reach && x < g.xRange[1] + reach;
     const lit = g === active || within(LIGHT_REACH);
-    for (const light of galleryLights[i]) light.visible = lit;
+    for (const light of lights) light.visible = lit;
     g.group.visible = g === active || within(DRAW_REACH) || mode === "orbit";
-  });
+  }
 }
 
-/** Hands the player over if they crossed into another gallery's side of the museum. */
+/**
+ * Hands the player over if they crossed into another gallery's side of the museum.
+ * If that room isn't built yet, the player is held at the line until it is: the
+ * corridor beyond the midpoint only exists in the next room's world.
+ */
 function checkHandover(margin = HANDOVER_MARGIN): void {
   const x = player.feet.x;
-  if (active.owns(x, margin)) return;
-  const next = galleries.find((g) => g !== active && g.owns(x, -margin));
-  if (next) switchTo(next);
+  if (roomOwns(activeIndex, x, margin)) return;
+  const next = ROOMS.findIndex((_, i) => i !== activeIndex && roomOwns(i, x, -margin));
+  if (next < 0) return;
+  if (live.has(next)) {
+    switchTo(next);
+    return;
+  }
+  player.undoStep();
+  void buildRoom(next);
 }
 
 function stepOnce(): void {
@@ -301,11 +365,18 @@ function downloadRecording(): void {
   URL.revokeObjectURL(link.href);
 }
 
-/** Debug: jump to a gallery's entrance. */
-function goToGallery(g: Gallery): void {
-  player.placeAt(g.entrance);
-  camera.rotation.set(-0.05, g.entranceYaw, 0);
+/**
+ * Jumps the player to a room (its entrance, or a given spot), building it and its
+ * neighbours first. Used by saved progress, the debug panel and the debug API.
+ */
+async function goToRoom(index: number, at?: { feet: { x: number; y: number; z: number }; yaw: number; pitch: number }): Promise<void> {
+  focus = index;
+  await ensureAround(index);
+  const g = live.get(index)!.gallery;
+  player.placeAt(at?.feet ?? g.entrance);
+  camera.rotation.set(at?.pitch ?? -0.05, at?.yaw ?? g.entranceYaw, 0);
   checkHandover(0);
+  trimRooms();
 }
 
 // --- Looking at in-world controls --------------------------------------------------
@@ -377,14 +448,14 @@ const CONTROLS = TOUCH
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 /** The visitor's ticket: one stamp per gallery, inked once it's solved. */
 function ticketHtml(solved: (id: string) => boolean): string {
-  const done = galleries.filter((g) => solved(g.id)).length;
-  const stamps = galleries
+  const done = ROOMS.filter((g) => solved(g.id)).length;
+  const stamps = ROOMS
     .map((g, i) => {
       const name = g.title.replace(/^The /, "").replace(/ Gallery$/, "");
       return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
     })
     .join("");
-  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${galleries.length} galleries restored</div><div class="stamps">${stamps}</div></div>`;
+  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${ROOMS.length} galleries restored</div><div class="stamps">${stamps}</div></div>`;
 }
 
 function showOverlay(pausedCard: boolean): void {
@@ -499,9 +570,9 @@ const touchWording = (text: string) =>
  */
 function knownLaws(): Map<string, string> {
   const known = new Map<string, string>();
-  for (const g of galleries) {
-    if (!gameState.isSolved(g.id)) continue;
-    for (const rule of g.exhibit.rules) if (rule.editable && !rule.control && !known.has(rule.id)) known.set(rule.id, g.title);
+  for (const room of ROOMS) {
+    if (!gameState.isSolved(room.id)) continue;
+    for (const law of room.laws) if (!known.has(law)) known.set(law, room.title);
   }
   return known;
 }
@@ -512,12 +583,12 @@ function renderHud(): void {
   const changesAllowed = ex.changesLeft > 0 && !ex.isSolved() && !ex.isFailed();
   const pips = "●".repeat(ex.changesLeft) + "○".repeat(ex.changesUsed);
   const hint = mode !== "first-person" ? "" : TOUCH ? "Tap <b>Laws</b> to read the room's laws." : "Hold <b>Q</b> to read the room's laws with your instrument.";
-  const restored = galleries.filter((g) => gameState.isSolved(g.id)).length;
+  const restored = ROOMS.filter((room) => gameState.isSolved(room.id)).length;
   const html = `
     <div class="title">${active.title}</div>
     <div>${active.summary()} · Changes left <span class="pips">${pips}</span></div>
     <div class="status">${TOUCH ? touchWording(active.status(player)) : active.status(player)}</div>
-    <div class="keys">Galleries restored: ${restored} of ${galleries.length}${hint ? ` · ${hint}` : ""}</div>`;
+    <div class="keys">Galleries restored: ${restored} of ${ROOMS.length}${hint ? ` · ${hint}` : ""}</div>`;
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
   // The instrument: pinned open in the window view, raised with Q in first person.
@@ -563,11 +634,11 @@ function setMode(next: CameraMode): void {
 }
 
 /** An orbit pose from any gallery; makes that gallery active (moving the player to it). */
-function setOrbitPose(name: string): void {
-  const owner = galleries.find((g) => name in g.cameraPoses);
-  if (!owner) throw new Error(`unknown camera "${name}"`);
-  if (owner !== active) goToGallery(owner);
-  const pose = owner.cameraPoses[name];
+async function setOrbitPose(name: string): Promise<void> {
+  const index = ROOMS.findIndex((room) => room.cameras.includes(name));
+  if (index < 0) throw new Error(`unknown camera "${name}"`);
+  if (index !== activeIndex) await goToRoom(index);
+  const pose = active.cameraPoses[name];
   setMode("orbit");
   camera.position.set(...pose.position);
   orbit.target.set(...pose.target);
@@ -586,21 +657,14 @@ const debug = {
   step: () => stepper.advance(FIXED_DT),
   downloadRecording,
   firstPerson: () => setMode("first-person"),
-  windowView: () => setOrbitPose("window"),
-  gallery1: () => goToGallery(galleries[0]),
-  gallery2: () => goToGallery(galleries[1]),
-  gallery3: () => goToGallery(galleries[2]),
-  gallery4: () => goToGallery(galleries[3]),
+  windowView: () => void setOrbitPose("window"),
 };
 gui.add(debug, "paused").name("Pause (P)").onChange((v: boolean) => (paused = v)).listen();
 gui.add(debug, "step").name("Step once (.)");
 gui.add(debug, "reset").name("Reset room (R)");
 gui.add(debug, "firstPerson").name("First person (C)");
 gui.add(debug, "windowView").name("View through window (C)");
-gui.add(debug, "gallery1").name("Go to Gallery I");
-gui.add(debug, "gallery2").name("Go to Gallery II");
-gui.add(debug, "gallery3").name("Go to Gallery III");
-gui.add(debug, "gallery4").name("Go to Gallery IV");
+ROOMS.forEach((room, i) => gui.add({ go: () => void goToRoom(i) }, "go").name(`Go to ${room.title}`));
 gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
@@ -622,7 +686,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === ".") debug.step();
   if (e.key === "c" || e.key === "C") {
     if (mode === "orbit") setMode("first-person");
-    else setOrbitPose(Object.keys(active.cameraPoses)[0]);
+    else void setOrbitPose(Object.keys(active.cameraPoses)[0]);
   }
 });
 window.addEventListener("keyup", (e) => {
@@ -662,17 +726,16 @@ installDebugApi({
   setPaused(value) {
     debug.paused = paused = value;
   },
-  cameras: [...galleries.flatMap((g) => Object.keys(g.cameraPoses)), "player"],
-  setCamera(name) {
+  cameras: [...ROOMS.flatMap((room) => room.cameras), "player"],
+  async setCamera(name) {
     if (name === "player") setMode("first-person");
-    else setOrbitPose(name);
+    else await setOrbitPose(name);
   },
-  setPlayer(feet, yaw, pitch = 0) {
-    player.placeAt({ x: feet.x, y: feet.y ?? 0, z: feet.z });
-    camera.rotation.set(pitch, yaw, 0);
-    checkHandover(0);
+  async setPlayer(feet, yaw, pitch = 0) {
+    await goToRoom(roomAt(feet.x), { feet: { x: feet.x, y: feet.y ?? 0, z: feet.z }, yaw, pitch });
     setMode("first-person");
   },
+  getLoaded: () => [...live.values()].toSorted((a, b) => a.index - b.index).map((room) => room.gallery.id),
   setLook(yaw, pitch) {
     camera.rotation.set(pitch, yaw, 0);
   },
@@ -724,7 +787,7 @@ renderer.setAnimationLoop((time) => {
   }
 
   // Inactive galleries don't step, so draw them exactly at their last step.
-  for (const g of galleries) g.sync.render(g === active ? alpha : 1);
+  for (const g of liveGalleries()) g.sync.render(g === active ? alpha : 1);
   if (mode === "first-person") {
     // Touch: dragging on the right half turns the view.
     const drag = touch.takeLook();

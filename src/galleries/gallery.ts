@@ -34,8 +34,6 @@ export interface Gallery {
   exhibit: ExhibitBase;
   sync: BodySync;
   recorder: Recorder;
-  /** Is a floor x-position on this gallery's side of the museum? */
-  owns(x: number, margin: number): boolean;
   /** Where to put the player when jumping here (debug camera switch). */
   entrance: { x: number; y: number; z: number };
   entranceYaw: number;

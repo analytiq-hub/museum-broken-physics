@@ -4,7 +4,6 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X_34, HANDOVER_X_45 } from "../exhibits/layout";
 import { DOORWAY_X, ENTRANCE, INDEX_MARKS, MIRRORS, OpticsExhibit, RESET_SPOT } from "../exhibits/optics/sim";
 import { CAMERA_POSES, buildOpticsView } from "../exhibits/optics/view";
 import { Recorder } from "../debug/recorder";
@@ -46,7 +45,6 @@ export function createOpticsGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X_34 + margin && x > HANDOVER_X_45 - margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,

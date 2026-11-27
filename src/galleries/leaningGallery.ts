@@ -4,7 +4,6 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X_23, HANDOVER_X_34 } from "../exhibits/layout";
 import { DOORWAY_X, ENTRANCE, GRAVITY_LABELS, LeaningPendulumExhibit, RESET_SPOT, TEAR_LOOSE } from "../exhibits/leaning-pendulum/sim";
 import { CAMERA_POSES, buildLeaningPendulumView } from "../exhibits/leaning-pendulum/view";
 import { Recorder } from "../debug/recorder";
@@ -44,7 +43,6 @@ export function createLeaningGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X_23 + margin && x > HANDOVER_X_34 - margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,

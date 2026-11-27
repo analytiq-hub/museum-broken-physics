@@ -137,7 +137,7 @@ try {
   await page.keyboard.up("w");
   expect("walking west hands the player to Gallery IV", fourth);
   await page.evaluate(async () => {
-    window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
     await window.__game!.nextFrame(); // the camera follows the player on the next frame
     window.__game!.lookAtButton("mirror-b");
   });
@@ -156,7 +156,7 @@ try {
   );
   // Gallery V: step through to the Bouncing Hall, aim at the lever, pull it.
   await page.evaluate(async () => {
-    window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0);
+    await window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("pulled");
   });
@@ -185,7 +185,7 @@ try {
 
   // Gallery VI: click an organ pipe to sound it, click again to stop it.
   await page.evaluate(async () => {
-    window.__game!.setPlayer({ x: -96.8, z: -1.2 }, 0.25, 0);
+    await window.__game!.setPlayer({ x: -96.8, z: -1.2 }, 0.25, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("2");
   });
@@ -196,6 +196,44 @@ try {
   expect("the crosshair offers to stop it", await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "Click: stop the third pipe", 30_000));
   await page.mouse.click(600, 400);
   expect("clicking it again stops it", await eventually(page, () => window.__game!.getState().rules.pipe === "none", 30_000));
+
+  // Streaming: only the room the player is in and its neighbours are built.
+  expect(
+    "in Gallery VI, only Galleries V and VI are built",
+    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["bouncing", "singing-glass"]),
+    (await q(page, () => window.__game!.getLoaded())).join(", "),
+  );
+  // Solve Gallery I, leave it far behind (it is freed), come back: it is still solved.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayer({ x: 0, z: 6 }, 0, 0);
+    for (const direction of ["north", "west", "down"]) {
+      window.__game!.setRule("gravity", direction);
+      window.__game!.settle();
+    }
+    window.__game!.step(120);
+  });
+  expect("Gallery I is solved", await q(page, () => window.__game!.getState().solved && window.__game!.getPlayer().gallery === "sideways-gravity"));
+  expect(
+    "around Gallery I, Galleries I and II are built",
+    JSON.stringify(await q(page, () => window.__game!.getLoaded())) === JSON.stringify(["sideways-gravity", "pendulum"]),
+  );
+  await page.evaluate(() => window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0));
+  expect(
+    "jumping to Gallery V frees Galleries I and II",
+    await eventually(page, () => {
+      const loaded = window.__game!.getLoaded();
+      return loaded.length <= 3 && !loaded.includes("sideways-gravity") && !loaded.includes("pendulum");
+    }),
+    (await q(page, () => window.__game!.getLoaded())).join(", "),
+  );
+  await page.evaluate(() => window.__game!.setPlayer({ x: 0, z: 6 }, 0, 0));
+  expect(
+    "coming back, Gallery I is rebuilt still solved, its door open",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.exhibit === "sideways-gravity" && s.solved && s.bodies.door.pos[1] < 0;
+    }),
+  );
 
   await page.close(); // the desktop page's rendering would slow the next pages' input handling
 
@@ -318,7 +356,7 @@ try {
 
   // Tap-to-use: aim at the console's Left wall button and tap it on screen.
   await tp.evaluate(async () => {
-    window.__game!.setPlayer({ x: 0, z: 3.7 }, 0, 0);
+    await window.__game!.setPlayer({ x: 0, z: 3.7 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("west");
     await window.__game!.nextFrame();
@@ -329,7 +367,7 @@ try {
 
   // Gallery IV on the phone: a mirror on the left of the screen (the joystick side) still taps.
   const mirrorAt = await tp.evaluate(async () => {
-    window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
+    await window.__game!.setPlayer({ x: -58.6, z: 3.6 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("mirror-b");
     const p = window.__game!.getPlayer();
@@ -345,7 +383,7 @@ try {
   );
   // Too far away: nothing turns, and the player is told to walk closer.
   const farAt = await tp.evaluate(async () => {
-    window.__game!.setPlayer({ x: -54.5, z: 3.6 }, 0, 0);
+    await window.__game!.setPlayer({ x: -54.5, z: 3.6 }, 0, 0);
     await window.__game!.nextFrame();
     window.__game!.lookAtButton("mirror-b");
     await window.__game!.nextFrame();

@@ -126,6 +126,13 @@ export class Player {
     this.body?.setTranslation(this.position, true);
   }
 
+  /** Takes back the last step (held at a corridor's midpoint until the next room is built). */
+  undoStep(): void {
+    this.position = { ...this.previous };
+    this.verticalSpeed = 0;
+    this.body?.setTranslation(this.position, true);
+  }
+
   getState(): PlayerState {
     return { position: { ...this.position }, verticalSpeed: this.verticalSpeed };
   }

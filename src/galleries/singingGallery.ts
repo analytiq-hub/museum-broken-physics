@@ -4,7 +4,6 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X_56 } from "../exhibits/layout";
 import { DOORWAY_X, ENTRANCE, GLASSES, PIPE_NAMES, RESET_SPOT, SPEED_MARKS, SingingGlassExhibit } from "../exhibits/singing-glass/sim";
 import { CAMERA_POSES, buildSingingGlassView } from "../exhibits/singing-glass/view";
 import { Recorder } from "../debug/recorder";
@@ -62,7 +61,6 @@ export function createSingingGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X_56 + margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,

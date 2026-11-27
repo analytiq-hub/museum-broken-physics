@@ -4,7 +4,6 @@ import * as THREE from "three";
 import type { Sound } from "../audio/sound";
 import { BodySync } from "../engine/bodySync";
 import type { Player } from "../engine/player";
-import { HANDOVER_X, HANDOVER_X_23 } from "../exhibits/layout";
 import { BELLS, DOORWAY_X, ENTRANCE, MAX_SWING, PendulumExhibit, RESET_SPOT } from "../exhibits/pendulum/sim";
 import { CAMERA_POSES, buildPendulumView } from "../exhibits/pendulum/view";
 import { Recorder } from "../debug/recorder";
@@ -43,7 +42,6 @@ export function createPendulumGallery(
     exhibit,
     sync,
     recorder,
-    owns: (x, margin) => x < HANDOVER_X + margin && x > HANDOVER_X_23 - margin,
     entrance: ENTRANCE,
     entranceYaw: Math.PI / 2,
     cameraPoses: CAMERA_POSES,

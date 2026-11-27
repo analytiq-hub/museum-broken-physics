@@ -3,6 +3,22 @@
 How we go from an empty repo to a first playable exhibit, then grow from there.
 See [concept.md](concept.md) for the game vision.
 
+## Where things stand (27 Nov 2026)
+
+- **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
+- **Six galleries, in one line west from the entrance:** I the Sideways Gallery (gravity),
+  II the Restless Pendulum (damping), III the Leaning Pendulum (both, in stages), IV the Hidden
+  Door (refractive index), V the Bouncing Hall (restitution), VI the Singing Glass (speed of
+  sound). The closing placard sits in an alcove behind Gallery VI's pane.
+- **Done:** Milestones 0–9 below, plus work added after the plan:
+  - touch controls;
+  - pause on Esc;
+  - saved progress with a visitor's ticket;
+  - an instrument that doesn't reveal a law until the player has discovered it;
+  - galleries streamed three at a time.
+- **Next:** Milestone 10, Gallery VII (the Backwards Furnace), and a real playtest of
+  Galleries V and VI with the new instrument (see "Immediate next steps").
+
 ## Guiding principle
 
 **Prove the puzzle is fun before making it pretty or walkable.** Build the first exhibit as a
@@ -254,6 +270,10 @@ cursor on it (the view freezes), which avoids re-locking entirely. It shows each
 vs. the law, a Broken / As it should be status, a one-line explanation, the options (gravity as
 the room-shaped pad), Restore, changes left and Reset. The in-world console stays; both share
 the budget. `npm run ui-check` tests the whole flow with a real pointer lock in CI.
+*Changed (Nov 2026):* the instrument no longer gives the answer away. Until the player has
+discovered a law (by solving a room where it could be changed), it shows only the reading and
+what it does here (each rule's `observe()`). No law, no Broken/OK chip, no highlighted option,
+no Restore. Discovered laws show everywhere afterwards, with where they were learned.
 - Instrument overlay (HTML/CSS on top of the canvas): lists the room's rules, their current
   and nominal values, which are editable, and the remaining budget.
 - HTML can't be clicked while the pointer is locked. Recommendation: holding a key raises the
@@ -335,17 +355,10 @@ A new subsystem, not a variation on rigid bodies, so it gets its own milestone.
   prism; the broken index (0.7) bends light the wrong way, and the misbent beam lands on the
   west wall, revealing a hidden door's outline beside its photocell. Put the index right
   (1.5) and turn the mirrors (free control rules, clicked in the world) to light the
-  photocell; the door opens on an alcove with the museum's last placard. The layout was found
+  photocell; the door opens onto corridor 4–5 (at first, an alcove). The layout was found
   by searching prism and mirror positions so that, of all 720 index × mirror arrangements,
   only the glass index works (one mirror setting). The instrument needed no optics code: the
   index is a range rule with marks; mirrors are `control` rules (not listed, no budget).
-- *In progress (Nov 2026): Gallery IV, the Hidden Door.* Sim, tracer (`trace.ts`) and
-  solver test exist: prism index 0.7 ("Backwards"), two mirrors turned by clicking them
-  (`control` rules, free), and one solution (index 1.5, mirrors at 135° and 120°). Still to
-  do: the view (beam as glowing lines, clickable mirrors, the door outline revealed by light),
-  the gallery descriptor, corridor 3–4 and Gallery III's west door. The space behind the
-  hidden door is an alcove for now; Gallery V replaces it.
-  *Done:* Gallery IV shipped, and corridor 4–5 now leads on to Gallery V.
 
 ### Milestone 7b: Gallery V, the Bouncing Hall (done, Nov 2026)
 Added after the plan, on the player's request. **Broken law: bounciness** (restitution 1.07,
@@ -414,6 +427,36 @@ the player can **hear** that law being wrong.
   - the room needs no waves-specific instrument UI.
 
 ### Milestone 9: Stream galleries instead of building them all (3–4 days)
+*Done (Nov 2026).* As built:
+- `src/galleries/rooms.ts` lists the rooms as data: id, title, the laws each one teaches, its
+  camera names, and a `load()` that imports the gallery's own chunk.
+- `main.ts` keeps the active room and its neighbours built. A handover loads the room beyond
+  and frees the one two rooms back with `disposeGroup` (shared materials stay), and frees the
+  physics world too.
+- A room built after it was solved comes back solved (`restoreSolved()`), the same path saved
+  progress uses.
+- Shaders compile with `compileAsync` before a room is shown.
+- `__game.setPlayer` and `setCamera` are async and load the destination first;
+  `__game.getLoaded()` lists what is built.
+
+Changes from the plan below:
+- **No door is held shut.** If the player reaches a corridor's midpoint before the next room
+  is ready, they are held at the line. That's rare: the room is requested as soon as the
+  player enters the room before it.
+- **Budgets run after every build** (`npm run build`, so in CI), not in `npm run check`,
+  which doesn't build. The plan's "4 MB first load including shared assets" couldn't hold with
+  6 MB of already-compressed textures, so code and assets have separate budgets:
+  - first-load JS + CSS: 2.3 MB gzipped (1.8 MB today);
+  - each room: 150 KB gzipped (1–6 KB today);
+  - `public/assets`: 8 MB (6 MB today).
+- **Not done yet:**
+  - KTX2 textures (no room has its own textures yet);
+  - Rapier's separate-`.wasm` build;
+  - measuring memory on a real GPU.
+
+The ui-check asserts which rooms are built where, and that a solved room survives being
+freed and rebuilt.
+
 The museum should be able to grow to about 50 rooms without a longer load or more memory.
 Do this before the gallery after VI. The later it waits, the more galleries assume they
 always exist.
@@ -534,7 +577,8 @@ too early or too late both lose.
 - ~~Save/load progress between rooms.~~ *Done (Nov 2026):* saved in the browser, with a
   visitor's ticket and Continue / New visit.
 - Hub gallery connecting exhibits; museum map.
-- Hint system ("museum placards" that explain the real law).
+- Hint system ("museum placards" that explain the real law). More needed now that the
+  instrument hides undiscovered laws: a stuck player has no other way to learn one.
 - Replace gray boxes with modeled glTF rooms and props.
 
 ## Risks and how we'll handle them
@@ -551,22 +595,29 @@ too early or too late both lose.
 | Unstable simulation from broken rules | Implement broken rules as explicit, capped forces rather than out-of-range engine parameters. |
 | Visual ambition slows progress | Strict gray-box-first rule; the visual pass happens per room, after it's fun. |
 | Performance with shadows and physics | Limit shadow-casting lights; sleep bodies; step only the active exhibit's world; profile early with stats.js. |
-| Load time and memory grow with every gallery added | Milestone 9: each gallery is its own chunk, only three galleries are live at once, and `npm run check` enforces size budgets. |
+| Load time and memory grow with every gallery added | Milestone 9 (done): each gallery is its own chunk, only three galleries are live at once, and every build enforces size budgets. |
 
 ## Open questions
 
-1. Does room gravity affect the player? (Recommendation: not in v1. Decide by Milestone 2.)
+1. ~~Does room gravity affect the player?~~ *Decided (Milestone 2): no.* The player has their
+   own gravity.
 2. ~~How is the instrument budget expressed?~~ *Decided: a count of changes.* Revisit an energy
    meter once rooms have "range" rules (damping, Milestone 5).
 3. ~~Target platform?~~ *Decided: desktop browser only for now.* Revisit touch after the visual pass.
    *Revisited (Nov 2026): touch is supported* (joystick, drag to look, tap to use, Laws/Reset
    buttons), after a player couldn't play on a phone.
 4. Is there a narrative layer (who broke the museum?), and how much text?
+5. How does the museum grow past one corridor of rooms: floors by level (classical,
+   modern, quantum), wings by subject, or a hub? Streaming (Milestone 9) works with any of
+   them, because rooms are loaded by neighbourhood, not by position in a list.
 
 ## Immediate next steps
 
-1. Milestone 0 scaffold, including the sim/view split, `npm run check`, `CLAUDE.md` and a
-   deployed URL.
-2. Gray-box the sideways-gravity room with tell-tales, debug-key gravity control, and reset.
-3. Run the solver and tune the layout until its thresholds pass.
-4. Playtest it before writing any movement or instrument code.
+1. **Playtest Galleries V and VI** with someone new, now that the instrument hides the laws.
+   Record with Shift+D; a stuck session becomes a replay test.
+2. **Milestone 10: Gallery VII, the Backwards Furnace.** The first room built after
+   streaming: its own chunk from day one.
+3. **Decide open question 5** (floors, wings or a hub) before Gallery VIII, since it decides
+   where corridors go.
+4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
+   download the physics engine again.
