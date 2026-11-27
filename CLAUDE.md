@@ -202,6 +202,9 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
 - **Tap detection uses `PointerEvent.timeStamp`**, not the time it was handled: on a slow frame
   a quick tap would otherwise look like a long press. Injected test touches carry explicit
   timestamps for the same reason.
+- **Moving `InstancedMesh`es get culled.** three.js computes an instanced mesh's bounding
+  sphere once and culls against it forever; if the instances move (Stern–Gerlach's atoms), set
+  `frustumCulled = false` or the beam vanishes from most view angles.
 - **Fast balls tunnel.** Enable CCD on small fast bodies and make walls at least as thick as
   the ball's radius.
 - **TypeScript 7 with `erasableSyntaxOnly`:** no constructor parameter properties, enums or

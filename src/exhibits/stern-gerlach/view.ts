@@ -175,6 +175,10 @@ export function buildSternGerlachView(scene: THREE.Object3D, ex: SternGerlachExh
   const atomGeometry = new THREE.SphereGeometry(0.012, 6, 4);
   const atomMaterial = new THREE.MeshBasicMaterial({ color: 0xe8f0ff });
   const atoms = new THREE.InstancedMesh(atomGeometry, atomMaterial, ATOMS);
+  // The instances move every frame, but three.js computes an InstancedMesh's bounding
+  // sphere once (from the first frame's instances) and culls against it forever after:
+  // the beam vanished from most view angles. One draw call; never cull it.
+  atoms.frustumCulled = false;
   scene.add(atoms);
   const phase = new Float32Array(ATOMS);
   const spinOf = new Float32Array(ATOMS);
