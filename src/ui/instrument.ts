@@ -1,6 +1,7 @@
-// The physics instrument: an overlay that lists the room's laws (reading vs.
-// law, broken or not, a plain explanation), lets the player adjust or restore
-// them within the room's budget, and resets the room.
+// The physics instrument: an overlay that lists the room's laws (the reading
+// here and what it does; once the player has discovered a law, also what it
+// should be), lets the player adjust them within the room's budget, and resets
+// the room.
 //
 // In first person it is raised by holding Q. The pointer stays locked and the
 // mouse drives a cursor on the instrument instead of the view, so there is no
@@ -158,7 +159,12 @@ function renderModel(m: InstrumentModel, hint: string): string {
 }
 
 function renderRule(rule: InstrumentRule): string {
-  const status = rule.broken ? `<span class="chip broken">Broken</span>` : `<span class="chip ok">As it should be</span>`;
+  // Until the player has discovered the law, the instrument can't judge the reading.
+  const status = !rule.known
+    ? `<span class="chip unknown">Law unknown</span>`
+    : rule.broken
+      ? `<span class="chip broken">Broken</span>`
+      : `<span class="chip ok">As it should be</span>`;
   const lock = rule.editable ? "" : `<span class="chip locked">Fixed here</span>`;
   // The room-shaped pad only fits Gallery I's five directions; anything else is a list.
   const isGravity = rule.id === "gravity" && rule.options.every((o) => GRAVITY_PAD.some((s) => s.direction === o.value));
@@ -182,10 +188,11 @@ function renderRule(rule: InstrumentRule): string {
       <div class="inst-rule-head"><b>${rule.label}</b>${status}${lock}</div>
       <dl class="inst-readings">
         <div><dt>Reading here</dt><dd>${rule.reading}</dd></div>
-        <div><dt>The law</dt><dd>${rule.law}</dd></div>
+        ${rule.known ? `<div><dt>The law</dt><dd>${rule.law}</dd></div>` : ""}
       </dl>
       <p class="inst-expl">${rule.explanation}</p>
+      ${rule.known ? `<p class="inst-note">Law discovered in ${rule.discoveredIn}.</p>` : rule.editable ? `<p class="inst-note">What should it be? Work it out: put a room right and your instrument will remember the law.</p>` : ""}
       ${rule.editable ? controls : ""}
-      ${rule.editable && rule.broken ? `<button type="button" class="inst-restore" data-action="restore" data-rule="${rule.id}" ${rule.canChange ? "" : "disabled"}>Restore the law: ${rule.law}</button>` : ""}
+      ${rule.editable && rule.known && rule.broken ? `<button type="button" class="inst-restore" data-action="restore" data-rule="${rule.id}" ${rule.canChange ? "" : "disabled"}>Restore the law: ${rule.law}</button>` : ""}
     </section>`;
 }

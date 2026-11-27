@@ -49,8 +49,15 @@ try {
   expect("instrument cursor shows", await eventually(page, () => !document.querySelector(".instrument-cursor")!.classList.contains("hidden")));
   expect("crosshair hides", await eventually(page, () => document.querySelector(".crosshair")!.classList.contains("hidden")));
   expect(
-    "instrument says gravity is broken",
-    await q(page, () => document.querySelector(".inst-expl")!.textContent!.includes("Here it pulls toward the right wall")),
+    "instrument says where gravity pulls here",
+    await q(page, () => document.querySelector(".inst-expl")!.textContent!.includes("Gravity pulls toward the right wall here")),
+  );
+  expect(
+    "…but not what the law should be (not yet discovered)",
+    await q(page, () => {
+      const text = document.querySelector(".instrument")!.textContent!;
+      return text.includes("Law unknown") && !text.includes("The law") && !text.includes("Restore") && !document.querySelector(".instrument .nominal");
+    }),
   );
 
   // Steer the cursor from the instrument's centre onto "Back wall".
@@ -155,15 +162,25 @@ try {
   });
   expect("the player is handed to Gallery V", await eventually(page, () => window.__game!.getPlayer().gallery === "bouncing"));
   expect("the crosshair finds the lever", await eventually(page, () => window.__game!.getPlayer().hovered === "pulled"));
+  // Let the ball in the claw fall asleep first: a sleeping ball once ignored the lever.
+  expect("the ball rests in the claw", await eventually(page, () => window.__game!.getState().settled, 30_000));
   await page.mouse.click(600, 400);
   expect(
     "clicking the lever drops the ball, for free",
-    await eventually(page, () => {
-      const s = window.__game!.getState();
-      return s.rules.lever === "pulled" && s.changesUsed === 0 && s.bodies.ball.pos[1] < 1.5;
-    }),
+    await eventually(
+      page,
+      () => {
+        const s = window.__game!.getState();
+        return s.rules.lever === "pulled" && s.changesUsed === 0 && s.bodies.ball.pos[1] < 1.5;
+      },
+      30_000,
+    ),
   );
-  expect("the crosshair says the lever is pulled", await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "The lever is pulled"));
+  await page.evaluate(() => window.__game!.lookAtButton("pulled")); // the handle swung down: aim at it again
+  expect(
+    "the crosshair says the lever is pulled",
+    await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "The lever is pulled", 30_000),
+  );
 
 
   await page.close(); // the desktop page's rendering would slow the next pages' input handling

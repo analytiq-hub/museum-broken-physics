@@ -28,7 +28,12 @@ export interface Rule<T = unknown> {
    * samples). Each is a choice the player can make.
    */
   readonly marks?: readonly RuleOption<T>[];
-  /** Optional plain-language "what's wrong" sentence for the instrument. */
+  /**
+   * What the player can see happening here, without saying what the law should be.
+   * The instrument shows this until the player has discovered the law.
+   */
+  observe?(current: T): string;
+  /** Plain-language "what's wrong" sentence, naming the law; shown once it's discovered. */
   explain?(current: T, nominal: T): string;
   current: T;
   /** The "correct" law. Drives Restore and later trade-offs. */

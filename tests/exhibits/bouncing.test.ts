@@ -38,6 +38,15 @@ describe("bouncing hall", () => {
     expect(ex.launched).toBe(false);
   });
 
+  it("drops even after waiting in the claw long enough to fall asleep", () => {
+    ex = new BouncingExhibit(R);
+    for (let i = 0; i < 10 * 60; i++) ex.step();
+    expect(ex.ball.isSleeping()).toBe(true);
+    ex.setRule("lever", "pulled");
+    run(1);
+    expect(ex.bounces).toBe(1); // it fell and bounced off the anvil
+  });
+
   it("with the broken law each bounce is higher, until the deflector throws it onto the balcony", () => {
     ex = new BouncingExhibit(R);
     expect(ex.setRule("lever", "pulled")).toBe(true);

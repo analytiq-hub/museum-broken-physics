@@ -227,6 +227,10 @@ function indexRule(): Rule<number> {
     current: INDEX_BROKEN,
     nominal: INDEX_LAW,
     editable: true,
+    observe: (current) =>
+      current < 1
+        ? `Here the prism's refractive index is ${current}: light travels faster inside the glass than in the air around it.`
+        : `Here the prism's refractive index is ${current}: light slows down inside the glass.`,
     explain: (current, nominal) =>
       current < 1
         ? `The prism's refractive index should be ${nominal}, like glass. Here it is ${current}: light speeds up in the glass and bends away from where it should go.`

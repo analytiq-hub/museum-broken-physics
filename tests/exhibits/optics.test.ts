@@ -57,7 +57,11 @@ describe("optics: the hidden door", () => {
     ex = new OpticsExhibit(R);
     const m = instrumentModel(ex, "The Hidden Door");
     expect(m.rules.map((r) => r.id)).toEqual(["index"]);
-    expect(m.rules[0]).toMatchObject({ reading: "Backwards (0.7)", law: "Glass (1.5)", broken: true });
+    // The law stays hidden until the player discovers it...
+    expect(m.rules[0]).toMatchObject({ reading: "Backwards (0.7)", known: false, law: "" });
+    // ...and shows once they have.
+    const known = instrumentModel(ex, "The Hidden Door", new Map([["index", "The Hidden Door"]]));
+    expect(known.rules[0]).toMatchObject({ law: "Glass (1.5)", broken: true });
   });
 
   it("reset restores the index and mirrors and closes the door", () => {

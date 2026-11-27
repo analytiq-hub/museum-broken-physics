@@ -332,6 +332,11 @@ body {
   color: #e4f3d3;
 }
 
+.chip.unknown {
+  background: #4a3f2c;
+  color: #e9d7a8;
+}
+
 .chip.locked {
   background: #3d3426;
   color: #cdbf9f;
@@ -355,8 +360,15 @@ body {
 }
 
 .inst-expl {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   color: #e3d7bd;
+}
+
+.inst-note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-style: italic;
+  color: #a99f8c;
 }
 
 .instrument .gravity-pad {

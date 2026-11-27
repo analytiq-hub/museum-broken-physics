@@ -79,7 +79,10 @@ non-solutions and asserts they are not.
 ## UI
 
 - `src/ui/instrumentModel.ts` (pure, tested) turns an exhibit's rules into what the physics
-  instrument shows; `src/ui/instrument.ts` renders it. In first person it is raised by holding
+  instrument shows. **It never gives the answer away:** until a law is discovered (the player
+  solved a room where it was editable; `knownLaws()` in `main.ts`) it shows only the reading and
+  the rule's `observe()` text, with no law, Broken/OK chip, highlighted option or Restore button.
+  Write `observe()` for every new rule without naming the correct value; `src/ui/instrument.ts` renders it. In first person it is raised by holding
   Q: the pointer stays locked and mouse deltas drive a virtual cursor (`look.enabled = false`),
   because re-locking the pointer after releasing it is restricted by browsers. In the window
   view (C) it stays open as a normal panel.

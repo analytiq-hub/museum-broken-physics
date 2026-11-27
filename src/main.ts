@@ -486,6 +486,20 @@ const gravityEditable = () =>
 const touchWording = (text: string) =>
   text.replace(/\bClick\b/g, "Tap").replace(/\bclick\b/g, "tap").replace(/\bhold Q\b/g, "tap Laws").replace(/\bHold Q\b/g, "Tap Laws");
 
+/**
+ * Laws the player has discovered, and where: a law is learned by putting right a
+ * room where it could be changed. The instrument shows what a law should be only
+ * once it's known, so it never gives the answer away.
+ */
+function knownLaws(): Map<string, string> {
+  const known = new Map<string, string>();
+  for (const g of galleries) {
+    if (!gameState.isSolved(g.id)) continue;
+    for (const rule of g.exhibit.rules) if (rule.editable && !rule.control && !known.has(rule.id)) known.set(rule.id, g.title);
+  }
+  return known;
+}
+
 let lastHud = "";
 function renderHud(): void {
   const ex = active.exhibit;
@@ -501,7 +515,7 @@ function renderHud(): void {
   if (html !== lastHud) hud.innerHTML = lastHud = html;
 
   // The instrument: pinned open in the window view, raised with Q in first person.
-  instrument.update(instrumentModel(ex, active.title));
+  instrument.update(instrumentModel(ex, active.title, knownLaws()));
   if (mode === "orbit") instrument.open(false, gravityEditable() ? "Arrow keys and Space set gravity too" : "");
   else if (instrumentHeld)
     instrument.open(

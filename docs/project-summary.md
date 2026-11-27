@@ -6,8 +6,9 @@
 ## What it is
 
 A first-person puzzle game in the browser. You walk through an abandoned museum whose
-exhibits have broken physical laws. A physics instrument (hold Q) shows each room's laws,
-what they read here and what they should be, and lets you change a limited number of them.
+exhibits have broken physical laws. A physics instrument (hold Q) shows each room's laws
+and what they read here, and lets you change a limited number of them. It never says what a
+law should be until you have discovered it by putting a room right.
 Each room is solved by forming a hypothesis, changing a law, and watching the room respond.
 Often you have to *use* the broken law before you put it right.
 
