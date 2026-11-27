@@ -46,14 +46,17 @@ export const CORRIDOR_3_4: readonly Box[] = [
 ];
 
 /**
- * Corridor from Gallery IV's hidden door (x = −63) to Gallery V's east doorway
- * (x = −72): z 1..2.6, 2.4 m high, the size of the hidden door.
+ * Corridor from the outside of Gallery IV's west wall (x = −63.5, the hidden door)
+ * to the outside of Gallery V's east wall (x = −71.5): z 1..2.6, 2.4 m high, the
+ * size of the hidden door. It stops at the walls' outer faces, like every corridor:
+ * running on to their inner faces would put its end caps in the same plane as the
+ * visible wall around each doorway, and they z-fight (flicker).
  */
 export const CORRIDOR_4_5: readonly Box[] = [
-  { name: "corridor45-floor", kind: "floor", center: [-67.5, -W, 1.8], half: [4.5, W, 0.8] },
-  { name: "corridor45-ceiling", kind: "ceiling", center: [-67.5, 2.4 + W, 1.8], half: [4.5, W, 0.8] },
-  { name: "corridor45-north", kind: "wall", center: [-67.5, 1.2, 1 - W], half: [4.5, 1.2, W] },
-  { name: "corridor45-south", kind: "wall", center: [-67.5, 1.2, 2.6 + W], half: [4.5, 1.2, W] },
+  { name: "corridor45-floor", kind: "floor", center: [-67.5, -W, 1.8], half: [4, W, 0.8] },
+  { name: "corridor45-ceiling", kind: "ceiling", center: [-67.5, 2.4 + W, 1.8], half: [4, W, 0.8] },
+  { name: "corridor45-north", kind: "wall", center: [-67.5, 1.2, 1 - W], half: [4, 1.2, W] },
+  { name: "corridor45-south", kind: "wall", center: [-67.5, 1.2, 2.6 + W], half: [4, 1.2, W] },
 ];
 
 /** West of this x the player belongs to Gallery II's world, east of it to Gallery I's. */

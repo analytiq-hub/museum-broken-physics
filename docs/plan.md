@@ -345,14 +345,27 @@ A new subsystem, not a variation on rigid bodies, so it gets its own milestone.
   do: the view (beam as glowing lines, clickable mirrors, the door outline revealed by light),
   the gallery descriptor, corridor 3–4 and Gallery III's west door. The space behind the
   hidden door is an alcove for now; Gallery V replaces it.
+  *Done:* Gallery IV shipped, and corridor 4–5 now leads on to Gallery V.
 
-### Milestone 8: Gallery V, the Singing Glass (waves; 4–5 days)
+### Milestone 7b: Gallery V, the Bouncing Hall (done, Nov 2026)
+Added after the plan, on the player's request. **Broken law: bounciness** (restitution 1.07,
+law 0.6). Pull a lever and the ball drops from a claw onto an anvil. Each bounce is higher,
+until a slanted brass deflector throws it onto a felt balcony. Restore the bounce there and
+it comes to rest; too early and it dies on the anvil, too late and it smashes the skylight.
+Restitution above 1 is an explicit, capped boost. The felt soaks up sideways speed, so the
+window is several seconds after the ball lands at any drop height (tested). The lever is a
+`control` rule. The closing alcove sits behind its exit door.
+
+**Order from here (agreed Nov 2026):** Gallery VI, the Singing Glass (Milestone 8), then
+streaming (Milestone 9), then Gallery VII, the Backwards Furnace (Milestone 10).
+
+### Milestone 8: Gallery VI, the Singing Glass (waves; 4–5 days)
 The second subsystem that isn't rigid bodies. It teaches one new law, resonance, and
 the player can **hear** that law being wrong.
 
-- **Room.** The hidden door in Gallery IV leads into a narrow hall. On the far wall is a small
+- **Room.** The Bouncing Hall's exit door leads into a narrow hall. On the far wall is a small
   organ with five open pipes of different lengths. Glass stands on shelves along both side walls:
-  - the exit is a tall **glass pane** in the left wall (the door to Gallery VI);
+  - the exit is a tall **glass pane** in the left wall (the door to Gallery VII);
   - an antique **glass harmonica** sits in a case on the right wall; shattering it fails the
     room;
   - two or three decoy glasses only ring and wobble.
@@ -388,70 +401,19 @@ the player can **hear** that law being wrong.
   - Solver thresholds in `harness/solverConfigs.ts`. The moves are "sound pipe *p* for *t*
     seconds", sampled over a time grid.
   - A screenshot of the cracked harmonica.
-- **Layout.** Corridor 4–5 replaces the alcove. The hidden door is 1.6 m wide, against the
-  standard 2 m of the corridors. Widen it to z 1..3 so corridor code stays uniform, and rerun
-  the optics solver test, because the reveal band moves.
+- **Layout.** Corridor 5–6 replaces the closing alcove behind the Bouncing Hall's exit door
+  (already the standard z 1..3), and the closing placard moves to the Singing Glass.
 - **Done when:**
   - a playtester explains which pipe broke the pane *and why that pipe*, not just that it
     worked;
   - the room needs no waves-specific instrument UI.
 
-### Milestone 9: Gallery VI, the Backwards Furnace (thermodynamics + optics; 4–5 days)
-This room teaches heat flowing backwards and combines it with optics from Gallery IV. It also
-delivers Milestone 6's unfinished trade-off: the broken law is the tool, and restoring it
-too early or too late both lose.
-
-- **Room.** A cold, abandoned boiler room at −8 °C:
-  - the exit door is latched by an **ice plug** in a brass frame;
-  - a lamp and one clickable mirror (the Gallery IV tracer, moved to `src/optics/`) can aim a
-    beam at the ice, at a cold iron stove, or at a wax-sealed display case.
-- **Broken law: heat flows from cold to hot.** It is a choice rule: "hot → cold" (the law) /
-  "cold → hot". It could also have "insulated"; the solver decides whether that third option
-  makes the room too easy.
-- **What the player sees on entering.** Under the reversed law, the warmest thing gets warmer.
-  The unlit stove slowly glows red, and frost creeps over the ice and the walls. These are the
-  tell-tales, like the plumb bobs in Gallery I.
-- **Sim** (`src/exhibits/furnace/heat.ts`, pure maths). It is a lumped thermal network: nodes
-  for ice, stove, wax and room air, each with a heat capacity, joined by links with a conductance.
-  - Each step: `dT_i = s · Σ k_ij (T_j − T_i) / C_i · dt`, where s = +1 under the law and −1
-    when broken, plus the beam's power on whichever node it hits.
-  - The ice node also has latent heat to absorb before it melts.
-  - The broken law is explicit and capped, per the Gotchas: temperatures are clamped
-    (−60…400 °C), so the runaway can't blow up.
-- **Puzzle.**
-  - Under the law, the beam warms the ice only to about −3 °C, because the cold room drains
-    the heat away. So it never melts, and "just restore" fails.
-  - Under the reversed law, a beam-warmed ice plug becomes a warm spot and pulls heat in from
-    the room. It runs away, melts, and the latch drops.
-  - Left reversed, the meltwater keeps heating, flashes to steam at 100 °C and bursts the frame,
-    which jams the door (fail, auto-reset).
-  - Intended solution: aim the mirror at the ice, wait for the melt, restore the law before
-    it boils.
-  - Wrong but tempting: aim at the stove ("heat the stove to melt the ice") or at the wax
-    case. Both run away somewhere useless, and the wax seal melting is a second fail.
-- **Waiting costs.** Under the broken law the ice gets colder the longer the player waits
-  without aiming the beam, so the melt takes longer. The window between the melt and boiling
-  is a few seconds that the player watches happen, not a frame-perfect timing. As in Gallery
-  II, the solver's robustness check models a player who reacts to an event (the latch
-  dropping, with a hiss), not to a clock.
-- **Cross-gallery state** (the other half of Milestone 6). If Gallery V was solved with
-  helium rather than air, the stove's flue whistles high. That is a cosmetic first use of
-  `GameState`. A mechanical dependency is an open question below.
-- **Harness.**
-  - Headless tests: intended solution solves; just-restore fails; aiming at the stove fails.
-  - Solver thresholds: mirror angle × heat-law changes × timing grid.
-  - Trajectory SVGs become temperature-over-time plots for each node in `harness/out/`.
-- **Done when:**
-  - a playtester can say why they had to leave heat flowing backwards for a while;
-  - every solver threshold passes;
-  - the instrument needs no heat-specific UI.
-
-### Milestone 10: Stream galleries instead of building them all (3–4 days)
+### Milestone 9: Stream galleries instead of building them all (3–4 days)
 The museum should be able to grow to about 50 rooms without a longer load or more memory.
 Do this before the gallery after VI. The later it waits, the more galleries assume they
 always exist.
 
-- **Where the cost is today (Nov 2026, four galleries).**
+- **Where the cost is today (Nov 2026, four galleries; five since).**
   - The download is about 4.85 MB of JS, almost all of it Rapier's inlined WASM, plus about
     6 MB of shared textures and HDRI. All gallery and exhibit code is about 129 KB raw, roughly
     32 KB per room. Fifty rooms of code would be about 1.6 MB raw, around 400 KB gzipped, so
@@ -506,13 +468,66 @@ always exist.
   - memory stays flat after walking through every gallery and back;
   - nothing visibly appears from nowhere in first person.
 
+### Milestone 10: Gallery VII, the Backwards Furnace (thermodynamics + optics; 4–5 days)
+This room teaches heat flowing backwards and combines it with optics from Gallery IV. It also
+delivers Milestone 6's unfinished trade-off: the broken law is the tool, and restoring it
+too early or too late both lose.
+
+- **Room.** A cold, abandoned boiler room at −8 °C:
+  - the exit door is latched by an **ice plug** in a brass frame;
+  - a lamp and one clickable mirror (the Gallery IV tracer, moved to `src/optics/`) can aim a
+    beam at the ice, at a cold iron stove, or at a wax-sealed display case.
+- **Broken law: heat flows from cold to hot.** It is a choice rule: "hot → cold" (the law) /
+  "cold → hot". It could also have "insulated"; the solver decides whether that third option
+  makes the room too easy.
+- **What the player sees on entering.** Under the reversed law, the warmest thing gets warmer.
+  The unlit stove slowly glows red, and frost creeps over the ice and the walls. These are the
+  tell-tales, like the plumb bobs in Gallery I.
+- **Sim** (`src/exhibits/furnace/heat.ts`, pure maths). It is a lumped thermal network: nodes
+  for ice, stove, wax and room air, each with a heat capacity, joined by links with a conductance.
+  - Each step: `dT_i = s · Σ k_ij (T_j − T_i) / C_i · dt`, where s = +1 under the law and −1
+    when broken, plus the beam's power on whichever node it hits.
+  - The ice node also has latent heat to absorb before it melts.
+  - The broken law is explicit and capped, per the Gotchas: temperatures are clamped
+    (−60…400 °C), so the runaway can't blow up.
+- **Puzzle.**
+  - Under the law, the beam warms the ice only to about −3 °C, because the cold room drains
+    the heat away. So it never melts, and "just restore" fails.
+  - Under the reversed law, a beam-warmed ice plug becomes a warm spot and pulls heat in from
+    the room. It runs away, melts, and the latch drops.
+  - Left reversed, the meltwater keeps heating, flashes to steam at 100 °C and bursts the frame,
+    which jams the door (fail, auto-reset).
+  - Intended solution: aim the mirror at the ice, wait for the melt, restore the law before
+    it boils.
+  - Wrong but tempting: aim at the stove ("heat the stove to melt the ice") or at the wax
+    case. Both run away somewhere useless, and the wax seal melting is a second fail.
+- **Waiting costs.** Under the broken law the ice gets colder the longer the player waits
+  without aiming the beam, so the melt takes longer. The window between the melt and boiling
+  is a few seconds that the player watches happen, not a frame-perfect timing. As in Gallery
+  II, the solver's robustness check models a player who reacts to an event (the latch
+  dropping, with a hiss), not to a clock.
+- **Cross-gallery state** (the other half of Milestone 6). If Gallery VI was solved with
+  helium rather than air, the stove's flue whistles high. That is a cosmetic first use of
+  `GameState`. A mechanical dependency is an open question below.
+- **Harness.**
+  - Headless tests: intended solution solves; just-restore fails; aiming at the stove fails.
+  - Solver thresholds: mirror angle × heat-law changes × timing grid.
+  - Trajectory SVGs become temperature-over-time plots for each node in `harness/out/`.
+- **Done when:**
+  - a playtester can say why they had to leave heat flowing backwards for a while;
+  - every solver threshold passes;
+  - the instrument needs no heat-specific UI.
+
 ## Later backlog
 
-- Exhibits after Gallery VI: candidates based on famous experiments, and the best fits for
+- Exhibits after Gallery VII: candidates based on famous experiments, and the best fits for
   the engine, are in [room-ideas.md](room-ideas.md).
-- Exhibits after Gallery VI. Reversed heat flow could also freeze something on purpose, a
+- The Little Solar System: gravity falls off with the cube of distance, so orbits spiral;
+  use the bad orbits to deliver a moon to a cradle, then restore the law.
+- Exhibits after Gallery VII. Reversed heat flow could also freeze something on purpose, a
   room about the opposite runaway.
-- Save/load progress between rooms (serialise the game-state object).
+- ~~Save/load progress between rooms.~~ *Done (Nov 2026):* saved in the browser, with a
+  visitor's ticket and Continue / New visit.
 - Hub gallery connecting exhibits; museum map.
 - Hint system ("museum placards" that explain the real law).
 - Replace gray boxes with modeled glTF rooms and props.
@@ -531,7 +546,7 @@ always exist.
 | Unstable simulation from broken rules | Implement broken rules as explicit, capped forces rather than out-of-range engine parameters. |
 | Visual ambition slows progress | Strict gray-box-first rule; the visual pass happens per room, after it's fun. |
 | Performance with shadows and physics | Limit shadow-casting lights; sleep bodies; step only the active exhibit's world; profile early with stats.js. |
-| Load time and memory grow with every gallery added | Milestone 10: each gallery is its own chunk, only three galleries are live at once, and `npm run check` enforces size budgets. |
+| Load time and memory grow with every gallery added | Milestone 9: each gallery is its own chunk, only three galleries are live at once, and `npm run check` enforces size budgets. |
 
 ## Open questions
 

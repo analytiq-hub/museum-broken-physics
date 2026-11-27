@@ -149,6 +149,9 @@ alters the physics, old recordings will legitimately fail: re-record or delete t
   bloom makes it a blaze. Light the room from the sides and corners; keep ceiling panels dim.
 - **`renderer.info` resets per render call**, and post-processing renders several passes. It is
   set to reset once per frame in `main.ts`, so `__game.getRenderInfo()` reports whole frames.
+- **Corridors stop at the walls' outer faces.** A corridor box that runs on to a room's inner
+  wall face puts its end cap in the same plane as the visible wall around the doorway, and the
+  two flicker (z-fighting). Corridor 4–5 did this until a playtester saw the ceiling flicker.
 - **Shared geometry is drawn once.** Corridor boxes are in both galleries' physics worlds, but
   only the eastern gallery's view draws them (the western one lists them in `skip`), or they
   z-fight.
