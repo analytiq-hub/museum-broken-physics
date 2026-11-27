@@ -35,6 +35,9 @@ redirect a beam of light, and use a rolling object to activate a switch.
 | Waves           | Resonance out of control                    | Tune frequency to shatter / stabilise  |
 | Thermodynamics  | Heat flows cold → hot                       | Use reversed heat flow to melt / freeze |
 
+More candidate rooms, based on famous experiments (Carnot, Maxwell's demon, the double
+slit, Rutherford, Stern–Gerlach and others), are listed in [room-ideas.md](room-ideas.md).
+
 ## Look and feel
 
 Richly textured marble galleries, brass instruments, fractured glass, dramatic pools of light,

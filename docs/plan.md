@@ -508,6 +508,8 @@ always exist.
 
 ## Later backlog
 
+- Exhibits after Gallery VI: candidates based on famous experiments, and the best fits for
+  the engine, are in [room-ideas.md](room-ideas.md).
 - Exhibits after Gallery VI. Reversed heat flow could also freeze something on purpose, a
   room about the opposite runaway.
 - Save/load progress between rooms (serialise the game-state object).
