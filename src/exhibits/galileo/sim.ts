@@ -230,12 +230,7 @@ function fallRule(corkHandle: number): Rule<Fall> {
     current: "half",
     nominal: "same",
     editable: true,
-    observe: (current) =>
-      current === "same"
-        ? "Here gravity pulls cork exactly as hard as brass, kilogram for kilogram: the two fall together."
-        : current === "half"
-          ? "Here gravity pulls cork half as hard as brass, though a kilogram of either takes the same push to move."
-          : "Here gravity pulls cork harder than brass, though a kilogram of either takes the same push to move.",
+    observe: () => "How hard gravity pulls on cork, kilogram for kilogram, compared with brass. A kilogram of either needs an equal push to move.",
     explain: (current) =>
       current === "same"
         ? "Gravity pulls every kilogram alike, whatever it is made of, as it should: all things fall together."

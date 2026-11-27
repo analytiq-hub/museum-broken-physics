@@ -129,7 +129,10 @@ non-solutions and asserts they are not.
   instrument shows. **It never gives the answer away:** until a law is discovered (the player
   solved a room where it was editable; `knownLaws()` in `main.ts`) it shows only the reading and
   the rule's `observe()` text, with no law, Broken/OK chip, highlighted option or Restore button.
-  Write `observe()` for every new rule without naming the correct value; `src/ui/instrument.ts` renders it. In first person it is raised by holding
+  Write `observe()` for every new rule so it reads the **same for every option** (only the value
+  itself may change): say what the quantity does, never judge the current value ("enormous",
+  "negative", "every swing gets bigger") or hint which is right. Option labels must not call one
+  value true or normal either. `tests/exhibits/readings.test.ts` enforces both; `src/ui/instrument.ts` renders it. In first person it is raised by holding
   Q: the pointer stays locked and mouse deltas drive a virtual cursor (`look.enabled = false`),
   because re-locking the pointer after releasing it is restricted by browsers. In the window
   view (C) it stays open as a normal panel.

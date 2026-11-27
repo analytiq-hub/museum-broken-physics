@@ -308,12 +308,7 @@ function dampingRule(): Rule<number> {
     current: DAMPING_BROKEN,
     nominal: DAMPING_LAW,
     editable: true,
-    observe: (current) =>
-      current < 0
-        ? `Here damping is negative (${current}/s): every swing comes back bigger than the last.`
-        : current === 0
-          ? "Here there is no damping at all: a swing keeps its energy for ever."
-          : `Here damping is +${current}/s: each swing loses a little energy.`,
+    observe: (current) => `Here damping is ${current}/s. It sets how the size of a swing changes from one swing to the next.`,
     explain: (current, nominal) =>
       current < 0
         ? `Damping should be a light drag (+${nominal}/s). Here it is negative (${current}/s): every swing gains energy.`

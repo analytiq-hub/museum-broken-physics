@@ -37,9 +37,9 @@ export const LEVER = { x: -3.0, z: AXIS_Z + 0.9 } as const;
 
 export { SPIN_MARKS, type Spin } from "../spin";
 export const PLANCK_MARKS = [
-  { value: 0, label: "True (6.6 × 10⁻³⁴ J·s)" },
-  { value: 1, label: "Huge (0.66 J·s)" },
-  { value: 2.5, label: "Larger still (6.6 J·s)" },
+  { value: 0, label: "6.6 × 10⁻³⁴ J·s" },
+  { value: 1, label: "0.66 J·s" },
+  { value: 2.5, label: "6.6 J·s" },
 ] as const;
 
 /** Share of the beam that lands on the glass, per spin setting (cell ±0.07 m around +SPLIT). */
@@ -197,10 +197,7 @@ function planckRule(): Rule<number> {
     current: 1,
     nominal: 0,
     editable: true,
-    observe: (current) =>
-      current === 0
-        ? "Here Planck's constant is far too small to notice: silver stays where it lands."
-        : "Here Planck's constant is enormous: silver is a spread-out wave, and leaks through glass it could never pass.",
+    observe: () => "Planck's constant sets how wave-like things are: the larger it is, the more the silver spreads out like a wave instead of staying where it lands.",
     explain: (current) =>
       current === 0
         ? "Planck's constant is tiny, 6.6 × 10⁻³⁴ J·s, as it should be."

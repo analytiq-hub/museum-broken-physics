@@ -176,12 +176,7 @@ function chargeRule(): Rule<Charge> {
     current: "spread",
     nominal: "nucleus",
     editable: true,
-    observe: (current) =>
-      current === "spread"
-        ? "Here the gold atom's positive charge is spread evenly through it, like plums through a pudding. A passing alpha particle feels only a gentle push."
-        : current === "nucleus"
-          ? "Here the gold atom's positive charge is packed into a tiny nucleus. A particle passing close to it is pushed away hard."
-          : "Here the gold atom's centre is negatively charged: alpha particles, which are positive, are pulled toward it.",
+    observe: () => "How the gold atom's charge is arranged. Alpha particles carry a positive charge: watch how their tracks bend as they pass the foil.",
     explain: (current) =>
       current === "nucleus"
         ? "An atom's positive charge sits in a tiny nucleus, as it should."

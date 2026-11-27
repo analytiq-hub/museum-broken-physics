@@ -177,10 +177,7 @@ function heatRule(): Rule<HeatLaw> {
     current: "cold-to-hot",
     nominal: "hot-to-cold",
     editable: true,
-    observe: (current) =>
-      current === "cold-to-hot"
-        ? "Here heat flows from cold things into warmer ones: whatever is warmest keeps getting warmer, and the cold gets colder."
-        : "Here heat flows from warm things into colder ones: everything drifts toward the temperature of the room.",
+    observe: () => "Which way heat flows between a warmer thing and a colder one. Everything here trades heat with the air of the room.",
     explain: (current) =>
       current === "cold-to-hot"
         ? "Heat should flow from hot to cold, evening things out. Here it flows from cold to hot: a warm spot runs away, hotter and hotter."

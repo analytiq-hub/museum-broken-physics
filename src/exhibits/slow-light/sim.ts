@@ -231,10 +231,7 @@ function speedRule(): Rule<LightSpeed> {
     current: "slow",
     nominal: "true",
     editable: true,
-    observe: (current) =>
-      current === "true"
-        ? "Here light crosses the room faster than anything can be seen to move: a flash is everywhere at once."
-        : `Here light travels at ${SPEEDS[current]} m/s, about as fast as you can walk${current === "slower" ? ", slowly" : ""}: you can watch a flash crawl.`,
+    observe: () => "How fast light travels here. Watch how long a flash takes to cross the room.",
     explain: (current) =>
       current === "true"
         ? "Light travels at 300 000 km/s, as it should: across this room in a few billionths of a second."

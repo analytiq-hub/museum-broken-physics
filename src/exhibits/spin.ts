@@ -26,13 +26,8 @@ export function spinRule(): Rule<Spin> {
     current: "any",
     nominal: "two",
     editable: true,
-    // Readings describe what is seen and never name the right value (see instrumentModel).
-    observe: (current) =>
-      current === "any"
-        ? "Measured along the magnet's field, an atom's spin can come out anywhere from fully up to fully down, so the magnet pushes each atom by its own amount."
-        : current === "two"
-          ? "Measured along the magnet's field, an atom's spin comes out only up or down, so the magnet pushes every atom one of two ways."
-          : "Measured along the magnet's field, an atom's spin comes out up, down or zero.",
+    // The reading is the same whichever option is set, so it can't give the answer away.
+    observe: () => "The magnet pushes each silver atom up or down by an amount set by its spin, measured along the field. Watch where the silver lands on the screen.",
     explain: (current) =>
       current === "two"
         ? "Measured along any axis, a silver atom's spin comes out exactly up or down, never in between, as it should be."

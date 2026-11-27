@@ -26,9 +26,9 @@ export const CASE = { z: -2.2, y: 0.95, height: 0.55, halfZ: 0.35, well: [-3.8, 
 export const LEVER = { x: -4.4, z: CASE.z + 0.9 } as const;
 
 export const PLANCK_MARKS = [
-  { value: 0, label: "True (6.6 × 10⁻³⁴ J·s)" },
-  { value: 1, label: "Huge (0.66 J·s)" },
-  { value: 2.5, label: "Larger still (6.6 J·s)" },
+  { value: 0, label: "6.6 × 10⁻³⁴ J·s" },
+  { value: 1, label: "0.66 J·s" },
+  { value: 2.5, label: "6.6 J·s" },
 ] as const;
 export const PLANCK_BROKEN = 1;
 export const PLANCK_LAW = 0;
@@ -165,10 +165,7 @@ function planckRule(): Rule<number> {
     current: PLANCK_BROKEN,
     nominal: PLANCK_LAW,
     editable: true,
-    observe: (current) =>
-      current === 0
-        ? "Here Planck's constant is far too small to notice: a marble is a marble, in one place at a time."
-        : "Here Planck's constant is enormous: a marble is a spread-out wave, and a wave can leak through a wall it could never roll over.",
+    observe: () => "Planck's constant sets how wave-like things are: the larger it is, the more a body spreads out like a wave instead of sitting in one place.",
     explain: (current) =>
       current === 0
         ? "Planck's constant is tiny, 6.6 × 10⁻³⁴ J·s, as it should be."

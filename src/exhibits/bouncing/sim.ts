@@ -324,12 +324,7 @@ function bounceRule(colliderHandle: number): Rule<number> {
     current: BOUNCE_BROKEN,
     nominal: BOUNCE_LAW,
     editable: true,
-    observe: (current) =>
-      current > 1
-        ? `Here a ball comes back up at ${current}× the speed it hit the floor: every bounce is higher than the last.`
-        : current === 1
-          ? "Here a ball comes back up at exactly the speed it hit the floor: it bounces to the same height for ever."
-          : `Here a ball comes back up at ${current}× the speed it hit the floor: each bounce is lower than the last.`,
+    observe: (current) => `Here a ball comes back up at ${current}× the speed it hit the floor.`,
     explain: (current, nominal) =>
       current > 1
         ? `A rubber ball should come back up at ${nominal}× the speed it hit the floor, losing a little each bounce. Here it is ${current}×: every bounce is higher than the last.`
