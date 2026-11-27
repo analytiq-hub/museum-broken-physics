@@ -6,24 +6,27 @@ See [concept.md](concept.md) for the game vision.
 ## Where things stand (27 Nov 2026)
 
 - **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
-- **Six galleries on two floors, visited in a fixed order:**
+- **Twelve galleries on three floors, visited in a fixed order:**
   - **Floor 1, mechanics:** I the Sideways Gallery (gravity), II the Restless Pendulum
     (damping), III the Bouncing Hall (restitution), IV the Leaning Pendulum (gravity and
-    damping, in stages).
-  - **The Grand Stair** climbs 4.8 m to Floor 2.
-  - **Floor 2, waves and light:** V the Hidden Door (refractive index), VI the Singing Glass
-    (speed of sound).
-  - The closing placard sits in an alcove behind Gallery VI's pane.
-- **Done:** Milestones 0–9 below, plus work added after the plan:
+    damping, the finale).
+  - **The Grand Stair** climbs 4.8 m.
+  - **Floor 2, waves, light and heat:** V the Hidden Door (refractive index), VI the Singing
+    Glass (speed of sound), VII the Chladni Plates (sound in brass), VIII the Backwards Furnace
+    (heat flow), IX Young's Double Slit (wavelength and index, the finale).
+  - **The Upper Stair** climbs to Floor 3.
+  - **Floor 3, modern physics** (in progress): X Rutherford's Gold Foil (the atom's charge),
+    XI Stern–Gerlach (spin), XII the Quantum Tunnel (Planck's constant).
+  - The closing placard is a small room (`the-end`) after the last gallery.
+- **Done:** Milestones 0–12, Floor 3's first three rooms (Milestone 13, in progress), plus work
+  added after the plan:
   - touch controls;
   - pause on Esc;
   - saved progress with a visitor's ticket;
   - an instrument that doesn't reveal a law until the player has discovered it;
   - galleries streamed three at a time;
   - the museum laid out as floors (see "Museum layout").
-- **Next:** Floor 2's last three rooms: the Backwards Furnace (Milestone 10), the Chladni
-  Plates (11) and Young's Double Slit as the finale (12). Also a real playtest with the new
-  instrument (see "Immediate next steps").
+- **Next:** the rest of Floor 3 (Milestone 13) and a real playtest (see "Immediate next steps").
 
 ## Museum layout (decided Nov 2026)
 
@@ -47,8 +50,8 @@ a level: clearly separate, and harder than the one below.
   | Floor | Theme | Rooms (built, then planned) | What makes it harder |
   | ----- | ----- | --------------------------- | -------------------- |
   | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale); later perhaps the Little Solar System before the finale | One law per room, visible effects, generous budgets |
-  | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale) | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
-  | 3 | Modern physics | Einstein's elevator, slow light, Rutherford, Stern–Gerlach, a quantum finale (room-ideas.md) | Laws that defy intuition, fewer changes, sometimes two laws per room |
+  | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale); all built | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
+  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel (built); XIII Slow Light, XIV Einstein's Elevator, XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
 
 - **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
   `src/galleries/rooms.ts` places them in the museum. Every corridor is a standard 8 m stub
@@ -557,6 +560,10 @@ always exist.
   - nothing visibly appears from nowhere in first person.
 
 ### Milestone 10: Gallery VIII, the Backwards Furnace (thermodynamics + optics; 4–5 days)
+*Done (Nov 2026).* As designed, with one change: objects exchange heat with the room as a
+fixed reservoir, not through a shared air node (under the broken law the air itself ran away
+to −60 °C and dragged every object into a runaway). Frost follows the stove's runaway instead.
+The "insulated" option was left out: it made the room solvable without the broken law.
 *Placement:* Floor 2, between the Chladni Plates and the Double Slit. It is built first
 because it is designed in full. Until the Chladni Plates exist, it sits right after the
 Singing Glass; inserting a room later is one entry in `ROOMS`, and the offsets of the rooms
@@ -612,6 +619,9 @@ too early or too late both lose.
   - the instrument needs no heat-specific UI.
 
 ### Milestone 11: Gallery VII, the Chladni Plates (sound you can see; 3–4 days)
+*Done (Nov 2026).* The broken speed is 2380 m/s (0.68 of brass), chosen so each note lands
+*exactly* on another figure: the shift is visible, not a blur. The sand needed a gentle slide
+down the vibration's slope as well as random kicks to form a figure in about a second.
 It follows the Singing Glass and turns sound into a picture.
 - **The room:** a brass plate on a stand, sprinkled with sand, driven by a brass oscillator
   with a dial of notes (a free `control`, like the organ pipes). The exit door's lock is
@@ -633,6 +643,10 @@ It follows the Singing Glass and turns sound into a picture.
   notes, and screenshots of each figure.
 
 ### Milestone 12: Gallery IX, Young's Double Slit (Floor 2's finale; 4–5 days)
+*Done (Nov 2026).* Marks: violet 420, green 560, sodium yellow 589 (law), deep red 770
+(broken) nm; backwards 0.75 (broken), air 1.0, water 1.33 (law). The sensor sits six bands
+out; a search over marks and sensor positions found this set, where every wrong combination
+stays under half bright.
 It combines two of the floor's laws, the way the Leaning Pendulum ends Floor 1.
 - **The room:** a lamp, a plate with two slits, a glass water tank between the slits and the
   screen, and a screen with a brass light sensor that unlocks the stairs to Floor 3.
@@ -649,6 +663,31 @@ It combines two of the floor's laws, the way the Leaning Pendulum ends Floor 1.
   real pattern as a texture.
 - **Harness:** headless tests (the solution, each law alone, the observer), brute force over
   both laws' marks, screenshots of the pattern before and after.
+
+### Milestone 13: Floor 3, modern physics (in progress)
+Floor 3 opens with the Upper Stair. Its rooms move from things that are odd to things that defy
+intuition even when working: the atom, spin, tunnelling, then light and time.
+
+- **Gallery X, Rutherford's Gold Foil (done).** Broken law: the atom's charge is spread
+  through it (plum pudding), so alpha particles pass almost straight. Restored, a nucleus
+  flings near particles away; their phosphor tracks show which way to slide the source (a
+  free control, nine positions); dead-on, three particles bounce straight back and open the
+  door. Decoy: a negative nucleus swallows them. Real 2D Coulomb scattering.
+- **Gallery XI, Stern–Gerlach (done).** Broken law: spin can point any way, so the beam smears;
+  the detectors starve and the glass cell between them slowly overheats (fail in ~13 s).
+  Restored, two values: two clean spots. Decoy: three values crack the cell in ~3 s.
+- **Gallery XII, the Quantum Tunnel (done).** Broken law: Planck's constant is enormous, so a
+  marble leaks through glass as a wave (well → cup → drain). Restoring the law measures it:
+  it collapses where its probability is largest. A 7 s window to land it in the cup.
+- **Gallery XIII, Slow Light (planned).** Broken law: the speed of light is 4 m/s. A light
+  clock and a lamp-lit gate: with slow light, a flash reaches the far photocell late, so a
+  shutter timed to it must be opened early (use the broken law to see the delay, then restore
+  it). Pure maths: positions of light fronts over time.
+- **Gallery XIV, Einstein's Elevator (planned).** Broken law: inertial and gravitational mass
+  differ, so a heavy ball and a light one fall differently in a lift; the player must make two
+  balls land on two plates at once. Rapier, with per-body gravity scales.
+- **Gallery XV, Floor 3's finale (planned).** Combines two of the floor's laws, for example
+  spin and Planck's constant: a beam split by spin, one half tunnelling.
 
 ## Later backlog
 
@@ -696,10 +735,9 @@ It combines two of the floor's laws, the way the Leaning Pendulum ends Floor 1.
 
 ## Immediate next steps
 
-1. **Playtest Floor 1 and Floor 2** with someone new, now that the instrument hides the laws
-   and the floors are separate. Record with Shift+D; a stuck session becomes a replay test.
-2. **Milestone 10: the Backwards Furnace** (Gallery VIII).
-3. **Milestone 11: the Chladni Plates** (Gallery VII), inserted before the Furnace.
-4. **Milestone 12: Young's Double Slit,** Floor 2's finale, then the stairs to Floor 3.
-5. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
+1. **Playtest all three floors** with someone new. The instrument hides undiscovered laws, so
+   the rooms must teach themselves; record with Shift+D, and a stuck session becomes a replay
+   test.
+2. **Milestone 13:** Slow Light, Einstein's Elevator and Floor 3's finale.
+3. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.

@@ -14,7 +14,7 @@ Often you have to *use* the broken law before you put it right.
 
 Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Plays on desktop and on phones and tablets.
 
-## The six galleries, on two floors
+## The galleries, on three floors
 
 | # | Floor | Gallery | Broken law | What the player does |
 | - | ----- | ------- | ---------- | -------------------- |
@@ -25,6 +25,13 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Pl
 | | | **The Grand Stair** | | A passage up to Floor 2, with the Floor 1 farewell and Floor 2 welcome placards. |
 | V | 2 | The Hidden Door | A prism's refractive index is wrong (0.7) | The misbent beam reveals a hidden door. Restore the index and turn two mirrors so the beam hits the door's photocell. |
 | VI | 2 | The Singing Glass | The speed of sound is 229 m/s, so every organ pipe plays flat | Find the one pipe that, in air, sings the glass pane in the doorway to pieces, without shattering the antique glass harmonica. |
+| VII | 2 | The Chladni Plates | Sound in brass travels at 2380 m/s, not 3500 | Each key draws the wrong sand figure, all shifted by one ratio. Restore the speed and the third key draws the figure engraved on the lock. |
+| VIII | 2 | The Backwards Furnace | Heat flows from cold to hot | Aim a mirror's beam at the ice latching the door; it runs away and melts. Restore the law before the water boils. |
+| IX | 2 | Young's Double Slit (finale) | The light's wavelength *and* the tank's refractive index | Only both laws put a bright band on the sensor. An observer lamp wipes the bands out. |
+| | | **The Upper Stair** | | Up to Floor 3. |
+| X | 3 | Rutherford's Gold Foil | The atom's charge is spread out, not in a nucleus | Restore the nucleus, read the alpha tracks, slide the source until particles bounce straight back. |
+| XI | 3 | Stern–Gerlach | Spin can point any way | The beam smears and slowly cracks a glass cell; with two spin values it splits cleanly onto the detectors. |
+| XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely in the cup. |
 
 The galleries are joined by corridors. Each opens the next when solved, and the walk ends in
 an alcove with a closing placard.
@@ -64,7 +71,7 @@ and pushed, deployed through CI, and checked before moving on.
 | 5. Second gallery | Restless Pendulum; multiple worlds and handover; game state. |
 | 6. Combined rules | Leaning Pendulum, the gravity + damping trade-off. |
 | 7. Optics | Hidden Door: a 2D beam tracer with Snell's law and total internal reflection. |
-| After the plan | Touch controls, pause, saved progress with a visitor's ticket, Gallery V (the Bouncing Hall) and Gallery VI (the Singing Glass). |
+| After the plan | Touch controls, pause, saved progress with a visitor's ticket, an instrument that hides undiscovered laws, streaming, the museum in floors, and Galleries VII–XII. |
 
 ### The development harness
 

@@ -66,9 +66,10 @@ non-solutions and asserts they are not.
   arrival is recorded so replays can follow (`Recorder.playerArrived`).
 - R resets only the gallery the player is in. `src/state/gameState.ts` records solved galleries.
 - **The route is fixed and runs in floors** (`src/galleries/rooms.ts`, in order). Floor 1,
-  mechanics: Galleries I, II, III, IV. Then the Grand Stair (a passage, `kind: "passage"`, no
-  puzzle). Floor 2, waves and light, 4.8 m up: Galleries V, VI. Each floor is a level; harder
-  going up. Rooms keep the coordinates they were built in, and `OFFSETS` places each one in the
+  mechanics: Galleries I–IV. The Grand Stair (a passage, `kind: "passage"`, no puzzle).
+  Floor 2, waves, light and heat, 4.8 m up: Galleries V–IX. The Upper Stair. Floor 3, modern
+  physics, 9.6 m up: Galleries X–XII so far. Then `the-end`, a small passage room with the
+  closing placard: new galleries go before it. Each floor is a level; harder going up. Rooms keep the coordinates they were built in, and `OFFSETS` places each one in the
   museum. The player runs in the active room's own coordinates and is shifted at each handover;
   the camera, light culling, handover and `getPlayer().feet` use museum coordinates.
   `__game.setPlayerIn(roomId, localFeet, …)` takes a room's own coordinates.
@@ -85,7 +86,20 @@ non-solutions and asserts they are not.
   Gallery VI: the Singing Glass (the speed of sound; pipes play v / 2L; each glass's ring is an
   envelope integrated exactly in `src/exhibits/singing-glass/resonance.ts`, no Rapier; organ
   pipes are toggle controls via `offValue`; the pane is the exit and the harmonica the fail).
-  The closing alcove is behind its pane.
+  Gallery VII: the Chladni Plates (speed of sound in brass; plate modes in `chladni/plate.ts`;
+  sand is a view-side random walk drawn as density; keys are `offValue` toggles).
+  Gallery VIII: the Backwards Furnace (heat flows cold → hot; a lumped network where each
+  object exchanges heat with the room reservoir, `furnace/heat.ts`; latent heat for the ice).
+  Gallery IX: Young's Double Slit, Floor 2's finale (wavelength and the tank's index, both
+  broken; closed-form fringes in `double-slit/fringes.ts`; marks searched for no near misses).
+  Gallery X: Rutherford's Gold Foil (the atom's charge: spread vs nucleus; 2D Coulomb
+  scattering with velocity Verlet in `rutherford/scatter.ts`; phosphor tracks drawn on a canvas).
+  Gallery XI: Stern–Gerlach (spin: any direction smears, two values split cleanly, three
+  values crack the middle cell). Gallery XII: the Quantum Tunnel (Planck's constant; a
+  three-compartment probability leak in `tunnel/leak.ts`; restoring the law measures the marble).
+- **New rooms:** `roomShell()`/`doorBox()`/`doorY()` in `layout.ts` build a standard room with
+  its corridor stubs and sinking west door; `PassageExhibit` is a room with nothing to solve.
+  Pure-maths models (no Rapier) go in their own module beside `sim.ts`, like `trace.ts`.
 - **Control rules** (`control: true`, e.g. a mirror's angle) cost nothing from the budget and
   aren't listed on the instrument; they're operated in the world by click targets, either
   `cycle: true` (each click steps to the next option) or a fixed `value` (the lever; its
