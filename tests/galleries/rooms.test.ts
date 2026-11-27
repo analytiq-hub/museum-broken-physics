@@ -22,6 +22,8 @@ import type { Box } from "../../src/exhibits/layout";
 import { PassageExhibit } from "../../src/exhibits/passage";
 import { ChladniExhibit, ENTRANCE as CHLADNI_ENTRANCE, STATIC_BOXES as CHLADNI_BOXES } from "../../src/exhibits/chladni/sim";
 import { CAMERA_POSES as CHLADNI_CAMERAS } from "../../src/exhibits/chladni/view";
+import { FurnaceExhibit, ENTRANCE as FURNACE_ENTRANCE, STATIC_BOXES as FURNACE_BOXES } from "../../src/exhibits/furnace/sim";
+import { CAMERA_POSES as FURNACE_CAMERAS } from "../../src/exhibits/furnace/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -40,6 +42,7 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new OpticsExhibit(R), OPTICS_CAMERAS, OPTICS_ENTRANCE, OPTICS_BOXES],
   [() => new SingingGlassExhibit(R), SINGING_CAMERAS, SINGING_ENTRANCE, SINGING_BOXES],
   [() => new ChladniExhibit(R), CHLADNI_CAMERAS, CHLADNI_ENTRANCE, CHLADNI_BOXES],
+  [() => new FurnaceExhibit(R), FURNACE_CAMERAS, FURNACE_ENTRANCE, FURNACE_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 

@@ -106,6 +106,12 @@ export class Sound {
     }
   }
 
+  /** Steam escaping: ice letting go, water flashing to steam. */
+  hiss(): void {
+    this.burst({ type: "highpass", freq: 2800, q: 0.6, gain: 0.3, attack: 0.05, decay: 1.6 });
+    this.burst({ type: "bandpass", freq: 5000, q: 1.2, gain: 0.12, attack: 0.1, decay: 1.2 });
+  }
+
   /** Glass breaking. */
   shatter(): void {
     this.burst({ type: "highpass", freq: 3000, q: 0.5, gain: 0.45, attack: 0.002, decay: 0.5 });

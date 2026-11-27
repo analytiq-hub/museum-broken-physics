@@ -224,6 +224,16 @@ try {
   expect("pressing a key sounds its note, for free", await eventually(page, () => window.__game!.getState().rules.note === "2" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.mouse.click(600, 400);
   expect("pressing it again releases it", await eventually(page, () => window.__game!.getState().rules.note === "none", 30_000));
+  // Gallery VIII: click the furnace's mirror to aim the beam at the ice.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("furnace", { x: -5.2, z: 0.4 }, 0, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("mirror");
+  });
+  expect("the player is handed to Gallery VIII", await eventually(page, () => window.__game!.getPlayer().gallery === "furnace"));
+  expect("the crosshair finds the furnace mirror", await eventually(page, () => window.__game!.getPlayer().hovered === "mirror"));
+  await page.mouse.click(600, 400);
+  expect("clicking the mirror aims the beam at the ice, for free", await eventually(page, () => window.__game!.getState().rules.mirror === "ice" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.

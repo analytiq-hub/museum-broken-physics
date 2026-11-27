@@ -129,6 +129,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./chladniGallery")).createChladniGallery,
   },
   {
+    id: "furnace",
+    title: "The Backwards Furnace",
+    floor: 2,
+    kind: "gallery",
+    laws: ["heat"],
+    cameras: ["furnace", "furnace-ice"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./furnaceGallery")).createFurnaceGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 2,
