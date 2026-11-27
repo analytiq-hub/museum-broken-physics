@@ -179,6 +179,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./sternGerlachGallery")).createSternGerlachGallery,
   },
   {
+    id: "tunnel",
+    title: "The Quantum Tunnel",
+    floor: 3,
+    kind: "gallery",
+    laws: ["planck"],
+    cameras: ["tunnel", "tunnel-case"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./tunnelGallery")).createTunnelGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 3,

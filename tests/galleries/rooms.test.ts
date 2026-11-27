@@ -30,6 +30,8 @@ import { RutherfordExhibit, ENTRANCE as RUTHERFORD_ENTRANCE, STATIC_BOXES as RUT
 import { CAMERA_POSES as RUTHERFORD_CAMERAS } from "../../src/exhibits/rutherford/view";
 import { SternGerlachExhibit, ENTRANCE as SG_ENTRANCE, STATIC_BOXES as SG_BOXES } from "../../src/exhibits/stern-gerlach/sim";
 import { CAMERA_POSES as SG_CAMERAS } from "../../src/exhibits/stern-gerlach/view";
+import { TunnelExhibit, ENTRANCE as TUNNEL_ENTRANCE, STATIC_BOXES as TUNNEL_BOXES } from "../../src/exhibits/tunnel/sim";
+import { CAMERA_POSES as TUNNEL_CAMERAS } from "../../src/exhibits/tunnel/view";
 import { ENTRANCE as END_ENTRANCE, STATIC_BOXES as END_BOXES } from "../../src/exhibits/the-end/sim";
 import { OFFSETS, ROOMS, liveAround, roomAt, roomOwns } from "../../src/galleries/rooms";
 
@@ -53,6 +55,7 @@ const REAL: [() => ExhibitBase, Record<string, unknown>, { x: number }, readonly
   [() => new StairwellExhibit(R, "upper-stair"), { "upper-stair": STAIR_CAMERAS.stairwell }, STAIR_ENTRANCE, STAIR_BOXES],
   [() => new RutherfordExhibit(R), RUTHERFORD_CAMERAS, RUTHERFORD_ENTRANCE, RUTHERFORD_BOXES],
   [() => new SternGerlachExhibit(R), SG_CAMERAS, SG_ENTRANCE, SG_BOXES],
+  [() => new TunnelExhibit(R), TUNNEL_CAMERAS, TUNNEL_ENTRANCE, TUNNEL_BOXES],
   [() => new PassageExhibit(R, "the-end", END_BOXES), {}, END_ENTRANCE, END_BOXES],
 ];
 

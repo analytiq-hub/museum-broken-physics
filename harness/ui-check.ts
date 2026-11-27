@@ -266,6 +266,16 @@ try {
   expect("the crosshair finds the oven", await eventually(page, () => window.__game!.getPlayer().hovered === "oven"));
   await page.mouse.click(600, 400);
   expect("turning the wheel lights the oven, for free", await eventually(page, () => window.__game!.getState().rules.oven === "on" && window.__game!.getState().changesUsed === 0, 30_000));
+  // Gallery XII: pull the lever to drop the marble into the well.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("tunnel", { x: -4.4, z: 0.4 }, 0, -0.2);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("pulled");
+  });
+  expect("the player is handed to Gallery XII", await eventually(page, () => window.__game!.getPlayer().gallery === "tunnel"));
+  expect("the crosshair finds the tunnel's lever", await eventually(page, () => window.__game!.getPlayer().hovered === "pulled"));
+  await page.mouse.click(600, 400);
+  expect("pulling it drops the marble, for free", await eventually(page, () => window.__game!.getState().rules.lever === "pulled" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.
@@ -303,7 +313,8 @@ try {
     await eventually(page, () => {
       const s = window.__game!.getState();
       return s.exhibit === "sideways-gravity" && s.solved && s.bodies.door.pos[1] < 0;
-    }),
+    }, 30_000),
+    await q(page, () => JSON.stringify({ s: window.__game!.getState(), g: window.__game!.getGameState(), loaded: window.__game!.getLoaded() })),
   );
 
   await page.close(); // the desktop page's rendering would slow the next pages' input handling
