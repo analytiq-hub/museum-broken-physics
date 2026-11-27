@@ -172,7 +172,7 @@ try {
     await q(page, () => document.querySelector(".hud")!.textContent!.replace(/\s+/g, " ")),
   );
   await page.keyboard.down("w");
-  const upstairs = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", WALK);
+  const upstairs = await eventually(page, () => window.__game!.getPlayer().gallery === "optics", 2 * WALK); // the longest walk: 16 m and a flight of stairs
   await page.keyboard.up("w");
   expect("climbing the stairs and walking on reaches Floor 2's first gallery", upstairs, `at ${JSON.stringify(await q(page, () => window.__game!.getPlayer().feet))}`);
   expect("Floor 2 is 4.8 m up", Math.abs((await q(page, () => window.__game!.getPlayer().feet.y)) - 4.8) < 0.2);
