@@ -27,7 +27,9 @@ See [concept.md](concept.md) for the game vision.
   - an instrument that doesn't reveal a law until the player has discovered it;
   - galleries streamed three at a time;
   - the museum laid out as floors (see "Museum layout").
-- **Next:** the rest of Floor 3 (Milestone 13) and a real playtest (see "Immediate next steps").
+- **Next:** the rest of Floor 3 (Milestone 13), a real playtest (see "Immediate next steps"),
+  then two more Floor 1 rooms, the Spring and the Sling (Milestone 14): Floor 1 covers
+  gravity, damping and collisions but none of Newton's laws, springs or circular motion.
 
 ## Museum layout (decided Nov 2026)
 
@@ -50,7 +52,7 @@ a level: clearly separate, and harder than the one below.
 
   | Floor | Theme | Rooms (built, then planned) | What makes it harder |
   | ----- | ----- | --------------------------- | -------------------- |
-  | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale); later perhaps the Little Solar System before the finale | One law per room, visible effects, generous budgets |
+  | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale), all built; the Spring and the Sling (planned, Milestone 14) go before the finale | One law per room, visible effects, generous budgets |
   | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale); all built | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
   | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light (built); XIV Einstein's Elevator, XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
 
@@ -693,12 +695,89 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
 - **Gallery XV, Floor 3's finale (planned).** Combines two of the floor's laws, for example
   spin and Planck's constant: a beam split by spin, one half tunnelling.
 
+### Milestone 14: Floor 1, the rest of mechanics (planned; 6–8 days)
+Floor 1 teaches gravity's direction, damping and restitution, but none of the textbook core:
+Newton's first law, Hooke's law, circular motion. Two rooms go between the Bouncing Hall and
+the Leaning Pendulum, so the floor runs Sideways Gallery, Restless Pendulum, Bouncing Hall,
+**the Spring**, **the Sling**, Leaning Pendulum (finale). Both are one-law rooms with visible
+effects, as Floor 1's rooms should be.
+
+- **Layout and numbering.** Rooms keep the coordinates they were built in, so the new rooms
+  are added to `ROOMS` and `HANDOVERS` before the Leaning Pendulum and `OFFSETS` pushes the
+  Leaning Pendulum, the Grand Stair and everything above them along. The gallery numbers
+  shift by two (the Leaning Pendulum becomes VI, the Hidden Door VII, Slow Light XV), in
+  player-facing text, placards, this plan and CLAUDE.md. Positions in `harness/ui-check.ts`
+  and `harness/screenshots.ts` that use museum coordinates need updating; saved progress keys
+  on room ids, so saved games survive.
+
+- **The Spring (Hooke's law).**
+  - **The room:** a brass plunger launcher on a ramp fires a ball up into a cup on a ledge
+    that lowers the door's counterweight. The pull-back is a free **cycle control** with five
+    marked notches. Beside it, a calibration tell-tale: three identical springs hanging with
+    1, 2 and 3 weights. Under Hooke's law their stretches go 1 : 2 : 3; under the broken law
+    they visibly don't, which is the room's hint without naming the answer.
+  - **Broken law:** the spring's force law, a "range" rule with named marks: constant force
+    (broken, the starting value), linear F = −kx (the law), stiffening x³ (decoy), and
+    negative stiffness (decoy: the plunger runs away, an explicit capped force, and the ball
+    hits the netting above the ramp).
+  - **The puzzle:** the stored energy is ½kx² under the law, Fx for constant force, ¼kx⁴ for
+    x³. Under the broken law no notch lands the ball in the cup (one falls short, the next
+    overshoots); restored, one notch does. Search the notch distances and marks so every
+    wrong combination misses clearly, as Young's Double Slit did.
+  - **Sim:** Rapier ball; the plunger is a kinematic body pushed by an explicit spring force
+    integrated with `FIXED_DT`; the tell-tale springs are decorative (collision groups, left
+    out of `settleBodies()`).
+
+- **The Sling (Newton's first law, circular motion).**
+  - **The room:** a felt-topped round table with a motorised turntable arm carrying a ball in
+    a latch. The latch's release point is a free **cycle control**: eight brass detents round
+    the rim, so the room tests understanding, not reflexes. A pocket in the table edge, on
+    the far side, drops the ball onto the door switch.
+  - **Broken law:** inertia. Medieval "circular impetus" (Buridan): an object released from
+    circular motion keeps curving. Marks: circular impetus (broken), straight line (the law),
+    and Aristotle's "motion needs a force" (decoy: the ball stops dead beside the table).
+  - **The puzzle:** under impetus the released ball spirals outwards into the gutter whatever
+    the detent. Restored, it flies along the tangent, so the player must release a quarter
+    turn *before* the pocket, not when the arm points at it: the misconception the room
+    teaches. A chalk trail on the felt shows each throw's path. The impetus curve must be
+    unable to reach the pocket from any detent (the solver checks this), so the law has to
+    be restored.
+  - **Sim:** Rapier ball released with the arm's tangential velocity; impetus is an explicit
+    capped force perpendicular to the velocity that fades over a few seconds; angular damping
+    so the ball doesn't drift on leftover spin. The arm is kinematic and doesn't touch the
+    ball after release.
+
+- **Harness for both:** headless tests (the solution, each decoy mark, the broken law at every
+  notch or detent), solver configs, `arrangeSolved()` with a `restoreSolved` test, room-list
+  test, screenshots, and a ui-check pass through the new corridors.
+
+### Mechanics ideas for later
+Background for further Floor 1 rooms, or a mechanics wing. Not scheduled.
+
+- **Galileo's falling bodies** (acceleration, F = ma): Aristotle's law, heavier falls faster.
+  It overlaps Einstein's Elevator (Floor 3, two masses landing together). If both are built,
+  Galileo is the simple version and the Elevator keeps the twist that acceleration is
+  indistinguishable from gravity.
+- **Newton's cradle / recoil** (momentum, Newton's third law): momentum isn't conserved, so
+  two balls fly off, or a cannon doesn't recoil. A chain of cradles opens a lock.
+- **The lever** (torque): torque goes as r² or ignores distance. A balance beam with weights
+  on hooks must tip a latch. Discrete, so the solver can search every placement; the cheapest
+  room here, with Archimedes for a story.
+- **The spinning skater** (angular momentum): pulling weights in on a turntable slows it
+  instead of speeding it up; match a spin rate to line up a slot. Pairs with the Sling.
+- **The Little Solar System** (orbits): gravity falls off with the cube of distance, so orbits
+  spiral; use the bad orbits to deliver a moon to a cradle, then restore the law. Harder to
+  make robust than the rooms above.
+- **Archimedes' buoyancy** (fluids): iron floats and wood sinks. Better in a fluids wing.
+- **Friction:** negative friction is too close to the Restless Pendulum's negative damping;
+  only worth a room with a different twist (static friction below kinetic, say).
+
+More candidates from famous experiments are in [room-ideas.md](room-ideas.md).
+
 ## Later backlog
 
 - Exhibits after Gallery VII: candidates based on famous experiments, and the best fits for
-  the engine, are in [room-ideas.md](room-ideas.md).
-- The Little Solar System: gravity falls off with the cube of distance, so orbits spiral;
-  use the bad orbits to deliver a moon to a cradle, then restore the law.
+  the engine, are in [room-ideas.md](room-ideas.md). Mechanics ideas are under Milestone 14.
 - Exhibits after Gallery VII. Reversed heat flow could also freeze something on purpose, a
   room about the opposite runaway.
 - ~~Save/load progress between rooms.~~ *Done (Nov 2026):* saved in the browser, with a
@@ -743,5 +822,6 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
    the rooms must teach themselves; record with Shift+D, and a stuck session becomes a replay
    test.
 2. **Milestone 13:** Einstein's Elevator and Floor 3's finale.
-3. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
+3. **Milestone 14:** the Spring and the Sling on Floor 1.
+4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.
