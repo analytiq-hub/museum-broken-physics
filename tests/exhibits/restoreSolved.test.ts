@@ -8,6 +8,7 @@ import { SidewaysGravityExhibit, TARGET } from "../../src/exhibits/sideways-grav
 import { PendulumExhibit } from "../../src/exhibits/pendulum/sim";
 import { LeaningPendulumExhibit } from "../../src/exhibits/leaning-pendulum/sim";
 import { OpticsExhibit } from "../../src/exhibits/optics/sim";
+import { BouncingExhibit } from "../../src/exhibits/bouncing/sim";
 
 let R: typeof RAPIER;
 beforeAll(async () => {
@@ -20,6 +21,7 @@ const exhibits: [string, () => WithDoor][] = [
   ["Gallery II", () => new PendulumExhibit(R)],
   ["Gallery III", () => new LeaningPendulumExhibit(R)],
   ["Gallery IV", () => new OpticsExhibit(R)],
+  ["Gallery V", () => new BouncingExhibit(R)],
 ];
 
 describe("restoreSolved", () => {

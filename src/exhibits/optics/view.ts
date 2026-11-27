@@ -2,14 +2,14 @@
 // the star. A brass lamp, two silvered mirrors on stands (they swing to each
 // new angle), a glass prism on a pedestal, the beam drawn as a glowing line,
 // a hidden door that shows a gold outline once light has fallen on it, its
-// brass photocell, and an alcove beyond with the museum's last placard.
+// brass photocell, and the corridor beyond to Gallery V.
 import * as THREE from "three";
 import type { BodySync } from "../../engine/bodySync";
 import type { Materials } from "../../render/materials";
 import { worldBoxGeometry } from "../../render/materials";
+import { placard } from "../../render/placard";
 import type { Box } from "../layout";
 import {
-  ALCOVE,
   BEAM_Y,
   DOOR,
   EYE,
@@ -144,7 +144,7 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
   // The eye rides on the door, so it sinks with it.
   const eyeOffset = BEAM_Y - DOOR.center[1];
 
-  // --- Placards: at the entrance, and the last one in the alcove.
+  // --- The entrance placard.
   scene.add(
     placard(
       {
@@ -162,23 +162,7 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
       m,
     ),
   );
-  scene.add(
-    placard(
-      {
-        kicker: "THE END, FOR NOW",
-        title: "More Galleries Ahead",
-        lines: [
-          "You have put right gravity, damping and light.",
-          "The museum's other wings are still being restored.",
-          "Thank you for visiting the",
-          "Museum of Broken Physics.",
-        ],
-      },
-      new THREE.Vector3(ALCOVE.xMin + 0.04, 1.4, zc),
-      Math.PI / 2,
-      m,
-    ),
-  );
+
 
   // --- The beam: glowing cylinders between path points, and a glow where it lands.
   const beamMaterial = new THREE.MeshBasicMaterial({ color: BEAM_COLOR, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -225,9 +209,10 @@ export function buildOpticsView(scene: THREE.Object3D, ex: OpticsExhibit, sync: 
   const fill = new THREE.PointLight(0xffe2c0, 4, 9, 1.8);
   fill.position.set(-55, 3, 3.5);
   scene.add(fill);
-  const alcoveLight = new THREE.PointLight(0xffe2c0, 3, 4, 2);
-  alcoveLight.position.set((ALCOVE.xMin + ALCOVE.xMax) / 2, 2.1, zc);
-  scene.add(alcoveLight);
+  // A low light halfway along the corridor to Gallery V (drawn here: this gallery is its east end).
+  const corridorLight = new THREE.PointLight(0xffe2c0, 2.5, 5, 2);
+  corridorLight.position.set(-67.5, 2.1, zc);
+  scene.add(corridorLight);
 
   let reveal = 0;
   return {
@@ -269,34 +254,4 @@ function buildTrim(scene: THREE.Object3D, m: Materials): void {
   add([hx, 0.09, 0.02], [cx, 0.09, Z - 0.02]);
   add([hx, 0.12, 0.08], [cx, H - 0.12, -Z + 0.08]);
   add([hx, 0.12, 0.08], [cx, H - 0.12, Z - 0.08]);
-}
-
-function placard(text: { kicker: string; title: string; lines: string[] }, at: THREE.Vector3, rotationY: number, m: Materials): THREE.Mesh {
-  const canvas = document.createElement("canvas");
-  canvas.width = 560;
-  canvas.height = 400;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#efe6d4";
-  ctx.fillRect(0, 0, 560, 400);
-  ctx.strokeStyle = "#8a6a2c";
-  ctx.lineWidth = 6;
-  ctx.strokeRect(14, 14, 532, 372);
-  ctx.fillStyle = "#3a2a14";
-  ctx.textAlign = "center";
-  ctx.font = "600 22px Georgia, serif";
-  ctx.letterSpacing = "4px";
-  ctx.fillText(text.kicker, 280, 70);
-  ctx.letterSpacing = "0px";
-  ctx.font = "700 38px Georgia, serif";
-  ctx.fillText(text.title, 280, 120);
-  ctx.font = "italic 21px Georgia, serif";
-  text.lines.forEach((line, i) => ctx.fillText(line, 280, 190 + i * 38));
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  const face = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 });
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.5, 0.02), [m.wood, m.wood, m.wood, m.wood, face, m.wood]);
-  mesh.position.copy(at);
-  mesh.rotation.y = rotationY;
-  return mesh;
 }

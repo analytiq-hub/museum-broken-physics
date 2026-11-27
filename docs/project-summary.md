@@ -11,9 +11,9 @@ what they read here and what they should be, and lets you change a limited numbe
 Each room is solved by forming a hypothesis, changing a law, and watching the room respond.
 Often you have to *use* the broken law before you put it right.
 
-Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Desktop only.
+Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Plays on desktop and on phones and tablets.
 
-## The four galleries
+## The five galleries
 
 | # | Gallery | Broken law | What the player does |
 | - | ------- | ---------- | -------------------- |
@@ -21,6 +21,7 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). De
 | II | The Restless Pendulum | Negative damping: every swing gains energy | Let the swing grow until both bells ring, then apply drag before the bob smashes a glass vase or the room shakes apart. Instrument only. |
 | III | The Leaning Pendulum | Gravity leans sideways *and* damping is negative | Ring a bell that is only reachable with broken gravity, calm the swing, then bring gravity home in stages (via 45°). Restoring gravity in one go tears the pendulum off its hook. This is the trade-off room. |
 | IV | The Hidden Door | A prism's refractive index is wrong (0.7) | The misbent beam reveals a hidden door. Restore the index and turn two mirrors so the beam hits the door's photocell. |
+| V | The Bouncing Hall | Bounces gain energy (restitution 1.07) | Drop the ball and let each bounce climb until a brass deflector throws it onto a high balcony, then restore the bounce before it hops back off and smashes the skylight. |
 
 The galleries are joined by corridors. Each opens the next when solved, and the walk ends in
 an alcove with a closing placard.
@@ -60,6 +61,7 @@ and pushed, deployed through CI, and checked before moving on.
 | 5. Second gallery | Restless Pendulum; multiple worlds and handover; game state. |
 | 6. Combined rules | Leaning Pendulum, the gravity + damping trade-off. |
 | 7. Optics | Hidden Door: a 2D beam tracer with Snell's law and total internal reflection. |
+| After the plan | Touch controls, pause, saved progress with a visitor's ticket, and Gallery V (the Bouncing Hall). |
 
 ### The development harness
 
@@ -106,7 +108,6 @@ All plan milestones are complete. What remains:
   (Shift+D) from playtests can be added as replay tests.
 - **Backlog:**
   - galleries for waves and thermodynamics;
-  - save and load;
   - a hub gallery;
   - hints;
   - modelled 3D rooms in place of the boxes;

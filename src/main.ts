@@ -16,6 +16,7 @@ import { HANDOVER_MARGIN } from "./exhibits/layout";
 import { PLAYER_SPAWN } from "./exhibits/sideways-gravity/sim";
 import type { Gallery, Interactable } from "./galleries/gallery";
 import { createLeaningGallery } from "./galleries/leaningGallery";
+import { createBouncingGallery } from "./galleries/bouncingGallery";
 import { createOpticsGallery } from "./galleries/opticsGallery";
 import { createPendulumGallery } from "./galleries/pendulumGallery";
 import { createSidewaysGallery } from "./galleries/sidewaysGallery";
@@ -103,6 +104,7 @@ const galleries: Gallery[] = [
   createPendulumGallery(R, scene, materials, sound, () => player),
   createLeaningGallery(R, scene, materials, sound, () => player),
   createOpticsGallery(R, scene, materials, sound, () => player),
+  createBouncingGallery(R, scene, materials, sound, () => player),
 ];
 let active = galleries[0];
 player.attach(active.exhibit.world);
@@ -394,7 +396,7 @@ function showOverlay(pausedCard: boolean): void {
       </div>`
       : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
-        <p>Four galleries whose laws have broken. Put them right, or put them to use.</p>
+        <p>Five galleries whose laws have broken. Put them right, or put them to use.</p>
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
       </div>`;
@@ -487,7 +489,7 @@ const touchWording = (text: string) =>
 let lastHud = "";
 function renderHud(): void {
   const ex = active.exhibit;
-  const canChange = ex.changesLeft > 0 && !ex.isSolved() && !ex.isFailed();
+  const changesAllowed = ex.changesLeft > 0 && !ex.isSolved() && !ex.isFailed();
   const pips = "●".repeat(ex.changesLeft) + "○".repeat(ex.changesUsed);
   const hint = mode !== "first-person" ? "" : TOUCH ? "Tap <b>Laws</b> to read the room's laws." : "Hold <b>Q</b> to read the room's laws with your instrument.";
   const restored = galleries.filter((g) => gameState.isSolved(g.id)).length;
@@ -517,9 +519,12 @@ function renderHud(): void {
   if (hovered?.cycle) {
     text = ex.isSolved() ? hovered.label.replace(/^Turn/, "") : `Click: ${hovered.label.charAt(0).toLowerCase()}${hovered.label.slice(1)}`;
   } else if (hovered) {
-    const current = ex.rule(hovered.rule).current === hovered.value;
+    const rule = ex.rule(hovered.rule);
+    const current = rule.current === hovered.value;
+    // Controls (the lever) cost nothing, so they work with the budget spent.
+    const canChange = rule.control ? !ex.isSolved() && !ex.isFailed() : changesAllowed;
     const action = hovered.rule === "gravity" ? `gravity toward the ${hovered.label.toLowerCase()}` : hovered.label;
-    text = current ? `${hovered.label} (current)` : canChange ? `Click: ${action}` : hovered.label;
+    text = current ? (hovered.doneLabel ?? `${hovered.label} (current)`) : canChange ? `Click: ${action}` : hovered.label;
   }
   crosshairHint.textContent = text;
 }

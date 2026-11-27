@@ -147,6 +147,24 @@ try {
     "the instrument shows only the index law (no mirror rows)",
     await q(page, () => document.querySelectorAll(".inst-rule").length === 0 || [...document.querySelectorAll(".inst-rule b")].every((b) => !b.textContent!.includes("Mirror"))),
   );
+  // Gallery V: step through to the Bouncing Hall, aim at the lever, pull it.
+  await page.evaluate(async () => {
+    window.__game!.setPlayer({ x: -79.6, z: -0.2 }, 0, 0);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("pulled");
+  });
+  expect("the player is handed to Gallery V", await eventually(page, () => window.__game!.getPlayer().gallery === "bouncing"));
+  expect("the crosshair finds the lever", await eventually(page, () => window.__game!.getPlayer().hovered === "pulled"));
+  await page.mouse.click(600, 400);
+  expect(
+    "clicking the lever drops the ball, for free",
+    await eventually(page, () => {
+      const s = window.__game!.getState();
+      return s.rules.lever === "pulled" && s.changesUsed === 0 && s.bodies.ball.pos[1] < 1.5;
+    }),
+  );
+  expect("the crosshair says the lever is pulled", await eventually(page, () => document.querySelector(".crosshair .hint")?.textContent === "The lever is pulled"));
+
 
   await page.close(); // the desktop page's rendering would slow the next pages' input handling
 

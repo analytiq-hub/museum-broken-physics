@@ -17,6 +17,8 @@ export interface Interactable {
   label: string;
   /** A click steps the rule to its next option (wrapping), e.g. turning a mirror a notch. */
   cycle?: boolean;
+  /** What the crosshair says once the rule already has this value (instead of "… (current)"). */
+  doneLabel?: string;
 }
 
 export interface Gallery {

@@ -19,7 +19,7 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
 import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
-import { addStaticBoxes, CORRIDOR_3_4, type Box } from "../layout";
+import { addStaticBoxes, CORRIDOR_3_4, CORRIDOR_4_5, type Box } from "../layout";
 import { mirrorSegment, prism, traceBeam, type BeamResult, type OpticsScene, type Segment, type Vec2 } from "./trace";
 
 /** Interior: x −63..−53, y 0..4.5, z −5..5. Optics coordinates are world (x, z). */
@@ -60,12 +60,9 @@ const DOOR_OPEN_SECONDS = 1.4;
 
 export const ENTRANCE = { x: ROOM.xMax - 0.6, y: 0, z: 2 } as const;
 
-
 const dz = (HIDDEN_DOOR.z0 + HIDDEN_DOOR.z1) / 2;
 const dh = (HIDDEN_DOOR.z1 - HIDDEN_DOOR.z0) / 2;
 export const DOOR: Box = { name: "hidden-door", kind: "wall", center: [ROOM.xMin - W, HIDDEN_DOOR.height / 2, dz], half: [W, HIDDEN_DOOR.height / 2, dh] };
-/** Beyond the hidden door: an alcove with the museum's last placard (for now). */
-export const ALCOVE = { xMin: ROOM.xMin - 2.5, xMax: ROOM.xMin - 0.5 } as const;
 
 export const STATIC_BOXES: readonly Box[] = [
   { name: "floor", kind: "floor", center: [CX, -W, 0], half: [HX + 0.5, W, ROOM.halfZ + 0.5] },
@@ -80,15 +77,11 @@ export const STATIC_BOXES: readonly Box[] = [
   { name: "east-north", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, -2.25], half: [W, ROOM.height / 2, 3.25] },
   { name: "east-south", kind: "wall", center: [ROOM.xMax + W, ROOM.height / 2, 4.25], half: [W, ROOM.height / 2, 1.25] },
   { name: "east-lintel", kind: "wall", center: [ROOM.xMax + W, 3.75, 2], half: [W, 0.75, 1] },
-  // The alcove behind the hidden door.
-  { name: "alcove-floor", kind: "floor", center: [(ALCOVE.xMin + ALCOVE.xMax) / 2, -W, dz], half: [1, W, dh + 0.5] },
-  { name: "alcove-ceiling", kind: "ceiling", center: [(ALCOVE.xMin + ALCOVE.xMax) / 2, HIDDEN_DOOR.height + W, dz], half: [1, W, dh + 0.5] },
-  { name: "alcove-north", kind: "wall", center: [(ALCOVE.xMin + ALCOVE.xMax) / 2, HIDDEN_DOOR.height / 2, HIDDEN_DOOR.z0 - W], half: [1, HIDDEN_DOOR.height / 2, W] },
-  { name: "alcove-south", kind: "wall", center: [(ALCOVE.xMin + ALCOVE.xMax) / 2, HIDDEN_DOOR.height / 2, HIDDEN_DOOR.z1 + W], half: [1, HIDDEN_DOOR.height / 2, W] },
-  { name: "alcove-end", kind: "wall", center: [ALCOVE.xMin - W, HIDDEN_DOOR.height / 2, dz], half: [W, HIDDEN_DOOR.height / 2, dh + 0.5] },
   // Pedestals under the prism and mirrors, and the lamp's stand (the player walks around them).
   { name: "prism-pedestal", kind: "pedestal", center: [PRISM.center.x, (BEAM_Y - 0.35) / 2, PRISM.center.z], half: [0.7, (BEAM_Y - 0.35) / 2, 0.7] },
   ...CORRIDOR_3_4,
+  // Beyond the hidden door: the corridor to Gallery V.
+  ...CORRIDOR_4_5,
 ];
 
 /** The optical walls: the room's four walls (the west one split around the door). */

@@ -12,7 +12,7 @@ architecture and the development harness in [docs/plan.md](docs/plan.md).
 | `npm test` | Unit and headless exhibit tests only (`tests/**/*.test.ts`). |
 | `npm run bench` | Physics step-time benchmark (`bench/`), prints ms/step. |
 | `npm run solve` | Puzzle solver report (every move sequence within budget, at early/settled timings) and trajectory SVGs in `harness/out/`. Solver thresholds themselves are asserted in `tests/exhibits/*.solver.test.ts`. |
-| `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`. |
+| `npm run screenshots` | Starts Vite, drives the real build in headless system Chrome via `window.__game` (`src/debug/api.ts`), and saves PNGs of set states to `harness/out/screens/`. Look at them after visual changes. Add shots in `harness/screenshots.ts`; `node harness/screenshots.ts 7` takes only shots named `7…`. |
 | `npm run ui-check` | End-to-end first-person UI check in headless Chrome with a real pointer lock (enter, hold Q, steer the instrument cursor, click a law, release). Runs in CI. Run it after UI changes. |
 | `node harness/record-pendulum-fixture.ts` | Same for Gallery II via the debug API (rewrites `tests/replays/pendulum-fixture.json`). |
 | `node harness/record-fixture.ts` | Plays the room in headless Chrome with real key presses and rewrites `tests/replays/sideways-gravity-fixture.json`. Rerun it when a deliberate physics/layout change makes the replay test fail. |
@@ -62,9 +62,14 @@ non-solutions and asserts they are not.
   more than 65° from gravity's hanging direction, so gravity must come home in stages).
   Gallery IV: the Hidden Door (optics: a beam traced in 2D by `src/exhibits/optics/trace.ts`;
   the broken law is the prism's refractive index; mirrors are **control** rules).
+  Gallery V: the Bouncing Hall (bounciness above 1: Rapier bounces elastically and an
+  explicit capped boost scales each upward rebound; a 45° deflector throws the ball onto a
+  felt balcony that soaks up sideways speed; the lever is a control with a fixed value). Its
+  west door leads to the closing alcove; Gallery IV's hidden door leads to it via `CORRIDOR_4_5`.
 - **Control rules** (`control: true`, e.g. a mirror's angle) cost nothing from the budget and
-  aren't listed on the instrument; they're operated in the world by click targets with
-  `cycle: true` (each click steps to the next option).
+  aren't listed on the instrument; they're operated in the world by click targets, either
+  `cycle: true` (each click steps to the next option) or a fixed `value` (the lever; its
+  `doneLabel` is what the crosshair says once it's set).
 - Pendulum rooms share one view builder (`buildPendulumRoom` in `src/exhibits/pendulum/view.ts`)
   driven by a spec. Corridor geometry is drawn by the gallery on its east side (each view's
   `skip` lists the prefixes another gallery draws).

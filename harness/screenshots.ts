@@ -80,6 +80,12 @@ const SHOTS: Shot[] = [
   { name: "43-optics-solved", camera: "optics", moves: [], actions: [{ rule: "index", value: 1.5 }, { rule: "mirror-b", value: 120 }, { wait: 3 * S }] },
   { name: "44-fp-optics-entrance", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [] },
   { name: "45-fp-optics-instrument", player: { x: -53.8, z: 2, yaw: Math.PI / 2 + 0.2, pitch: -0.12 }, moves: [], instrument: true },
+  { name: "70-bouncing-start", camera: "bouncing", moves: [] },
+  { name: "71-bouncing-climbing", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 9 * S }] },
+  { name: "72-bouncing-balcony", camera: "bouncing-balcony", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }] },
+  { name: "73-bouncing-solved", camera: "bouncing", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 13.4 * S }, { rule: "bounce", value: 0.6 }, { wait: 4 * S }] },
+  { name: "74-fp-bouncing-entrance", player: { x: -72.6, z: 1.8, yaw: Math.PI / 2 - 0.35, pitch: 0.12 }, moves: [] },
+  { name: "75-fp-bouncing-lever", player: { x: -78.9, z: 0.1, yaw: 0.85, pitch: -0.1 }, moves: [] },
   {
     name: "46-fp-alcove",
     player: { x: -61.5, z: 1.8, yaw: Math.PI / 2, pitch: 0 },
@@ -104,7 +110,9 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   page.on("pageerror", (e) => console.error("page error:", e.message));
 
-  for (const shot of SHOTS) {
+  // `node harness/screenshots.ts 7` takes only the shots whose names start with "7".
+  const only = process.argv[2];
+  for (const shot of SHOTS.filter((sh) => !only || sh.name.startsWith(only))) {
     await page.goto(`${url}?automation&paused`);
     await page.waitForFunction(() => window.__game?.ready === true, undefined, { timeout: 30_000 });
     const state = await page.evaluate(async (s: Shot) => {
