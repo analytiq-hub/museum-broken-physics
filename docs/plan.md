@@ -21,8 +21,9 @@ See [concept.md](concept.md) for the game vision.
   - an instrument that doesn't reveal a law until the player has discovered it;
   - galleries streamed three at a time;
   - the museum laid out as floors (see "Museum layout").
-- **Next:** Milestone 10, Gallery VII (the Backwards Furnace), and a real playtest of
-  Galleries V and VI with the new instrument (see "Immediate next steps").
+- **Next:** Floor 2's last three rooms: the Backwards Furnace (Milestone 10), the Chladni
+  Plates (11) and Young's Double Slit as the finale (12). Also a real playtest with the new
+  instrument (see "Immediate next steps").
 
 ## Museum layout (decided Nov 2026)
 
@@ -37,6 +38,7 @@ a level: clearly separate, and harder than the one below.
   - a different look per floor (Floor 1 marble floors, Floor 2 wood);
   - the HUD shows the floor ("Floor 2 · Waves and Light · Gallery V");
   - the visitor's ticket has a row of stamps per floor.
+- **Floors have as many rooms as their theme needs** (Floor 2 has five), not a fixed count.
 - **The shape of a floor:** the first room teaches the floor's new idea with one obvious law,
   the middle rooms vary it, and the last room combines them (Floor 1 ends with the Leaning
   Pendulum, gravity plus damping). That last room is the gate up.
@@ -45,7 +47,7 @@ a level: clearly separate, and harder than the one below.
   | Floor | Theme | Rooms (built, then planned) | What makes it harder |
   | ----- | ----- | --------------------------- | -------------------- |
   | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale); later perhaps the Little Solar System before the finale | One law per room, visible effects, generous budgets |
-  | 2 | Waves, light and heat | Hidden Door, Singing Glass; next the Backwards Furnace (Milestone 10), then double slit or Chladni plates, ending with a room combining two of them | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
+  | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale) | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
   | 3 | Modern physics | Einstein's elevator, slow light, Rutherford, Stern–Gerlach, a quantum finale (room-ideas.md) | Laws that defy intuition, fewer changes, sometimes two laws per room |
 
 - **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
@@ -554,9 +556,12 @@ always exist.
   - memory stays flat after walking through every gallery and back;
   - nothing visibly appears from nowhere in first person.
 
-### Milestone 10: Gallery VII, the Backwards Furnace (thermodynamics + optics; 4–5 days)
-*Placement:* Floor 2, after the Singing Glass. Its corridor replaces the closing alcove behind
-the Singing Glass's pane, and the closing placard moves to the end of Floor 2.
+### Milestone 10: Gallery VIII, the Backwards Furnace (thermodynamics + optics; 4–5 days)
+*Placement:* Floor 2, between the Chladni Plates and the Double Slit. It is built first
+because it is designed in full. Until the Chladni Plates exist, it sits right after the
+Singing Glass; inserting a room later is one entry in `ROOMS`, and the offsets of the rooms
+after it follow. Its corridor replaces the closing alcove behind the Singing Glass's pane, and
+the closing placard moves to whichever room ends Floor 2 at the time.
 This room teaches heat flowing backwards and combines it with optics from Gallery IV. It also
 delivers Milestone 6's unfinished trade-off: the broken law is the tool, and restoring it
 too early or too late both lose.
@@ -606,6 +611,45 @@ too early or too late both lose.
   - every solver threshold passes;
   - the instrument needs no heat-specific UI.
 
+### Milestone 11: Gallery VII, the Chladni Plates (sound you can see; 3–4 days)
+It follows the Singing Glass and turns sound into a picture.
+- **The room:** a brass plate on a stand, sprinkled with sand, driven by a brass oscillator
+  with a dial of notes (a free `control`, like the organ pipes). The exit door's lock is
+  the plate itself: the door opens when the sand draws the keyhole figure engraved on it.
+- **Broken law:** the speed of sound in brass, so every note draws the wrong figure. A mode's
+  frequency scales with the wave speed in the plate. At the broken speed, the note marked
+  "keyhole" draws a different figure, and the keyhole figure appears at a note no dial offers.
+- **The puzzle:** read which figure each note draws, work out that every figure has shifted by
+  the same ratio, and restore the speed. The keyhole note then draws the keyhole. Decoy
+  figures (a star, a cross) are near-misses that don't open the lock. Driving the plate at
+  resonance too long cracks it (fail, auto-reset), as in the Singing Glass, so a player who
+  reacts to the crack is safe.
+- **Sim:** pure maths, a plate's modes (products of cosines, frequency ∝ n² + m²) mixed
+  through a resonance curve, like `resonance.ts`. Solved = the keyhole mode dominates for
+  three seconds; it is decided from the mode weights, not from sand grains. The sand is the
+  view's job: grains random-walk with step ∝ local amplitude and settle on the nodal lines.
+  The art piece *Detuned Resonance* is a working prototype of this view.
+- **Harness:** headless tests (solution, each decoy, the crack), brute force over speed marks ×
+  notes, and screenshots of each figure.
+
+### Milestone 12: Gallery IX, Young's Double Slit (Floor 2's finale; 4–5 days)
+It combines two of the floor's laws, the way the Leaning Pendulum ends Floor 1.
+- **The room:** a lamp, a plate with two slits, a glass water tank between the slits and the
+  screen, and a screen with a brass light sensor that unlocks the stairs to Floor 3.
+- **Broken laws:**
+  - the light's wavelength (its colour is wrong);
+  - the tank's refractive index, which the player has met in the Hidden Door, so its law is
+    already known.
+  Fringe spacing is λL / (n d). Neither law alone puts a bright band on the sensor.
+- **The puzzle:** restoring the wavelength alone moves the bands but leaves a dark band on the
+  sensor; restoring the index alone does too. Both are needed, in an order the budget allows.
+  A free "observer" lamp switches on a detector at the slits and wipes out the pattern: the
+  quantum hint that Floor 3 picks up.
+- **Sim:** closed-form two-slit intensity (pure maths, like `trace.ts`). The screen shows the
+  real pattern as a texture.
+- **Harness:** headless tests (the solution, each law alone, the observer), brute force over
+  both laws' marks, screenshots of the pattern before and after.
+
 ## Later backlog
 
 - Exhibits after Gallery VII: candidates based on famous experiments, and the best fits for
@@ -654,8 +698,8 @@ too early or too late both lose.
 
 1. **Playtest Floor 1 and Floor 2** with someone new, now that the instrument hides the laws
    and the floors are separate. Record with Shift+D; a stuck session becomes a replay test.
-2. **Milestone 10: Gallery VII, the Backwards Furnace,** on Floor 2 after the Singing Glass.
-3. **Floor 2's finale:** a room combining light, sound or heat, so Floor 2 ends the way Floor 1
-   does, before the stairs to Floor 3.
-4. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
+2. **Milestone 10: the Backwards Furnace** (Gallery VIII).
+3. **Milestone 11: the Chladni Plates** (Gallery VII), inserted before the Furnace.
+4. **Milestone 12: Young's Double Slit,** Floor 2's finale, then the stairs to Floor 3.
+5. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.
