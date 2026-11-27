@@ -780,6 +780,23 @@ Background for further Floor 1 rooms, or a mechanics wing. Not scheduled.
 
 More candidates from famous experiments are in [room-ideas.md](room-ideas.md).
 
+### Small feature: the GitHub link and star count (planned)
+A line at the foot of the title, "Welcome back" and "Paused" cards: "★ 128 · Source on GitHub",
+linking to https://github.com/analytiq-hub/museum-broken-physics in a new tab.
+
+- **Count:** baked in at build time (CI reads `stargazers_count` from the GitHub API and passes
+  it in as a Vite `define`, 0 if the request fails), shown at once; then refreshed from
+  `api.github.com` on load, cached in `localStorage` for an hour (unauthenticated limit: 60
+  requests an hour per visitor's network). Any failure keeps the baked-in number.
+- **Below 10 stars** the number is hidden: just "Source on GitHub".
+- **The click must not enter the game:** the cards enter on any click, so the link stops the
+  event's propagation (and on touch, doesn't trigger fullscreen).
+- `src/ui/repoLink.ts` (fetch, cache, format), with a unit test for formatting, the threshold,
+  the cache and failures; `?automation` skips the live fetch. A ui-check step: clicking the
+  link opens a new tab and leaves the card up.
+- While there: the title card still says "Two floors"; it's three. Pick a license for the repo
+  (none yet) before pointing visitors at it.
+
 ## Later backlog
 
 - Exhibits after Gallery VII: candidates based on famous experiments, and the best fits for
