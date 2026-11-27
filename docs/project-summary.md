@@ -32,6 +32,7 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Pl
 | X | 3 | Rutherford's Gold Foil | The atom's charge is spread out, not in a nucleus | Restore the nucleus, read the alpha tracks, slide the source until particles bounce straight back. |
 | XI | 3 | Stern–Gerlach | Spin can point any way | The beam smears and slowly cracks a glass cell; with two spin values it splits cleanly onto the detectors. |
 | XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely in the cup. |
+| XIII | 3 | Slow Light | Light travels at 4 m/s | A coincidence lock wants one flash at two cells at once; slow light reaches them 1.75 s apart. Restore it and fire while the shutter is open. |
 
 The galleries are joined by corridors. Each opens the next when solved, and the walk ends in
 an alcove with a closing placard.
@@ -71,7 +72,7 @@ and pushed, deployed through CI, and checked before moving on.
 | 5. Second gallery | Restless Pendulum; multiple worlds and handover; game state. |
 | 6. Combined rules | Leaning Pendulum, the gravity + damping trade-off. |
 | 7. Optics | Hidden Door: a 2D beam tracer with Snell's law and total internal reflection. |
-| After the plan | Touch controls, pause, saved progress with a visitor's ticket, an instrument that hides undiscovered laws, streaming, the museum in floors, and Galleries VII–XII. |
+| After the plan | Touch controls, pause, saved progress with a visitor's ticket, an instrument that hides undiscovered laws, streaming, the museum in floors, and Galleries VII–XIII. |
 
 ### The development harness
 

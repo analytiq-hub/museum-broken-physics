@@ -6,7 +6,7 @@ See [concept.md](concept.md) for the game vision.
 ## Where things stand (27 Nov 2026)
 
 - **Live:** https://analytiqhub.com/museum-broken-physics/, deployed from `main` after CI.
-- **Twelve galleries on three floors, visited in a fixed order:**
+- **Thirteen galleries on three floors, visited in a fixed order:**
   - **Floor 1, mechanics:** I the Sideways Gallery (gravity), II the Restless Pendulum
     (damping), III the Bouncing Hall (restitution), IV the Leaning Pendulum (gravity and
     damping, the finale).
@@ -16,7 +16,8 @@ See [concept.md](concept.md) for the game vision.
     (heat flow), IX Young's Double Slit (wavelength and index, the finale).
   - **The Upper Stair** climbs to Floor 3.
   - **Floor 3, modern physics** (in progress): X Rutherford's Gold Foil (the atom's charge),
-    XI Stern–Gerlach (spin), XII the Quantum Tunnel (Planck's constant).
+    XI Stern–Gerlach (spin), XII the Quantum Tunnel (Planck's constant), XIII Slow Light (the
+    speed of light).
   - The closing placard is a small room (`the-end`) after the last gallery.
 - **Done:** Milestones 0–12, Floor 3's first three rooms (Milestone 13, in progress), plus work
   added after the plan:
@@ -51,7 +52,7 @@ a level: clearly separate, and harder than the one below.
   | ----- | ----- | --------------------------- | -------------------- |
   | 1 | Mechanics | Sideways Gallery, Restless Pendulum, Bouncing Hall, Leaning Pendulum (finale); later perhaps the Little Solar System before the finale | One law per room, visible effects, generous budgets |
   | 2 | Waves, light and heat | V Hidden Door, VI Singing Glass, VII Chladni Plates, VIII Backwards Furnace, IX Young's Double Slit (finale); all built | Invisible quantities (index, frequency, temperature), decoys, tighter timing |
-  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel (built); XIII Slow Light, XIV Einstein's Elevator, XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
+  | 3 | Modern physics | X Rutherford's Gold Foil, XI Stern–Gerlach, XII the Quantum Tunnel, XIII Slow Light (built); XIV Einstein's Elevator, XV a quantum finale (planned, Milestone 13) | Laws that defy intuition, measurement changes outcomes, sometimes two laws per room |
 
 - **How it is built:** rooms keep the coordinates they were built in, and `OFFSETS` in
   `src/galleries/rooms.ts` places them in the museum. Every corridor is a standard 8 m stub
@@ -679,10 +680,13 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
 - **Gallery XII, the Quantum Tunnel (done).** Broken law: Planck's constant is enormous, so a
   marble leaks through glass as a wave (well → cup → drain). Restoring the law measures it:
   it collapses where its probability is largest. A 7 s window to land it in the cup.
-- **Gallery XIII, Slow Light (planned).** Broken law: the speed of light is 4 m/s. A light
-  clock and a lamp-lit gate: with slow light, a flash reaches the far photocell late, so a
-  shutter timed to it must be opened early (use the broken law to see the delay, then restore
-  it). Pure maths: positions of light fronts over time.
+- **Gallery XIII, Slow Light (done).** Broken law: light travels at 4 m/s, so a flash visibly
+  crawls down a bench (a brass ruler marks the metres). The lock is a coincidence counter: one
+  flash must light cell A, a metre from the lamp, and cell B, eight metres off behind a
+  clockwork shutter, at the same instant. Slow light lights them 1.75 s apart (the lock's
+  display says so); a flash that reaches the shutter while it is shut scorches it, and the
+  second scorch jams it (fail). Restored, a flash is everywhere at once: fire it while the dial
+  shows the shutter open. Decoy: 2 m/s. Pure maths (pulse fronts advanced each step).
 - **Gallery XIV, Einstein's Elevator (planned).** Broken law: inertial and gravitational mass
   differ, so a heavy ball and a light one fall differently in a lift; the player must make two
   balls land on two plates at once. Rapier, with per-body gravity scales.
@@ -738,6 +742,6 @@ intuition even when working: the atom, spin, tunnelling, then light and time.
 1. **Playtest all three floors** with someone new. The instrument hides undiscovered laws, so
    the rooms must teach themselves; record with Shift+D, and a stuck session becomes a replay
    test.
-2. **Milestone 13:** Slow Light, Einstein's Elevator and Floor 3's finale.
+2. **Milestone 13:** Einstein's Elevator and Floor 3's finale.
 3. Optionally, Rapier's separate-`.wasm` build, so a new room doesn't make returning players
    download the physics engine again.

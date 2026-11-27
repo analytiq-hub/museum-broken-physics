@@ -278,6 +278,16 @@ try {
   expect("the crosshair finds the tunnel's lever", await eventually(page, () => window.__game!.getPlayer().hovered === "pulled"));
   await page.mouse.click(600, 400);
   expect("pulling it drops the marble, for free", await eventually(page, () => window.__game!.getState().rules.lever === "pulled" && window.__game!.getState().changesUsed === 0, 30_000));
+  // Gallery XIII: fire the flash lamp.
+  await page.evaluate(async () => {
+    await window.__game!.setPlayerIn("slow-light", { x: -2.2, z: -0.6 }, 0, -0.3);
+    await window.__game!.nextFrame();
+    window.__game!.lookAtButton("lamp");
+  });
+  expect("the player is handed to Gallery XIII", await eventually(page, () => window.__game!.getPlayer().gallery === "slow-light"));
+  expect("the crosshair finds the flash lamp", await eventually(page, () => window.__game!.getPlayer().hovered === "lamp"));
+  await page.mouse.click(600, 400);
+  expect("clicking fires the lamp, for free", await eventually(page, () => window.__game!.getState().rules.lamp === "1" && window.__game!.getState().changesUsed === 0, 30_000));
   await page.evaluate(() => window.__game!.setPlayerIn("singing-glass", { x: -96.8, z: -1.2 }, 0.25, 0));
 
   // Streaming: only the room the player is in and its neighbours are built.

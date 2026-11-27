@@ -16,6 +16,7 @@ import { DoubleSlitExhibit } from "../../src/exhibits/double-slit/sim";
 import { RutherfordExhibit } from "../../src/exhibits/rutherford/sim";
 import { SternGerlachExhibit } from "../../src/exhibits/stern-gerlach/sim";
 import { TunnelExhibit } from "../../src/exhibits/tunnel/sim";
+import { SlowLightExhibit } from "../../src/exhibits/slow-light/sim";
 
 let R: typeof RAPIER;
 beforeAll(async () => {
@@ -36,6 +37,7 @@ const exhibits: [string, () => WithDoor][] = [
   ["Gallery X", () => new RutherfordExhibit(R)],
   ["Gallery XI", () => new SternGerlachExhibit(R)],
   ["Gallery XII", () => new TunnelExhibit(R)],
+  ["Gallery XIII", () => new SlowLightExhibit(R)],
 ];
 
 describe("restoreSolved", () => {

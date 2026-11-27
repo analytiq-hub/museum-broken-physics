@@ -118,6 +118,11 @@ const SHOTS: Shot[] = [
   { name: "E0-tunnel-start", camera: "tunnel", moves: [] },
   { name: "E1-tunnel-spreading", camera: "tunnel-case", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 5 * S }] },
   { name: "E2-tunnel-solved", camera: "tunnel-case", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 5 * S }, { rule: "planck", value: 0 }, { wait: 2 * S }] },
+  { name: "F0-slow-light-start", camera: "slow-light", moves: [] },
+  // Fired at 1.0 s, seen 1.2 s later: the flash is 4.8 m down the bench.
+  { name: "F1-slow-light-crawling", camera: "slow-light-bench", moves: [], actions: [{ wait: 1 * S }, { rule: "lamp", value: "1" }, { wait: 1.2 * S }], extraSteps: 0 },
+  { name: "F2-slow-light-apart", camera: "slow-light-bench", moves: [], actions: [{ wait: 1.2 * S }, { rule: "lamp", value: "1" }, { wait: 2.5 * S }] },
+  { name: "F3-slow-light-solved", camera: "slow-light-bench", moves: [], actions: [{ rule: "light", value: "true" }, { wait: 3.1 * S }, { rule: "lamp", value: "1" }, { wait: 0.3 * S }] },
   { name: "90-stairwell", camera: "stairwell", moves: [] },
   { name: "91-fp-stair-foot", player: { x: -1.0, z: 2, yaw: Math.PI / 2, pitch: 0.18, room: "stairwell" }, moves: [] },
   { name: "92-fp-stair-landing", player: { x: -10.9, y: 4.8, z: 1.3, yaw: Math.PI, pitch: 0.02, room: "stairwell" }, moves: [] },

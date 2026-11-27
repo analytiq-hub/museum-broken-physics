@@ -189,6 +189,16 @@ export const ROOMS: readonly Room[] = [
     load: async () => (await import("./tunnelGallery")).createTunnelGallery,
   },
   {
+    id: "slow-light",
+    title: "Slow Light",
+    floor: 3,
+    kind: "gallery",
+    laws: ["light"],
+    cameras: ["slow-light", "slow-light-bench"],
+    doors: { east: 0, west: -13 },
+    load: async () => (await import("./slowLightGallery")).createSlowLightGallery,
+  },
+  {
     id: "the-end",
     title: "The End, For Now",
     floor: 3,
