@@ -126,8 +126,9 @@ non-solutions and asserts they are not.
 ## UI
 
 - `src/ui/instrumentModel.ts` (pure, tested) turns an exhibit's rules into what the physics
-  instrument shows. **It never gives the answer away:** until a law is discovered (the player
-  solved a room where it was editable; `knownLaws()` in `main.ts`) it shows only the reading and
+  instrument shows. **It never gives the answer away:** until the room the player is in stands
+  solved (`knownLaws()` in `main.ts`; a law learnt elsewhere isn't carried over, and a reset
+  hides it again) it shows only the reading and
   the rule's `observe()` text, with no law, Broken/OK chip, highlighted option or Restore button.
   Write `observe()` for every new rule so it reads the **same for every option** (only the value
   itself may change): say what the quantity does, never judge the current value ("enormous",

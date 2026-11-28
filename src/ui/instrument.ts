@@ -191,7 +191,7 @@ function renderRule(rule: InstrumentRule): string {
         ${rule.known ? `<div><dt>The law</dt><dd>${rule.law}</dd></div>` : ""}
       </dl>
       <p class="inst-expl">${rule.explanation}</p>
-      ${rule.known ? `<p class="inst-note">Law discovered in ${rule.discoveredIn}.</p>` : rule.editable ? `<p class="inst-note">What should it be? Work it out: put a room right and your instrument will remember the law.</p>` : ""}
+      ${rule.known ? `<p class="inst-note">You worked out this law by putting the room right.</p>` : rule.editable ? `<p class="inst-note">What should it be? Work it out: put the room right and the instrument will show the law.</p>` : ""}
       ${rule.editable ? controls : ""}
       ${rule.editable && rule.known && rule.broken ? `<button type="button" class="inst-restore" data-action="restore" data-rule="${rule.id}" ${rule.canChange ? "" : "disabled"}>Restore the law: ${rule.law}</button>` : ""}
     </section>`;

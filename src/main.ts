@@ -617,16 +617,14 @@ const touchWording = (text: string) =>
   text.replace(/\bClick\b/g, "Tap").replace(/\bclick\b/g, "tap").replace(/\bhold Q\b/g, "tap Laws").replace(/\bHold Q\b/g, "Tap Laws");
 
 /**
- * Laws the player has discovered, and where: a law is learned by putting right a
- * room where it could be changed. The instrument shows what a law should be only
- * once it's known, so it never gives the answer away.
+ * Laws the instrument reveals: only those of the room the player is in, and only
+ * while that room stands solved. A law learnt in one room isn't shown in another,
+ * and resetting a room hides its laws again, so it can be worked out afresh.
  */
 function knownLaws(): Map<string, string> {
   const known = new Map<string, string>();
-  for (const room of ROOMS) {
-    if (!gameState.isSolved(room.id)) continue;
-    for (const law of room.laws) if (!known.has(law)) known.set(law, room.title);
-  }
+  if (!active.exhibit.isSolved()) return known;
+  for (const law of ROOMS[activeIndex].laws) known.set(law, active.title);
   return known;
 }
 
