@@ -19,7 +19,7 @@ export const CAMERA_POSES = {
   /** Close along the case. */
   "tunnel-case": { position: [-7.0, 1.9, 0.4] as V3, target: [-7.0, CASE.y + 0.2, CASE.z] as V3 },
   /** In front of the drain, its shaft down to the floor in view. */
-  "tunnel-drain": { position: [-9.0, 1.35, 1.1] as V3, target: [-9.2, 0.5, CASE.z] as V3 },
+  "tunnel-drain": { position: [-9.3, 1.4, 1.1] as V3, target: [-9.5, 0.55, CASE.z] as V3 },
 } as const;
 
 export interface TunnelView {
@@ -34,6 +34,11 @@ const MARBLE_R = 0.09;
 const RING_IN = 0.13;
 const RING_OUT = 0.21;
 const RING_T = 0.006;
+/** Height of the drain tray's floor, where a lost marble comes to rest. */
+const TRAY_Y = 0.012;
+/** The drain's hole, toward the far end of its compartment: the marble's ghost sits
+ *  beside it, and a lost marble is seen rolling to it before it drops. */
+const HOLE_X = CASE.drain[0] - 1.5;
 /** Radius of the drain's hole and the glass shaft below it. */
 const SHAFT_R = 0.13;
 
@@ -74,8 +79,8 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   const byKind: Record<Box["kind"], THREE.Material> = { floor: m.ledge, ceiling: m.ceiling, wall: m.wall, glass: m.glass, ledge: m.ledge, pedestal: m.wood };
   // The bench is one collider, but it is drawn in two pieces with a gap for the drain's shaft.
   const bench = STATIC_BOXES.find((b) => b.name === "bench")!;
-  const gapEast = centre("drain") + SHAFT_R + 0.08;
-  const gapWest = centre("drain") - SHAFT_R - 0.08;
+  const gapEast = HOLE_X + SHAFT_R + 0.08;
+  const gapWest = HOLE_X - SHAFT_R - 0.08;
   const benchEast = bench.center[0] + bench.half[0];
   const benchWest = bench.center[0] - bench.half[0];
   const benchPieces: Box[] = [
@@ -117,7 +122,7 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   // --- The drain: a brass-rimmed hole in the case floor over a glass shaft that runs
   // down through a gap in the bench to a tray on the floor, so a lost marble is seen
   // falling all the way down.
-  const dx = centre("drain");
+  const dx = HOLE_X;
   const rim = new THREE.Mesh(new THREE.RingGeometry(SHAFT_R, SHAFT_R + 0.07, 40), m.brass);
   rim.rotation.x = -Math.PI / 2;
   rim.position.set(dx, CASE.y + 0.003, CASE.z);
@@ -140,7 +145,7 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   const front = CASE.z + 0.5; // the bench's front face
   for (const c of ["well", "cup", "drain"] as Compartment[]) {
     const plaque = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.11), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.6, roughness: 0.4, map: plaqueTexture(c === "cup" ? "RING" : c.toUpperCase()) }));
-    plaque.position.set(c === "drain" ? centre(c) + 0.55 : centre(c), CASE.y - 0.17, front + 0.004);
+    plaque.position.set(c === "drain" ? HOLE_X + 0.6 : centre(c), CASE.y - 0.17, front + 0.004);
     scene.add(plaque);
   }
 
@@ -225,7 +230,9 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
     update(dt) {
       time += dt;
       const p = ex.probabilities;
-      const wave = ex.released && ex.found === null;
+      // Lost (measured in the drain, or drained away while nobody looked): solid again.
+      const lost = ex.released && ex.lost;
+      const wave = ex.released && ex.found === null && !lost;
       // Clouds glow with their share of the probability (shimmering while it is a wave).
       for (const { c, material } of clouds) material.opacity = wave ? Math.sqrt(p[c]) * (0.28 + 0.05 * Math.sin(time * 7 + c.length)) : 0;
       // The marble: in the claw, a ghost in the likeliest compartment, or solid where it was found.
@@ -233,21 +240,36 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
       leverPivot.rotation.x = -0.5 + leverAngle * 1.4;
       claw.rotation.z = ex.released ? 0.8 : 0;
       const likeliest = (Object.keys(p) as Compartment[]).reduce((a, b) => (p[b] > p[a] ? b : a), "well");
-      const where = ex.found ?? likeliest;
-      const targetX = centre(where);
-      marbleX += (targetX - marbleX) * Math.min(1, dt * (wave ? 1.5 : 6));
-      // Found in the drain, it drops down the shaft to the tray on the floor.
-      const lost = where === "drain" && !wave;
+      const where = lost ? "drain" : (ex.found ?? likeliest);
+      const targetX = lost ? HOLE_X : centre(where);
+      const floorY = CASE.y + MARBLE_R;
       if (!ex.released) {
+        // Held in the claw over the well (also straight after a reset).
+        marbleX = centre("well");
         marbleY = clawY - 0.02;
         fallSpeed = 0;
-      } else if (lost) {
+      } else if (lost && marbleY > floorY - 0.001 && marbleY < floorY + 0.02 && Math.abs(targetX - marbleX) > 0.01) {
+        // Lost: roll along the floor to the hole first...
+        marbleX += Math.sign(targetX - marbleX) * Math.min(Math.abs(targetX - marbleX), dt * 1.2);
+        marbleY = floorY;
+        fallSpeed = 0;
+      } else if (lost && Math.abs(targetX - marbleX) <= 0.01) {
+        // ...then drop down the shaft to the tray on the floor.
         marbleX = targetX;
         fallSpeed += 9.81 * dt;
-        marbleY = Math.max(0.012 + MARBLE_R, marbleY - fallSpeed * dt);
+        marbleY = Math.max(TRAY_Y + MARBLE_R, marbleY - fallSpeed * dt);
       } else {
-        marbleY = CASE.y + MARBLE_R + (where === "cup" ? RING_T : 0);
-        fallSpeed = 0;
+        // Dropped from the claw, it falls into the well; on the floor it drifts (as a
+        // wave) or slides to where it was found, resting on the ring there.
+        const restY = floorY + (where === "cup" ? RING_T : 0);
+        if (marbleY > restY + 0.001) {
+          fallSpeed += 9.81 * dt;
+          marbleY = Math.max(restY, marbleY - fallSpeed * dt);
+        } else {
+          marbleY = restY;
+          fallSpeed = 0;
+          marbleX += (targetX - marbleX) * Math.min(1, dt * (wave ? 1.5 : 6));
+        }
       }
       marble.position.set(marbleX, marbleY, CASE.z);
       marbleMaterial.opacity = wave ? 0.25 + 0.1 * Math.sin(time * 5) : 1;

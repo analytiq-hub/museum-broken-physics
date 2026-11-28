@@ -257,12 +257,14 @@ async function continueVisit(saved: SavedProgress): Promise<void> {
   stepper.clear();
 }
 
-function chooseVisit(fresh: boolean): void {
-  if (progressChosen) return;
+function chooseVisit(fresh: boolean): Promise<void> {
+  if (progressChosen) return Promise.resolve();
   progressChosen = true;
-  if (fresh) clearProgress();
-  else if (savedVisit) void continueVisit(savedVisit);
+  const saved = savedVisit;
   savedVisit = undefined;
+  if (fresh) clearProgress();
+  else if (saved) return continueVisit(saved);
+  return Promise.resolve();
 }
 
 /**
@@ -470,7 +472,7 @@ const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"
 /** The visitor's ticket: one stamp per gallery, inked once it's solved. */
 const FLOOR_NAMES: Record<number, string> = { 1: "Floor 1 · Mechanics", 2: "Floor 2 · Waves and Light", 3: "Floor 3 · Modern Physics" };
 /** The visitor's ticket: one stamp per gallery, inked once it's solved, a row per floor. */
-function ticketHtml(solved: (id: string) => boolean): string {
+function ticketHtml(solved: (id: string) => boolean, extraClass = ""): string {
   const done = GALLERIES.filter((g) => solved(g.id)).length;
   const floors = [...new Set(GALLERIES.map((g) => g.floor))];
   const rows = floors
@@ -479,13 +481,13 @@ function ticketHtml(solved: (id: string) => boolean): string {
         .filter(({ g }) => g.floor === floor)
         .map(({ g, i }) => {
           const name = g.title.replace(/^The /, "").replace(/ Gallery$/, "");
-          return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
+          return `<span class="stamp${solved(g.id) ? " done" : ""}" title="${g.title}" data-room="${g.id}"><b>${ROMAN[i]}</b><small>${name}</small></span>`;
         })
         .join("");
       return `<div class="ticket-floor">${FLOOR_NAMES[floor] ?? `Floor ${floor}`}</div><div class="stamps">${stamps}</div>`;
     })
     .join("");
-  return `<div class="ticket"><div class="ticket-head">Visitor's ticket · ${done} of ${GALLERIES.length} galleries restored</div>${rows}</div>`;
+  return `<div class="ticket${extraClass}"><div class="ticket-head">Visitor's ticket · ${done} of ${GALLERIES.length} galleries restored</div>${rows}</div>`;
 }
 
 /** The repo's star count for the cards' GitHub link: from the build, a fresh cache, then GitHub. */
@@ -524,6 +526,7 @@ function showOverlay(pausedCard: boolean): void {
       : `<div class="card">
         <h1>The Museum of Broken Physics</h1>
         <p>Three floors of galleries whose laws have broken. Put them right, or put them to use.</p>
+        ${ticketHtml(() => false, " jump-only")}
         <p class="controls"><b>${action}</b> to enter · ${CONTROLS}</p>
         ${TOUCH ? `<p class="portrait-hint">Turn your phone sideways for a better view.</p>` : ""}
         ${repoLine()}
@@ -561,11 +564,30 @@ function resumeGame(): void {
   if (TOUCH) touch.setVisible(true);
 }
 
+/**
+ * Hidden shortcut: hold J on any card and click a stamp on the visitor's ticket to
+ * enter at that gallery (the start card shows the ticket only while J is held).
+ * Galleries in between are left as they were; nothing is marked solved.
+ */
+const JUMP_KEY = "KeyJ";
+function setJumpHeld(down: boolean): void {
+  document.body.classList.toggle("jump", down);
+}
+
 overlay.addEventListener("click", (e) => {
+  const target = e.target as HTMLElement;
   // The GitHub link opens in a new tab and leaves the card up: it doesn't enter the game.
-  if ((e.target as HTMLElement).closest(".repo-link")) return;
+  if (target.closest(".repo-link")) return;
+  const jumpTo = keys.has(JUMP_KEY) ? target.closest("[data-room]")?.getAttribute("data-room") : undefined;
   // A returning visitor's card: "Start a new visit" starts over; anywhere else continues.
-  chooseVisit((e.target as HTMLElement).closest("[data-visit]")?.getAttribute("data-visit") === "new");
+  const chosen = chooseVisit(target.closest("[data-visit]")?.getAttribute("data-visit") === "new");
+  if (jumpTo) {
+    void chosen.then(async () => {
+      const index = roomIndex(jumpTo);
+      if (index >= 0 && index !== activeIndex) await goToRoom(index);
+      stepper.clear();
+    });
+  }
   sound.unlock();
   if (!TOUCH) {
     look.lock(); // resumes on the "lock" event
@@ -723,6 +745,7 @@ gui.add(debug, "downloadRecording").name("Download recording (Shift+D)");
 
 window.addEventListener("keydown", (e) => {
   keys.add(e.code);
+  if (e.code === JUMP_KEY) setJumpHeld(true);
   sound.unlock();
   if (e.code === "KeyM") sound.setMuted(!sound.isMuted);
   if (e.code === "KeyQ" && !e.repeat && mode === "first-person") raiseInstrument();
@@ -745,10 +768,12 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => {
   keys.delete(e.code);
+  if (e.code === JUMP_KEY) setJumpHeld(false);
   if (e.code === "KeyQ") lowerInstrument();
 });
 window.addEventListener("blur", () => {
   keys.clear();
+  setJumpHeld(false);
   lowerInstrument();
 });
 

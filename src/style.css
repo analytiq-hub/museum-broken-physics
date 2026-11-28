@@ -237,6 +237,21 @@ body {
   background: rgba(192, 87, 63, 0.1);
 }
 
+/* Hidden jump (hold J): the ticket's stamps become doors to their galleries. */
+.ticket.jump-only {
+  display: none;
+}
+body.jump .ticket.jump-only {
+  display: block;
+}
+body.jump .stamp {
+  cursor: pointer;
+}
+body.jump .stamp:hover {
+  border-color: #e9c46a;
+  color: #e9c46a;
+}
+
 .visit-buttons {
   display: flex;
   flex-wrap: wrap;
