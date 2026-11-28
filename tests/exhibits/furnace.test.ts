@@ -106,7 +106,7 @@ describe("backwards furnace", () => {
   it("the instrument shows heat flow, not the mirror, and doesn't name the law", () => {
     ex = new FurnaceExhibit(R);
     const m = instrumentModel(ex, "The Backwards Furnace");
-    expect(m.rules.map((r) => r.id)).toEqual(["heat", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["heat"]);
     expect(m.rules[0].explanation).not.toMatch(/should/);
   });
 });

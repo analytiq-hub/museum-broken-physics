@@ -18,7 +18,7 @@
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
 import { FIXED_DT } from "../../engine/physics";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
 import { spinRule, type Spin } from "../spin";
@@ -88,7 +88,7 @@ export class VaultExhibit extends ExhibitBase {
     const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
     world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
     this.doorHandle = door.handle;
-    this.rules = [spinRule(), planckRule(), gravityRule("down", ["down"], { down: "Floor" }, false), ovenRule()];
+    this.rules = [spinRule(), planckRule(), ovenRule()];
     this.finishSetup();
   }
 

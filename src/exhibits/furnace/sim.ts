@@ -19,7 +19,7 @@
 // The heat maths is in heat.ts.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
 import { BOILING, WAX_MELTS, initialHeat, stepHeat, type HeatNode, type HeatState } from "./heat";
@@ -73,7 +73,7 @@ export class FurnaceExhibit extends ExhibitBase {
     const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
     world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
     this.doorHandle = door.handle;
-    this.rules = [heatRule(), gravityRule("down", ["down"], { down: "Floor" }, false), mirrorRule()];
+    this.rules = [heatRule(), mirrorRule()];
     this.finishSetup();
   }
 

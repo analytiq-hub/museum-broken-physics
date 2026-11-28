@@ -81,7 +81,7 @@ describe("rutherford's gold foil", () => {
   it("the instrument shows the atom's charge, not the source, and doesn't name the law", () => {
     ex = new RutherfordExhibit(R);
     const m = instrumentModel(ex, "Rutherford's Gold Foil");
-    expect(m.rules.map((r) => r.id)).toEqual(["charge", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["charge"]);
     expect(m.rules[0].explanation).not.toMatch(/should/);
   });
 });

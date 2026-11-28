@@ -113,7 +113,7 @@ describe("the silver vault", () => {
   it("the instrument shows both laws, not the oven, and names neither", () => {
     ex = new VaultExhibit(R);
     const m = instrumentModel(ex, "The Silver Vault");
-    expect(m.rules.map((r) => r.id)).toEqual(["spin", "planck", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["spin", "planck"]);
     for (const r of m.rules.slice(0, 2)) expect(r.explanation).not.toMatch(/should/);
   });
 });

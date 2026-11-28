@@ -82,7 +82,7 @@ describe("quantum tunnel", () => {
   it("the instrument shows Planck's constant, not the lever, and doesn't name the law", () => {
     ex = new TunnelExhibit(R);
     const m = instrumentModel(ex, "The Quantum Tunnel");
-    expect(m.rules.map((r) => r.id)).toEqual(["planck", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["planck"]);
     expect(m.rules[0].explanation).not.toMatch(/should|6\.6 × 10⁻³⁴/);
   });
 });

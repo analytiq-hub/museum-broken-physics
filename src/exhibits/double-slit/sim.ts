@@ -17,7 +17,7 @@
 // the light goes through wipes out the bands: the hint Floor 3 picks up.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
 import { fringe, spacing, type Optics } from "./fringes";
@@ -84,7 +84,7 @@ export class DoubleSlitExhibit extends ExhibitBase {
     const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
     world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
     this.doorHandle = door.handle;
-    this.rules = [wavelengthRule(), indexRule(), gravityRule("down", ["down"], { down: "Floor" }, false), observerRule()];
+    this.rules = [wavelengthRule(), indexRule(), observerRule()];
     this.finishSetup();
   }
 

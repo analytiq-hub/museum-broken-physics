@@ -14,7 +14,7 @@
 // lands in the cup. A decoy, "larger still", leaks faster: a shorter window.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
 import { collapse, leak, type Compartment, type Probabilities } from "./leak";
@@ -67,7 +67,7 @@ export class TunnelExhibit extends ExhibitBase {
     const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
     world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
     this.doorHandle = door.handle;
-    this.rules = [planckRule(), gravityRule("down", ["down"], { down: "Floor" }, false), leverRule()];
+    this.rules = [planckRule(), leverRule()];
     this.finishSetup();
   }
 

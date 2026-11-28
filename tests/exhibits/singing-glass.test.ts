@@ -114,7 +114,7 @@ describe("singing glass", () => {
   it("the instrument shows the speed of sound, not the pipes, and doesn't name the law", () => {
     ex = new SingingGlassExhibit(R);
     const m = instrumentModel(ex, "The Singing Glass");
-    expect(m.rules.map((r) => r.id)).toEqual(["speed", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["speed"]);
     expect(m.rules[0].explanation).not.toContain("343");
   });
 });

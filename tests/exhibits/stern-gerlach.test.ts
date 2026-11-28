@@ -98,7 +98,7 @@ describe("stern–gerlach", () => {
   it("the instrument shows spin, not the oven, and doesn't name the law", () => {
     ex = new SternGerlachExhibit(R);
     const m = instrumentModel(ex, "Stern–Gerlach");
-    expect(m.rules.map((r) => r.id)).toEqual(["spin", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["spin"]);
     expect(m.rules[0].explanation).not.toMatch(/should/);
   });
 });

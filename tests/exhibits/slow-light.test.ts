@@ -126,7 +126,7 @@ describe("slow light", () => {
   it("the instrument shows the speed of light, not the lamp, and doesn't name the law", () => {
     ex = new SlowLightExhibit(R);
     const m = instrumentModel(ex, "Slow Light");
-    expect(m.rules.map((r) => r.id)).toEqual(["light", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["light"]);
     expect(m.rules[0].explanation).not.toMatch(/should|300 000/);
   });
 });

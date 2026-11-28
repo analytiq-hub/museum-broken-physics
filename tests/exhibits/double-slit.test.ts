@@ -70,10 +70,10 @@ describe("double slit", () => {
     expect(brightestWrong).toBeLessThan(0.5);
   });
 
-  it("the instrument lists both laws and the gravity, not the observer, and names neither law", () => {
+  it("the instrument lists both laws, not the observer, and names neither law", () => {
     ex = new DoubleSlitExhibit(R);
     const m = instrumentModel(ex, "Young's Double Slit");
-    expect(m.rules.map((r) => r.id)).toEqual(["wavelength", "index", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["wavelength", "index"]);
     expect(m.rules[0].explanation).not.toContain("589");
     expect(m.rules[1].explanation).not.toContain("1.33");
   });

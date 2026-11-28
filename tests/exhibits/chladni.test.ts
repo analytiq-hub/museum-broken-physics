@@ -87,7 +87,7 @@ describe("chladni plates", () => {
   it("the instrument shows the speed in brass, not the keys, and doesn't name the law", () => {
     ex = new ChladniExhibit(R);
     const m = instrumentModel(ex, "The Chladni Plates");
-    expect(m.rules.map((r) => r.id)).toEqual(["brass-speed", "gravity"]);
+    expect(m.rules.map((r) => r.id)).toEqual(["brass-speed"]);
     expect(m.rules[0].explanation).not.toContain("3500");
   });
 });

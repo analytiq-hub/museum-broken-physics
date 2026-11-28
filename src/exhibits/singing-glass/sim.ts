@@ -17,7 +17,7 @@
 // in resonance.ts; the Rapier world holds only the room and the pane.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, corridor, type Box } from "../layout";
 import { pipeFrequency, ringGlass, type GlassSpec, type GlassState } from "./resonance";
@@ -118,7 +118,7 @@ export class SingingGlassExhibit extends ExhibitBase {
     world.createCollider(R.ColliderDesc.cuboid(...PANE.half).setCollisionGroups(ROOM_GROUPS), pane);
     this.paneHandle = pane.handle;
 
-    this.rules = [speedRule(), gravityRule("down", ["down"], { down: "Floor" }, false), pipeRule()];
+    this.rules = [speedRule(), pipeRule()];
     this.finishSetup();
   }
 

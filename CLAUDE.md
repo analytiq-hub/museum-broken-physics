@@ -137,6 +137,9 @@ non-solutions and asserts they are not.
   Q: the pointer stays locked and mouse deltas drive a virtual cursor (`look.enabled = false`),
   because re-locking the pointer after releasing it is restricted by browsers. In the window
   view (C) it stays open as a normal panel.
+- The instrument lists only laws that matter in the room. A fixed `gravityRule(..., false)` goes
+  only in rooms where something falls (pendulums, the Bouncing Hall, Galileo's Ledge); worlds
+  default to downward gravity, so rooms with nothing dynamic leave it out.
 - Player-facing directions are named from the viewer's side: floor, left/right/back wall, window.
 - **Touch mode** (`src/ui/touchControls.ts`, `body.touch`): on automatically for touchscreens
   without a mouse, `?touch` forces it. Left-thumb floating joystick, right-thumb drag to look,

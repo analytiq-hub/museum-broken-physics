@@ -16,7 +16,7 @@
 // stops at the first crack is safe.
 import type RAPIER from "@dimforge/rapier3d-compat";
 import { ROOM_GROUPS } from "../../engine/groups";
-import { gravityRule, type Rule } from "../../rules/Rule";
+import type { Rule } from "../../rules/Rule";
 import { ExhibitBase } from "../Exhibit";
 import { addStaticBoxes, doorBox, doorY, roomShell, type Box, type RoomBounds } from "../layout";
 import { K, MODES, modeIndex, modeWeights } from "./plate";
@@ -86,7 +86,7 @@ export class ChladniExhibit extends ExhibitBase {
     const door = world.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(...DOOR.center));
     world.createCollider(R.ColliderDesc.cuboid(...DOOR.half).setCollisionGroups(ROOM_GROUPS), door);
     this.doorHandle = door.handle;
-    this.rules = [speedRule(), gravityRule("down", ["down"], { down: "Floor" }, false), noteRule()];
+    this.rules = [speedRule(), noteRule()];
     this.finishSetup();
   }
 
