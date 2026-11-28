@@ -156,6 +156,10 @@ non-solutions and asserts they are not.
   open) and puts the player at the gallery they were in. Every exhibit must implement
   `arrangeSolved()`; `tests/exhibits/restoreSolved.test.ts` covers them. Restored rooms aren't
   recorded until reset (`Recorder.skipUntilReset`). `?automation` ignores saved progress.
+  To start from scratch: "Start a new visit" on the Welcome back card, or
+  `localStorage.removeItem("museum-broken-physics/progress")` and reload.
+  **Hidden jump:** hold J on any card (start, welcome back, pause) and the ticket shows; click
+  a stamp to enter at that gallery (rooms in between stay unsolved).
 
 - **GitHub link** (`src/ui/repoLink.ts`): the title, welcome-back and pause cards end with
   "★ N · Source on GitHub" (no number below 10 stars). The count is baked in at build time
