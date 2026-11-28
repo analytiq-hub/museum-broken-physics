@@ -40,7 +40,7 @@ export const WAVELENGTH_MARKS = [
   { value: 770, label: "Deep red (770 nm)" },
 ] as const;
 export const INDEX_MARKS = [
-  { value: 0.75, label: "Backwards (0.75)" },
+  { value: 0.75, label: "0.75" },
   { value: 1, label: "Like air (1.0)" },
   { value: 1.33, label: "Water (1.33)" },
 ] as const;

@@ -44,7 +44,7 @@ export const HIDDEN_DOOR = { z0: 1.0, z1: 2.6, height: 2.4 } as const;
 export const EYE = { z: 2.14, halfWidth: 0.12 } as const;
 
 export const INDEX_MARKS = [
-  { value: 0.7, label: "Backwards (0.7)" },
+  { value: 0.7, label: "0.7" },
   { value: 1.0, label: "Air (1.0)" },
   { value: 1.33, label: "Water (1.33)" },
   { value: 1.5, label: "Glass (1.5)" },

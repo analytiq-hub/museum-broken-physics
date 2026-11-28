@@ -27,7 +27,8 @@ export function spinRule(): Rule<Spin> {
     nominal: "two",
     editable: true,
     // The reading is the same whichever option is set, so it can't give the answer away.
-    observe: () => "The magnet pushes each silver atom up or down by an amount set by its spin, measured along the field. Watch where the silver lands on the screen.",
+    // It must not echo any option's wording (no "up or down"), or it points at one.
+    observe: () => "The magnet deflects each silver atom according to its spin, measured along the field. Watch where the silver lands on the screen.",
     explain: (current) =>
       current === "two"
         ? "Measured along any axis, a silver atom's spin comes out exactly up or down, never in between, as it should be."

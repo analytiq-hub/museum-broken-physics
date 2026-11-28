@@ -25,7 +25,7 @@ export const ROOM: RoomBounds = { xMin: -10.5, xMax: -0.5, halfZ: 4, height: 4.5
 
 export const SPEED_MARKS = [
   { value: 1200, label: "Lead (1200)" },
-  { value: 2380, label: "Too slow (2380)" },
+  { value: 2380, label: "2380 m/s" },
   { value: 3500, label: "Brass (3500)" },
   { value: 5900, label: "Steel (5900)" },
 ] as const;

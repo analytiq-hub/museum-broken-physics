@@ -58,11 +58,11 @@ describe("instrument readings don't give the answer away", () => {
     });
   }
 
-  it("no option label calls itself the true value", () => {
+  it("no option label calls itself the true value or a wrong one", () => {
     for (const [, make] of exhibits) {
       for (const rule of make().rules) {
         if (rule.control) continue;
-        for (const o of rule.options ?? rule.marks ?? []) expect(`${rule.id}: ${o.label}`).not.toMatch(/\b(true|correct|normal|real)\b/i);
+        for (const o of rule.options ?? rule.marks ?? []) expect(`${rule.id}: ${o.label}`).not.toMatch(/\b(true|correct|normal|real|wrong|too|backwards)\b/i);
       }
     }
   });

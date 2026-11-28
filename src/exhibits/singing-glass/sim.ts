@@ -30,7 +30,7 @@ const HX = (ROOM.xMax - ROOM.xMin) / 2;
 
 /** Speeds of sound the instrument offers (m/s). */
 export const SPEED_MARKS = [
-  { value: 229, label: "Too slow (229)" },
+  { value: 229, label: "229 m/s" },
   { value: 259, label: "Carbon dioxide (259)" },
   { value: 343, label: "Air (343)" },
   { value: 972, label: "Helium (972)" },

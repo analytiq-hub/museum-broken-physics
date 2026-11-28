@@ -435,7 +435,7 @@ the player can **hear** that law being wrong.
 - **Broken law: the speed of sound.** It is 229 m/s instead of 343. An open pipe sounds at
   v / 2L, so every pipe plays flat, by about a fifth. The glasses' own frequencies don't depend
   on v, so retuning v retunes the organ and nothing else. It is a range rule with marks:
-  "Too slow (229)", "Carbon dioxide (259)", "Air (343)", "Helium (972)".
+  "229 m/s", "Carbon dioxide (259)", "Air (343)", "Helium (972)".
 - **Controls.** Clicking a pipe sounds it until it's clicked again: a `control` rule
   "sounding pipe" (none, 1–5), which costs nothing from the budget, like the mirrors in Gallery IV.
 - **Sim** (`src/exhibits/singing-glass/resonance.ts`, pure maths like `trace.ts`). Real
