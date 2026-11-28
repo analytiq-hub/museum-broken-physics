@@ -131,8 +131,9 @@ non-solutions and asserts they are not.
   the rule's `observe()` text, with no law, Broken/OK chip, highlighted option or Restore button.
   Write `observe()` for every new rule so it reads the **same for every option** (only the value
   itself may change): say what the quantity does, never judge the current value ("enormous",
-  "negative", "every swing gets bigger") or hint which is right. Option labels must not call one
-  value true or normal either. `tests/exhibits/readings.test.ts` enforces both; `src/ui/instrument.ts` renders it. In first person it is raised by holding
+  "negative", "every swing gets bigger") or hint which is right, and never echo the right option's wording (spin's once said atoms are pushed
+  "up or down"). Option labels must not call one value true or normal, or another too slow or
+  backwards. `tests/exhibits/readings.test.ts` enforces both; `src/ui/instrument.ts` renders it. In first person it is raised by holding
   Q: the pointer stays locked and mouse deltas drive a virtual cursor (`look.enabled = false`),
   because re-locking the pointer after releasing it is restricted by browsers. In the window
   view (C) it stays open as a normal panel.
