@@ -184,7 +184,7 @@ export const ROOMS: readonly Room[] = [
     floor: 3,
     kind: "gallery",
     laws: ["planck"],
-    cameras: ["tunnel", "tunnel-case"],
+    cameras: ["tunnel", "tunnel-case", "tunnel-drain"],
     doors: { east: 0, west: -13 },
     load: async () => (await import("./tunnelGallery")).createTunnelGallery,
   },

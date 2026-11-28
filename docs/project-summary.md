@@ -31,7 +31,7 @@ Built with TypeScript, Vite, three.js (rendering) and Rapier (physics, WASM). Pl
 | | | **The Upper Stair** | | Up to Floor 3. |
 | X | 3 | Rutherford's Gold Foil | The atom's charge is spread out, not in a nucleus | Restore the nucleus, read the alpha tracks, slide the source until particles bounce straight back. |
 | XI | 3 | Stern–Gerlach | Spin isn't quantised: along the field it can take any value | The beam smears and slowly cracks a glass cell; with two spin values it splits cleanly onto the detectors. |
-| XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely in the cup. |
+| XII | 3 | The Quantum Tunnel | Planck's constant is enormous | A marble leaks through glass as a wave; measure it (restore the law) when it's most likely on the ring. |
 | XIII | 3 | Slow Light | Light travels at 4 m/s | A coincidence lock wants one flash at two cells at once; slow light reaches them 1.75 s apart. Restore it and fire while the shutter is open. |
 | XIV | 3 | Galileo's Ledge | Gravity pulls cork half as hard as brass | Kick both balls off a ledge under the broken law so cork flies into the far pan; then restore it so the balance hangs level. |
 | XV | 3 | The Silver Vault | Spin and Planck's constant | Floor 3's finale: restore spin so silver lands on the glass, let it tunnel into the vault, then restore Planck's constant while the vault holds the most. |

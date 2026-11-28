@@ -1,5 +1,5 @@
 // View of the Quantum Tunnel: a long glass case on a bench, split by thin glass
-// walls into a well, a brass cup and a dark drain. Above the well, a brass claw and
+// walls into a well, a brass ring in the floor, and a drain whose glass shaft runs to the floor. Above the well, a brass claw and
 // a lever that opens it. While the marble is a wave, each compartment glows with
 // how much of its probability is there, and the marble is a faint ghost in the
 // likeliest one; once measured, it is solid, where it was found.
@@ -18,6 +18,8 @@ export const CAMERA_POSES = {
   tunnel: { position: [-1.2, 2.6, 1.6] as V3, target: [-7.0, 0.9, -2.2] as V3 },
   /** Close along the case. */
   "tunnel-case": { position: [-7.0, 1.9, 0.4] as V3, target: [-7.0, CASE.y + 0.2, CASE.z] as V3 },
+  /** In front of the drain, its shaft down to the floor in view. */
+  "tunnel-drain": { position: [-9.0, 1.35, 1.1] as V3, target: [-9.2, 0.5, CASE.z] as V3 },
 } as const;
 
 export interface TunnelView {
@@ -28,6 +30,39 @@ export interface TunnelView {
 
 const TILE: Record<Box["kind"], number> = { floor: 7, ceiling: 3, wall: 3.2, glass: 1, ledge: 2, pedestal: 1.2 };
 const MARBLE_R = 0.09;
+/** The ring inlaid in the case floor: inner and outer radius, and thickness. */
+const RING_IN = 0.13;
+const RING_OUT = 0.21;
+const RING_T = 0.006;
+/** Radius of the drain's hole and the glass shaft below it. */
+const SHAFT_R = 0.13;
+
+function canvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void): THREE.Texture {
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  draw(canvas.getContext("2d")!);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/** A small brass plaque with an engraved word. */
+function plaqueTexture(word: string): THREE.Texture {
+  return canvasTexture(256, 80, (ctx) => {
+    ctx.fillStyle = "#c9a14a";
+    ctx.fillRect(0, 0, 256, 80);
+    ctx.strokeStyle = "#3a2a14";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(6, 6, 244, 68);
+    ctx.fillStyle = "#3a2a14";
+    ctx.font = "600 38px Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.letterSpacing = "6px";
+    ctx.fillText(word, 131, 42);
+  });
+}
 
 /** The middle of a compartment along the case. */
 function centre(c: Compartment): number {
@@ -37,7 +72,17 @@ function centre(c: Compartment): number {
 
 export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Materials): TunnelView {
   const byKind: Record<Box["kind"], THREE.Material> = { floor: m.ledge, ceiling: m.ceiling, wall: m.wall, glass: m.glass, ledge: m.ledge, pedestal: m.wood };
-  for (const box of STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-east-"))) {
+  // The bench is one collider, but it is drawn in two pieces with a gap for the drain's shaft.
+  const bench = STATIC_BOXES.find((b) => b.name === "bench")!;
+  const gapEast = centre("drain") + SHAFT_R + 0.08;
+  const gapWest = centre("drain") - SHAFT_R - 0.08;
+  const benchEast = bench.center[0] + bench.half[0];
+  const benchWest = bench.center[0] - bench.half[0];
+  const benchPieces: Box[] = [
+    { ...bench, name: "bench-east", center: [(benchEast + gapEast) / 2, bench.center[1], bench.center[2]], half: [(benchEast - gapEast) / 2, bench.half[1], bench.half[2]] },
+    { ...bench, name: "bench-west", center: [(gapWest + benchWest) / 2, bench.center[1], bench.center[2]], half: [(gapWest - benchWest) / 2, bench.half[1], bench.half[2]] },
+  ];
+  for (const box of [...STATIC_BOXES.filter((b) => !b.name.startsWith("corridor-east-") && b !== bench), ...benchPieces]) {
     const mesh = new THREE.Mesh(worldBoxGeometry(box.half, box.center, TILE[box.kind]), byKind[box.kind]);
     mesh.position.set(...box.center);
     mesh.receiveShadow = true;
@@ -56,19 +101,48 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   shell.position.set((x0 + x1) / 2, CASE.y + CASE.height / 2, CASE.z);
   scene.add(shell);
   for (const x of [(CASE.well[1] + CASE.cup[0]) / 2, (CASE.cup[1] + CASE.drain[0]) / 2]) {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(0.03, CASE.height, CASE.halfZ * 2), new THREE.MeshPhysicalMaterial({ color: 0xcfe8f0, roughness: 0.05, transmission: 0.7, transparent: true, opacity: 0.45 }));
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(0.03, CASE.height, CASE.halfZ * 2), new THREE.MeshPhysicalMaterial({ color: 0xcfe8f0, roughness: 0.05, transmission: 0.7, transparent: true, opacity: 0.45, depthWrite: false }));
     wall.position.set(x, CASE.y + CASE.height / 2, CASE.z);
     scene.add(wall);
   }
 
-  // --- The cup (brass) and the drain (a dark hole) inside their compartments.
-  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.08, 24, 1, true), m.brass);
-  cup.position.set(centre("cup"), CASE.y + 0.04, CASE.z);
-  scene.add(cup);
-  const drain = new THREE.Mesh(new THREE.CircleGeometry(0.24, 24), new THREE.MeshBasicMaterial({ color: 0x050505 }));
-  drain.rotation.x = -Math.PI / 2;
-  drain.position.set(centre("drain"), CASE.y + 0.003, CASE.z);
-  scene.add(drain);
+  // --- The ring: a flat brass band inlaid in the case floor. The marble slides in along
+  // the floor and rests on top of it, in plain view.
+  const ringProfile = [[RING_IN, 0], [RING_OUT, 0], [RING_OUT, RING_T], [RING_IN, RING_T], [RING_IN, 0]].map(([r, y]) => new THREE.Vector2(r, y));
+  const ring = new THREE.Mesh(new THREE.LatheGeometry(ringProfile, 48), m.brass);
+  ring.position.set(centre("cup"), CASE.y, CASE.z);
+  ring.receiveShadow = true;
+  scene.add(ring);
+
+  // --- The drain: a brass-rimmed hole in the case floor over a glass shaft that runs
+  // down through a gap in the bench to a tray on the floor, so a lost marble is seen
+  // falling all the way down.
+  const dx = centre("drain");
+  const rim = new THREE.Mesh(new THREE.RingGeometry(SHAFT_R, SHAFT_R + 0.07, 40), m.brass);
+  rim.rotation.x = -Math.PI / 2;
+  rim.position.set(dx, CASE.y + 0.003, CASE.z);
+  scene.add(rim);
+  const tubeMaterial = new THREE.MeshPhysicalMaterial({ color: 0xe8f4f6, roughness: 0.05, transmission: 0.85, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false });
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(SHAFT_R, SHAFT_R, CASE.y, 32, 1, true), tubeMaterial);
+  tube.position.set(dx, CASE.y / 2, CASE.z);
+  scene.add(tube);
+  for (const y of [CASE.y - 0.06, 0.06]) {
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(SHAFT_R + 0.012, SHAFT_R + 0.012, 0.04, 32, 1, true), m.brass);
+    band.position.set(dx, y, CASE.z);
+    scene.add(band);
+  }
+  const trayProfile = [[0, 0.004], [SHAFT_R + 0.04, 0.004], [SHAFT_R + 0.06, 0.04], [SHAFT_R + 0.05, 0.042], [SHAFT_R + 0.03, 0.012], [0, 0.012]].map(([r, y]) => new THREE.Vector2(r, y));
+  const tray = new THREE.Mesh(new THREE.LatheGeometry(trayProfile, 40), m.brass);
+  tray.position.set(dx, 0, CASE.z);
+  scene.add(tray);
+
+  // --- Engraved brass plaques on the bench front name the three compartments.
+  const front = CASE.z + 0.5; // the bench's front face
+  for (const c of ["well", "cup", "drain"] as Compartment[]) {
+    const plaque = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.11), new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.6, roughness: 0.4, map: plaqueTexture(c === "cup" ? "RING" : c.toUpperCase()) }));
+    plaque.position.set(c === "drain" ? centre(c) + 0.55 : centre(c), CASE.y - 0.17, front + 0.004);
+    scene.add(plaque);
+  }
 
   // --- Probability clouds: one glowing box per compartment.
   const clouds = (["well", "cup", "drain"] as Compartment[]).map((c) => {
@@ -84,6 +158,7 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   const marbleMaterial = new THREE.MeshPhysicalMaterial({ color: 0x3a6ad0, roughness: 0.15, clearcoat: 0.8, transparent: true, opacity: 1 });
   const marble = new THREE.Mesh(new THREE.SphereGeometry(MARBLE_R, 24, 16), marbleMaterial);
   marble.castShadow = true;
+  marble.renderOrder = 2; // drawn after the glass, so walls and clouds never cut into it
   scene.add(marble);
   const clawY = CASE.y + CASE.height + 0.15;
   const claw = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.015, 8, 20, Math.PI * 1.4), m.brass);
@@ -114,7 +189,7 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
         lines: [
           "Here a marble is a wave, and waves leak",
           "through walls a marble could never climb.",
-          "The door opens for a marble in the cup.",
+          "The door opens for a marble on the ring.",
           "Look at it at the right moment.",
         ],
       },
@@ -143,6 +218,8 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
   let time = 0;
   let leverAngle = 0;
   let marbleX = centre("well");
+  let marbleY = clawY - 0.02;
+  let fallSpeed = 0;
   return {
     lever: [handle, knob, post],
     update(dt) {
@@ -159,10 +236,21 @@ export function buildTunnelView(scene: THREE.Object3D, ex: TunnelExhibit, m: Mat
       const where = ex.found ?? likeliest;
       const targetX = centre(where);
       marbleX += (targetX - marbleX) * Math.min(1, dt * (wave ? 1.5 : 6));
+      // Found in the drain, it drops down the shaft to the tray on the floor.
       const lost = where === "drain" && !wave;
-      marble.position.set(marbleX, ex.released ? (lost ? CASE.y - 0.3 : CASE.y + MARBLE_R + (where === "cup" ? 0.04 : 0)) : clawY - 0.02, CASE.z);
+      if (!ex.released) {
+        marbleY = clawY - 0.02;
+        fallSpeed = 0;
+      } else if (lost) {
+        marbleX = targetX;
+        fallSpeed += 9.81 * dt;
+        marbleY = Math.max(0.012 + MARBLE_R, marbleY - fallSpeed * dt);
+      } else {
+        marbleY = CASE.y + MARBLE_R + (where === "cup" ? RING_T : 0);
+        fallSpeed = 0;
+      }
+      marble.position.set(marbleX, marbleY, CASE.z);
       marbleMaterial.opacity = wave ? 0.25 + 0.1 * Math.sin(time * 5) : 1;
-      marble.visible = !lost;
       door.position.y = ex.door.translation().y;
     },
   };

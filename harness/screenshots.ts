@@ -101,6 +101,8 @@ const SHOTS: Shot[] = [
   { name: "A2-furnace-ice-melting", camera: "furnace-ice", moves: [], actions: [{ rule: "mirror", value: "ice" }, { wait: 6.5 * S }] },
   { name: "A3-furnace-boiling", camera: "furnace-ice", moves: [], actions: [{ rule: "mirror", value: "ice" }, { wait: 15 * S }] },
   { name: "A4-furnace-solved", camera: "furnace", moves: [], actions: [{ rule: "mirror", value: "ice" }, { wait: 10 * S }, { rule: "heat", value: "hot-to-cold" }, { wait: 2 * S }] },
+  { name: "E3-tunnel-drain-start", camera: "tunnel-drain", moves: [] },
+  { name: "E4-tunnel-lost", camera: "tunnel-drain", moves: [], actions: [{ rule: "lever", value: "pulled" }, { wait: 14 * S }, { rule: "planck", value: 0 }, { wait: 1 * S }], viewSeconds: 2 },
   { name: "B0-double-slit-start", camera: "double-slit", moves: [] },
   { name: "B1-double-slit-screen-broken", camera: "double-slit-screen", moves: [] },
   { name: "B2-double-slit-wavelength-only", camera: "double-slit-screen", moves: [], actions: [{ rule: "wavelength", value: 589 }] },

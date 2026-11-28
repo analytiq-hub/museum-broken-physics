@@ -45,14 +45,14 @@ export function createTunnelGallery(R: typeof RAPIER, scene: THREE.Object3D, mat
       const h = exhibit.rule("planck").current as number;
       const label = PLANCK_MARKS.find((mk) => mk.value === h)?.label ?? String(h);
       const p = exhibit.probabilities;
-      return `Planck's constant: <b>${label}</b> · well ${percent(p.well)} · cup ${percent(p.cup)} · drain ${percent(p.drain)}`;
+      return `Planck's constant: <b>${label}</b> · well ${percent(p.well)} · ring ${percent(p.cup)} · drain ${percent(p.drain)}`;
     },
     status() {
-      if (exhibit.isSolved()) return "Solved! The marble was found in the cup, and the door has opened.";
+      if (exhibit.isSolved()) return "Solved! The marble was found on the ring, and the door has opened.";
       if (exhibit.isFailed()) return "The marble is lost down the drain. The room will reset.";
       if (exhibit.found === "well") return "Found in the well, and now it is a marble again: it will never get through. Reset to try again.";
       if (exhibit.released) return "The marble is spreading through the glass…";
-      return "Put the marble in the cup. Pull the lever to drop it into the well; hold Q for the room's laws.";
+      return "Put the marble on the ring. Pull the lever to drop it into the well; hold Q for the room's laws.";
     },
     afterStep() {},
     update(dt) {
