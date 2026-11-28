@@ -206,7 +206,7 @@ export function buildSternGerlachView(scene: THREE.Object3D, ex: SternGerlachExh
         lines: [
           "Silver atoms fly through a magnet",
           "that pushes each one by its spin.",
-          "Two detectors wait where they should land.",
+          "Fill both brass detectors with silver.",
           "Mind the glass between them.",
         ],
       },

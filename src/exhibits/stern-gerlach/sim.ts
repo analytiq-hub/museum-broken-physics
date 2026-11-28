@@ -3,7 +3,7 @@
 // An oven boils off silver atoms; slits narrow them into a beam that passes
 // between the poles of a magnet shaped to push each atom up or down by its spin,
 // then lands on a glass screen, where the silver builds up as a visible deposit.
-// Two brass detectors sit where the atoms should land; between them, a fragile
+// Two brass detectors sit where a quantised beam lands; between them, a fragile
 // glass cell.
 //
 // The broken law is spin's quantisation (../spin.ts): measured along the magnet's
